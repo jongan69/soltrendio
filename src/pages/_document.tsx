@@ -8,7 +8,7 @@ class MyDocument extends Document {
         <Head>
           <meta
             name="description"
-            content="It's time to lock in."
+            content="An app for finding wallet trends and analyzing sentiment in Solana."
           />
           <link rel="icon" href="/favicon.ico" />
 

@@ -119,10 +119,10 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Lock TF In</title>
+        <title>Soltrendio</title>
         <meta
           name="description"
-          content="Lock TF In"
+          content="Soltrendio"
         />
       </Head>
       <DrawerContainer>
