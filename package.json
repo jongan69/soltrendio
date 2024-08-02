@@ -1,11 +1,7 @@
 {
-  "name": "lock",
-  "description": "lock in",
+  "name": "soltrendio",
+  "description": "soltrendio",
   "version": "0.1.0",
-  "author": {
-    "name": "Jonathan Gan",
-    "email": "jonny2298@live.com"
-  },
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
