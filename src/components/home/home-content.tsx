@@ -37,6 +37,7 @@ export function HomeContent() {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
       prevPublicKey.current = publicKey.toBase58();
       setSignState("initial");
+      saveWalletToDb(publicKey.toBase58());
     }
   }, [publicKey]);
 
@@ -288,9 +289,19 @@ export function HomeContent() {
     window.open(tweetUrl, "_blank");
   };
 
-  const handleAddressSubmit = (e: { preventDefault: () => void; }) => {
+  const saveWalletToDb = async (address: string) => {
+    try {
+      await axios.post('/api/save-wallet', { address });
+      console.log('Wallet saved successfully');
+    } catch (error) {
+      console.error('Error saving wallet:', error);
+    }
+  };
+
+  const handleAddressSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setSubmittedAddress(manualAddress);
+    await saveWalletToDb(manualAddress);
   };
 
   // Loading State
