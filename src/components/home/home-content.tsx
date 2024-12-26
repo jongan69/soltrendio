@@ -10,6 +10,8 @@ import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import axios from "axios";
 import { NETWORK } from "@utils/endpoints";
+import { getTokenInfo } from "../../utils/getTokenInfo";
+import { isSolanaAddress } from "../../pages/api/isSolanaAddress";
 
 export function HomeContent() {
   const { publicKey, signTransaction, sendTransaction } = useWallet();
@@ -28,7 +30,7 @@ export function HomeContent() {
   const [hateSpeechScore, setHateSpeechScore] = useState<number>(0);
   const [drugUseScore, setDrugUseScore] = useState<number>(0);
   const [trendsData, setTrendsData] = useState([]);
-  const [topSymbols, setTopSymbols] = useState([]);
+  const [topSymbols, setTopSymbols] = useState<string[]>([]);
   const connection = new Connection(NETWORK);
 
   useEffect(() => {
@@ -57,19 +59,27 @@ export function HomeContent() {
 
   const fetchGoogleTrends = async (tokens: any) => {
     try {
-      // Sort tokens by usdValue in descending order and take the top 20
+      // Sort tokens by usdValue in descending order and take the top 3
       const topTokens = tokens?.sort((a: { usdValue: number }, b: { usdValue: number }) => b.usdValue - a.usdValue).slice(0, 3);
-      // Extract symbols from the top tokens and filter out any undefined values
-      let symbols = topTokens.map((token: { symbol: any }) => token.symbol).filter((symbol: any) => symbol !== undefined);
-      setTopSymbols(symbols)
+      
+      // Process symbols and resolve addresses
+      const processedSymbols = await Promise.all(topTokens.map(async (token: { symbol: any }) => {
+        if (isSolanaAddress(token.symbol)) {
+          const tokenInfo = await getTokenInfo(token.symbol);
+          return tokenInfo?.symbol || token.symbol;
+        }
+        return token.symbol;
+      }));
 
-      console.log("Looking for keywords:", symbols);
+      setTopSymbols(processedSymbols);
+      console.log("Looking for keywords:", processedSymbols);
+
       const response = await fetch('/api/trends', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ keywords: symbols }),
+        body: JSON.stringify({ keywords: processedSymbols }),
       });
 
       const data = await response.json();
@@ -115,6 +125,7 @@ export function HomeContent() {
           );
 
           const tokens = await Promise.all(tokenDataPromises);
+          console.log("Tokens:", tokens);
           setTokens(tokens);
 
           // Check the balance of the specific token
@@ -170,11 +181,26 @@ export function HomeContent() {
     }
   }, [signState, publicKey, submittedAddress, updateTotalValue]);
 
-  const summarizeTokenData = (tokens: any[]) => {
-    const summary = tokens.map((token: { symbol: string; amount: any; usdValue: any; }) => ({
-      symbol: token.symbol,
-      amount: token.amount,
-      usdValue: token.usdValue,
+  const summarizeTokenData = async (tokens: any[]) => {
+    // Process tokens and resolve any contract addresses
+    const summary = await Promise.all(tokens.map(async (token: { symbol: string; name: string; amount: any; usdValue: any; }) => {
+      let processedToken = {
+        symbol: token.symbol,
+        name: token.name,
+        amount: token.amount,
+        usdValue: token.usdValue,
+      };
+
+      // If symbol looks like a Solana address, try to fetch token info
+      if (isSolanaAddress(token.symbol)) {
+        const tokenInfo = await getTokenInfo(token.symbol);
+        if (tokenInfo) {
+          processedToken.name = tokenInfo.name;
+          processedToken.symbol = tokenInfo.symbol;
+        }
+      }
+
+      return processedToken;
     }));
 
     // Aggregate data for overall summary
@@ -189,9 +215,9 @@ export function HomeContent() {
   };
 
   const generateThesis = async (tokens: { name?: string | undefined; symbol?: string | undefined; logo?: string | undefined; cid?: string | null | undefined; collectionName?: string | undefined; collectionLogo?: string | undefined; isNft?: boolean | undefined; mintAddress: any; tokenAddress: string; amount: any; decimals: any; usdValue: number; }[]) => {
-    const summarizedData = summarizeTokenData(tokens);
-
     try {
+      const summarizedData = await summarizeTokenData(tokens);
+
       const response = await fetch("/api/generate-thesis", {
         method: "POST",
         headers: {
@@ -225,7 +251,11 @@ export function HomeContent() {
         );
 
         const signature = await sendTransaction(transaction, connection);
-        await connection.confirmTransaction(signature, 'confirmed');
+        await connection.confirmTransaction({
+          signature,
+          blockhash: transaction.recentBlockhash!,
+          lastValidBlockHeight: transaction.lastValidBlockHeight!
+        });
         toast.success("Fee transaction successful, generating new thesis...");
       } catch (error) {
         toast.error("Transaction failed, please try again");

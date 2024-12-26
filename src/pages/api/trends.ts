@@ -1,10 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import googleTrends from 'google-trends-api';
-
+import { getTokenInfo } from '../../utils/getTokenInfo';
+import { isSolanaAddress } from './isSolanaAddress';
 type TrendsResponse = {
   default?: { timelineData: any[] };
   error?: string;
 }
+
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,30 +27,41 @@ export default async function handler(
     return;
   }
 
-  // Filter out long token addresses and clean keywords
-  const cleanedKeywords = keywords
-    .filter((kw: string) => kw.length < 30) // Filter out long addresses
-    .map((kw: string) => kw.replace(/[^a-zA-Z0-9]/g, '')) // Remove special characters
-    .filter((kw: string) => {
-      // Keep only uppercase alphanumeric strings (tickers)
-      const isUpperCase = kw === kw.toUpperCase();
-      const hasLetters = /[A-Z]/.test(kw);
-      return isUpperCase && hasLetters && kw.length >= 2;
-    });
-
-  // If no valid keywords after cleaning, return empty data
-  if (cleanedKeywords.length === 0) {
-    console.log("No valid tickers after cleaning");
-    return res.status(200).json({ 
-      default: { 
-        timelineData: [] 
-      } 
-    });
-  }
-
-  console.log("Cleaned keywords for Google Trends:", cleanedKeywords);
-
   try {
+    // Process keywords and resolve addresses
+    const processedKeywords = await Promise.all(
+      keywords.map(async (kw: string) => {
+        if (isSolanaAddress(kw)) {
+          const tokenInfo = await getTokenInfo(kw);
+          return tokenInfo?.symbol || kw;
+        }
+        return kw;
+      })
+    );
+
+    // Clean and filter keywords
+    const cleanedKeywords = processedKeywords
+      .filter((kw: string) => kw.length < 30) // Filter out long addresses
+      .map((kw: string) => kw.replace(/[^a-zA-Z0-9]/g, '')) // Remove special characters
+      .filter((kw: string) => {
+        // Keep only uppercase alphanumeric strings (tickers)
+        const isUpperCase = kw === kw.toUpperCase();
+        const hasLetters = /[A-Z]/.test(kw);
+        return isUpperCase && hasLetters && kw.length >= 2;
+      });
+
+    // If no valid keywords after cleaning, return empty data
+    if (cleanedKeywords.length === 0) {
+      console.log("No valid tickers after cleaning");
+      return res.status(200).json({ 
+        default: { 
+          timelineData: [] 
+        } 
+      });
+    }
+
+    console.log("Cleaned keywords for Google Trends:", cleanedKeywords);
+
     // Use only first 5 keywords (Google Trends limit)
     const keywordsToUse = cleanedKeywords.slice(0, 5);
     
@@ -56,12 +69,12 @@ export default async function handler(
       keyword: keywordsToUse,
       startTime: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)), // Last 7 days
       endTime: new Date(),
-      geo: 'US' // Add geo restriction to improve results
+      geo: 'US'
     });
 
     const results = await googleTrends.interestOverTime({
       keyword: keywordsToUse,
-      startTime: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)), // Last 7 days
+      startTime: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
       endTime: new Date(),
       geo: 'US'
     });

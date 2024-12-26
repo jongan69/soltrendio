@@ -73,13 +73,6 @@ export const ItemList = ({ initialItems, totalValue }: Props) => {
     });
   };
 
-  const handleTipChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10);
-    if (!isNaN(value)) {
-      setTipAmount(value); // Update tip amount state
-    }
-  };
-
   const handleConfirmSelection = () => {
     if (selectedItems.size > 0) {
       setShowPopup(true); // Show confirmation popup
@@ -133,19 +126,6 @@ export const ItemList = ({ initialItems, totalValue }: Props) => {
     <div>
       <h2 className="text-center text-primary m-10">{items.length} Token Accounts</h2>
       <h2 className="text-center text-primary m-10">Total Estimated Accounts Value: ${totalValue.toFixed(2)}</h2>
-      {/* <div className="tip-amount-container">
-        <label htmlFor="tip-amount" className="block text-sm font-medium text-white bold">
-          Jito Bundle Tip Amount (lamports):
-        </label>
-        <input
-          type="number"
-          id="tip-amount"
-          value={tipAmount}
-          onChange={handleTipChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-      </div> */}
-      {/* <h1 className="text-center text-primary m-10">Swappable Tokens</h1> */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {items.length === 0 || !sortedItems ? (
           <p className="p-4">No Coins found in your wallet</p>
