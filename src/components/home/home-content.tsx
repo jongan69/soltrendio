@@ -283,7 +283,7 @@ export function HomeContent() {
   };
 
   const handleTweetThis = () => {
-    const tweetText = encodeURIComponent(`Investment Thesis using https://soltrendio.com:\n\n${thesis}`);
+    const tweetText = encodeURIComponent(`Investment Thesis Generated using https://soltrendio.com:\n\n${thesis}`);
     const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
     window.open(tweetUrl, "_blank");
   };
