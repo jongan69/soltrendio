@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { createJupiterApiClient, QuoteGetRequest, QuoteResponse } from "@jup-ag/api";
 import { ComputeBudgetProgram } from "@solana/web3.js";
 import { useState, useCallback } from "react";
+import { BLOCKENGINE } from "@utils/endpoints";
 
 export type bundleStatus = {
   jsonrpc: string
@@ -27,7 +28,7 @@ export type bundleStatus = {
 }
 
 export async function getBundleStatus(id: string): Promise<bundleStatus> {
-  let endpoint = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+  let endpoint = `${BLOCKENGINE}/api/v1/bundles`;
 
   let payload = {
     jsonrpc: "2.0",

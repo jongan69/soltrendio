@@ -2,7 +2,6 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { createCloseAccountInstruction } from "@solana/spl-token";
 import { toast } from "react-hot-toast";
-import { useState } from "react";
 
 export const useCloseTokenAccount = () => {
   const { publicKey, signTransaction, sendTransaction } = useWallet();

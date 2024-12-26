@@ -7,8 +7,8 @@ class MyDocument extends Document {
       <Html data-theme={DEFAULT_THEME}>
         <Head>
           <meta
-            name="description"
-            content="An app for finding wallet trends and analyzing sentiment in Solana."
+            name="Soltrendio"
+            content="Solana wallet trends and sentiment analysis."
           />
           <link rel="icon" href="/favicon.ico" />
 

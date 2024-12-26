@@ -51,7 +51,7 @@ const GoogleTrendsProjection = ({ trendsData, dataNames }: any) => {
 
   return (
     <div>
-      <h2>Google Trends Projection</h2>
+      <h2>Google Trends Projections of Coin Keywords</h2>
       <Line data={data} />
     </div>
   );

@@ -14,7 +14,7 @@ import { getTokenInfo } from "../../utils/getTokenInfo";
 import { isSolanaAddress } from "../../pages/api/isSolanaAddress";
 
 export function HomeContent() {
-  const { publicKey, signTransaction, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const [signState, setSignState] = useState<string>("initial");
   const [tokens, setTokens] = useState<TokenData[]>([]);
   const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
@@ -366,6 +366,8 @@ export function HomeContent() {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">Wallet Overview</h2>
               <div className="text-right">
+                <p className="text-sm">Total Value</p>
+                <p className="text-lg font-bold">${totalValue.toFixed(2)}</p>
                 <p className="text-sm">Lockin Balance</p>
                 <p className="text-lg font-bold">{specificTokenBalance}</p>
               </div>

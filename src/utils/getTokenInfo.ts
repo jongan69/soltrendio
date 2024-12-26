@@ -1,7 +1,9 @@
+import { DEXSCREENER } from "./endpoints";
+
 // Helper function to fetch token info from contract address
 export async function getTokenInfo(address: string) {
     try {
-      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
+      const response = await fetch(`${DEXSCREENER}/latest/dex/tokens/${address}`);
       if (!response.ok) return null;
       
       const data = await response.json();

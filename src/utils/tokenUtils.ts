@@ -72,7 +72,7 @@ export async function handleTokenData(
   const amount = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount || 0;
   const decimals = tokenAccount.account.data.parsed.info.tokenAmount.decimals;
 
-  const [tokenAccountAddress] = await PublicKey.findProgramAddress(
+  const [tokenAccountAddress] = PublicKey.findProgramAddressSync(
     [publicKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), new PublicKey(mintAddress).toBuffer()],
     ASSOCIATED_TOKEN_PROGRAM_ID
   );

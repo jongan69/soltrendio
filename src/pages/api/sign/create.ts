@@ -1,17 +1,9 @@
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
   VersionedTransaction
 } from "@solana/web3.js";
 import { NextApiRequest, NextApiResponse } from "next";
-import { NETWORK } from "@utils/endpoints";
-// import { MEMO_PROGRAM_ID, NONCE } from "@utils/globals";
 import fetch from 'cross-fetch';
-import { Wallet } from '@project-serum/anchor';
-import bs58 from 'bs58';
+import { JUPITER_QUOTE } from "@utils/endpoints";
 
 export type SignCreateData = {
   tx: string;
@@ -34,18 +26,14 @@ export default async function handler(
       return;
     }
 
-    const connection = new Connection(NETWORK);
-    const publicKey = new PublicKey(publicKeyStr);
-    const wallet = new Wallet(Keypair.fromSecretKey(bs58.decode(privateKey)));
-
     // Get the quote for the swap
     const quoteResponse = await (
-      await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}`)
+      await fetch(`${JUPITER_QUOTE}/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}`)
     ).json();
 
     // Get the serialized transactions for the swap
     const swapResponse = await (
-      await fetch('https://quote-api.jup.ag/v6/swap', {
+      await fetch(`${JUPITER_QUOTE}/swap`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -63,7 +51,6 @@ export default async function handler(
     const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
     // transaction.feePayer = publicKey;
 
-    const blockHash = (await connection.getLatestBlockhash("finalized")).blockhash;
     // transaction.recentBlockhash = blockHash;
 
     // Serialize the transaction
