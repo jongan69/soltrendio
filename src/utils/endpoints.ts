@@ -12,4 +12,4 @@ export const HELIUS = `${process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT}`;
 export const BLOCKENGINE = `mainnet.block-engine.jito.wtf`
 
 // You can use any of the other enpoints here
-export const NETWORK = HELIUS;
+export const NETWORK = HELIUS || SOLANA_MAIN;

@@ -9,6 +9,7 @@ import { Connection, PublicKey, Transaction, SystemProgram, PublicKeyInitData } 
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import axios from "axios";
+import { NETWORK } from "@utils/endpoints";
 
 export function HomeContent() {
   const { publicKey, signTransaction, sendTransaction } = useWallet();
@@ -28,7 +29,7 @@ export function HomeContent() {
   const [drugUseScore, setDrugUseScore] = useState<number>(0);
   const [trendsData, setTrendsData] = useState([]);
   const [topSymbols, setTopSymbols] = useState([]);
-  const connection = new Connection("https://api.mainnet-beta.solana.com");
+  const connection = new Connection(NETWORK);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -70,7 +71,7 @@ export function HomeContent() {
         },
         body: JSON.stringify({ keywords: symbols }),
       });
-    
+
       const data = await response.json();
       setTrendsData(data.default.timelineData);
     } catch (error) {
@@ -86,11 +87,28 @@ export function HomeContent() {
         const signToastId = toast.loading("Getting Token Data...");
 
         try {
-          const tokenAccounts = await fetchTokenAccounts(new PublicKey(walletAddress));
+          // Validate the address first
+          let pubKey: PublicKey;
+          try {
+            pubKey = new PublicKey(walletAddress);
+            console.log("Valid public key created:", pubKey.toBase58());
+          } catch (e) {
+            throw new Error("Invalid wallet address");
+          }
+
+          console.log("Fetching token accounts for:", pubKey.toBase58());
+          const tokenAccounts = await fetchTokenAccounts(pubKey);
+          console.log("Token accounts received:", tokenAccounts);
+
+          if (!tokenAccounts?.value) {
+            throw new Error("No token accounts found");
+          }
+
           setTotalAccounts(tokenAccounts.value.length);
+          console.log("Total accounts found:", tokenAccounts.value.length);
 
           const tokenDataPromises = tokenAccounts.value.map((tokenAccount) =>
-            handleTokenData(new PublicKey(walletAddress), tokenAccount, apiLimiter).then((tokenData) => {
+            handleTokenData(pubKey, tokenAccount, apiLimiter).then((tokenData) => {
               updateTotalValue(tokenData.usdValue);
               return tokenData;
             })
@@ -100,8 +118,12 @@ export function HomeContent() {
           setTokens(tokens);
 
           // Check the balance of the specific token
-          const specificTokenAccount = tokenAccounts.value.find(account => account.account.data.parsed.info.mint === DEFAULT_TOKEN);
-          const specificTokenAmount = specificTokenAccount ? specificTokenAccount.account.data.parsed.info.tokenAmount.uiAmount : 0;
+          const specificTokenAccount = tokenAccounts.value.find(account =>
+            account.account.data.parsed.info.mint === DEFAULT_TOKEN
+          );
+          const specificTokenAmount = specificTokenAccount
+            ? specificTokenAccount.account.data.parsed.info.tokenAmount.uiAmount
+            : 0;
           setSpecificTokenBalance(specificTokenAmount);
 
           // Generate initial thesis
@@ -116,8 +138,25 @@ export function HomeContent() {
           toast.success("Token Data Retrieved", { id: signToastId });
         } catch (error) {
           setSignState("error");
-          toast.error("Error verifying wallet, please reconnect wallet", { id: signToastId });
-          console.error(error);
+          let errorMessage = "Error retrieving wallet data";
+
+          if (error instanceof Error) {
+            console.error("Detailed error:", error);
+
+            // More specific error messages
+            if (error.message.includes("Invalid wallet address")) {
+              errorMessage = "Invalid wallet address. Please check the address and try again.";
+            } else if (error.message.includes("No token accounts found")) {
+              errorMessage = "No tokens found in this wallet.";
+            } else if (error.message.includes("429")) {
+              errorMessage = "Too many requests. Please try again in a few minutes.";
+            } else if (error.message.includes("fetch")) {
+              errorMessage = "Network error. Please check your connection and try again.";
+            }
+          }
+
+          toast.error(errorMessage, { id: signToastId });
+          console.error("Error in sign function:", error);
         } finally {
           setLoading(false);
         }
@@ -201,7 +240,7 @@ export function HomeContent() {
       setThesis(newThesis);
 
       // Fetch sentiment analysis and Google Trends data
-      if (thesis) await fetchSentimentAnalysis(thesis);
+      if (newThesis) await fetchSentimentAnalysis(newThesis);
       if (tokens) await fetchGoogleTrends(tokens);
 
       toast.success("New Thesis Generated");
@@ -214,7 +253,7 @@ export function HomeContent() {
   };
 
   const handleTweetThis = () => {
-    const tweetText = encodeURIComponent(`Investment Thesis: ${thesis}`);
+    const tweetText = encodeURIComponent(`Investment Thesis using https://soltrendio.com:\n\n${thesis}`);
     const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
     window.open(tweetUrl, "_blank");
   };
@@ -224,87 +263,156 @@ export function HomeContent() {
     setSubmittedAddress(manualAddress);
   };
 
+  // Loading State
   if (loading || !tokens || signState === "loading") {
     return (
-      <>
-        <p>Found {totalAccounts} Accounts, Getting Token Data...</p>
-        <div className="flex justify-center items-center h-screen">
-          <Circles color="#00BFFF" height={80} width={80} />
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <p className="text-lg mb-4">Found {totalAccounts} Accounts, Generating Thesis...</p>
+        <Circles color="#00BFFF" height={80} width={80} />
+      </div>
     );
   }
 
+  // Initial Loading State
   if ((publicKey || submittedAddress) && signState === "success" && tokens.length === 0) {
-    return <p className="text-center p-4">Loading wallet information...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg">Loading wallet information...</p>
+      </div>
+    );
   }
 
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
   return (
-    <div className="grid grid-cols-1">
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Connection Status Banner - Moved to top */}
       {!publicKey && !submittedAddress && (
-        <div className="text-center p-4">
-          <form onSubmit={handleAddressSubmit}>
-            <label className="block mb-2">Enter your Solana wallet address:</label>
+        <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mb-8">
+          <h2 className="text-xl text-primary font-bold text-center">
+            Please connect your wallet or submit your address to begin
+          </h2>
+        </div>
+      )}
+
+      {/* Wallet Input Section */}
+      {!publicKey && !submittedAddress && (
+        <div className="bg-base-200 rounded-lg p-6 mb-8">
+          <form onSubmit={handleAddressSubmit} className="max-w-md mx-auto">
+            <h2 className="text-xl font-bold mb-4">Connect Your Wallet</h2>
+            <label className="block text-sm font-medium mb-2">
+              Enter your Solana wallet address:
+            </label>
             <input
               type="text"
               value={manualAddress}
               onChange={(e) => setManualAddress(e.target.value)}
-              className="p-2 border rounded mb-4 w-full"
+              className="w-full p-2 border rounded-md mb-4 bg-base-100"
+              placeholder="Solana address..."
             />
-            <button type="submit" className="btn btn-primary">Submit</button>
+            <button type="submit" className="btn btn-primary w-full">
+              Analyze Wallet
+            </button>
           </form>
         </div>
       )}
+
+      {/* Main Content */}
       {hasFetchedData ? (
-        <div>
-          <p className="text-center p-4">Lockin Balance: {specificTokenBalance}</p>
-          <h2 className="text-center p-4">Investment Thesis</h2>
-          {`${thesis}`}
-          <h2 className="text-center p-4">Sentiment Analysis</h2>
-          <SentimentCharts
-            racismScore={racismScore}
-            hateSpeechScore={hateSpeechScore}
-            drugUseScore={drugUseScore}
-          />
-          <h2 className="text-center p-4">Google Trends Projection</h2>
-          <GoogleTrendsProjection trendsData={trendsData} dataNames={topSymbols}/>
-          <div className="text-center p-4">
-            <button className="btn btn-primary m-2" onClick={handleGenerateNewThesis}>
-              Generate New Thesis
-            </button>
-            <button className="btn btn-secondary m-2" onClick={handleTweetThis}>
-              Tweet This
-            </button>
+        <div className="space-y-8">
+          {/* Token Balance Card */}
+          <div className="bg-base-200 rounded-lg p-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Wallet Overview</h2>
+              <div className="text-right">
+                <p className="text-sm">Lockin Balance</p>
+                <p className="text-lg font-bold">{specificTokenBalance}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Thesis Section */}
+          <div className="bg-base-200 rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Investment Thesis</h2>
+              <div className="space-x-2">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleGenerateNewThesis}
+                >
+                  Generate New
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleTweetThis}
+                >
+                  Tweet
+                </button>
+              </div>
+            </div>
+            <div className="prose max-w-none">
+              {thesis}
+            </div>
+          </div>
+
+          {/* Sentiment Analysis */}
+          <div className="bg-base-200 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Sentiment Analysis</h2>
+            <SentimentCharts
+              racismScore={racismScore}
+              hateSpeechScore={hateSpeechScore}
+              drugUseScore={drugUseScore}
+            />
+          </div>
+
+          {/* Google Trends */}
+          <div className="bg-base-200 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Google Trends Projection</h2>
+            <GoogleTrendsProjection
+              trendsData={trendsData}
+              dataNames={topSymbols}
+            />
           </div>
         </div>
       ) : (
-        <div className="text-center">
-          <p className="text-center p-4">
-            This app allows users to analyze their wallet holdings to generate a thesis.
-          </p>
-          {!publicKey && !submittedAddress && (
-            <div className="card border-2 border-primary mb-5">
-              <div className="card-body items-center">
-                <h2 className="card-title text-center text-primary mb-2">
-                  Please connect your wallet or submit your address...
-                </h2>
-              </div>
-            </div>
-          )}
+        <div className="text-center space-y-6">
+          <div className="bg-base-200 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">
+              Welcome to Wallet Analyzer
+            </h2>
+            <p className="text-lg">
+              This app analyzes your wallet holdings to generate an investment thesis.
+            </p>
+          </div>
+
           {signState === "error" && (
-            <div className="card border-2 border-primary mb-5">
-              <div className="card-body items-center text-center">
-                <h2 className="card-title text-center mb-2">
-                  {`Please disconnect and reconnect your wallet. You might need to reload the page. You might have too many tokens and we're being rate limited. Thank you 🔒`}
-                </h2>
-              </div>
+            <div className="bg-error/10 border-2 border-error rounded-lg p-6">
+              <h2 className="text-xl text-error font-bold">
+                Connection Error
+              </h2>
+              <p className="mt-2">
+                {publicKey
+                  ? "Please disconnect and reconnect your wallet. You might need to reload the page. You might have too many tokens and we're being rate limited."
+                  : submittedAddress
+                    ? "Unable to fetch token data for this address. Please verify the address and try again."
+                    : "Please check the wallet address and try again. Make sure it's a valid Solana address."}
+              </p>
+              <p className="mt-2 text-sm opacity-75">
+                If the problem persists, try again in a few minutes or with a different address.
+              </p>
             </div>
           )}
         </div>
       )}
-      {balance > 0 && <p className="text-center p-4">Total LOCKINS Generated: {balance.toFixed(5)}</p>}
+
+      {/* Footer Stats */}
+      {balance > 0 && (
+        <div className="text-center mt-8 p-4 bg-base-200 rounded-lg">
+          <p className="text-sm">
+            Total LOCKINS Generated: <span className="font-bold">{balance.toFixed(5)}</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

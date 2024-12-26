@@ -226,7 +226,11 @@ export const useCreateSwapInstructions = (
           addressLookupTableAddresses,
         } = instructions;
 
-        const deserializeInstruction = (instruction: { programId: PublicKeyInitData; accounts: any[]; data: WithImplicitCoercion<string> | { [Symbol.toPrimitive](hint: "string"): string; }; }) => {
+        const deserializeInstruction = (instruction: { 
+          programId: PublicKeyInitData; 
+          accounts: any[]; 
+          data: string | Buffer; 
+        }) => {
           return new TransactionInstruction({
             programId: new PublicKey(instruction.programId),
             keys: instruction.accounts.map((key) => ({
@@ -234,7 +238,7 @@ export const useCreateSwapInstructions = (
               isSigner: key.isSigner,
               isWritable: key.isWritable,
             })),
-            data: Buffer.from(instruction.data, "base64"),
+            data: Buffer.isBuffer(instruction.data) ? instruction.data : Buffer.from(instruction.data, "base64"),
           });
         };
 
