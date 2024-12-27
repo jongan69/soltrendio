@@ -57,15 +57,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         {
           role: "system",
           content:
-            "Generate an outrageously funny investment thesis and investment strategy based on the following token data. Use $TICKER format when mentioning tokens. End with scores (0-100) for: racism, crudity, profanity, drug/alcohol, hate speech. Keep response concise.",
+            "Generate an outrageously funny investment thesis and investment strategy based on the following token data. Use $TICKER format when mentioning tokens. End with scores (0-100) for: racism, crudity, profanity, drug/alcohol, hate speech.",
         },
         {
           role: "user",
           content: JSON.stringify(summarizedTokens),
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500 // Reduced max tokens for faster response
+      temperature: 0.8,
+      max_tokens: 8000
     };
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
