@@ -326,7 +326,7 @@ export function HomeContent() {
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl overflow-x-hidden">
       {/* Connection Status Banner - Moved to top */}
       {!publicKey && !submittedAddress && (
         <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mb-8">
@@ -375,10 +375,10 @@ export function HomeContent() {
           </div>
 
           {/* Thesis Section */}
-          <div className="bg-base-200 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-base-200 rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
               <h2 className="text-xl font-bold">Investment Thesis</h2>
-              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 w-full sm:w-auto">
                 <button
                   className="btn btn-primary btn-sm w-full sm:w-auto"
                   onClick={handleGenerateNewThesis}
@@ -393,28 +393,32 @@ export function HomeContent() {
                 </button>
               </div>
             </div>
-            <div className="prose max-w-none">
+            <div className="prose prose-sm max-w-none break-words overflow-x-hidden">
               {thesis}
             </div>
           </div>
 
           {/* Sentiment Analysis */}
-          <div className="bg-base-200 rounded-lg p-6">
+          <div className="bg-base-200 rounded-lg p-4 sm:p-6 overflow-x-hidden">
             <h2 className="text-xl font-bold mb-4">Sentiment Analysis</h2>
-            <SentimentCharts
-              racismScore={racismScore}
-              hateSpeechScore={hateSpeechScore}
-              drugUseScore={drugUseScore}
-            />
+            <div className="w-full overflow-x-hidden">
+              <SentimentCharts
+                racismScore={racismScore}
+                hateSpeechScore={hateSpeechScore}
+                drugUseScore={drugUseScore}
+              />
+            </div>
           </div>
 
           {/* Google Trends */}
-          <div className="bg-base-200 rounded-lg p-6">
+          <div className="bg-base-200 rounded-lg p-4 sm:p-6 overflow-x-hidden">
             <h2 className="text-xl font-bold mb-4">Google Trends Projection</h2>
-            <GoogleTrendsProjection
-              trendsData={trendsData}
-              dataNames={topSymbols}
-            />
+            <div className="w-full overflow-x-hidden">
+              <GoogleTrendsProjection
+                trendsData={trendsData}
+                dataNames={topSymbols}
+              />
+            </div>
           </div>
         </div>
       ) : (
