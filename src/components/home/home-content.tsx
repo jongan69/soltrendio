@@ -326,7 +326,7 @@ export function HomeContent() {
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">
       {/* Connection Status Banner - Moved to top */}
       {!publicKey && !submittedAddress && (
         <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mb-8">
@@ -339,8 +339,8 @@ export function HomeContent() {
       {/* Wallet Input Section */}
       {!publicKey && !submittedAddress && (
         <div className="bg-base-200 rounded-lg p-6 mb-8">
-          <form onSubmit={handleAddressSubmit} className="max-w-md mx-auto">
-            <h2 className="text-xl font-bold mb-4">Connect Your Wallet</h2>
+          <form onSubmit={handleAddressSubmit} className="w-full max-w-md mx-auto">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Connect Your Wallet</h2>
             <label className="block text-sm font-medium mb-2">
               Enter your Solana wallet address:
             </label>
@@ -362,10 +362,10 @@ export function HomeContent() {
       {hasFetchedData ? (
         <div className="space-y-8">
           {/* Token Balance Card */}
-          <div className="bg-base-200 rounded-lg p-6">
-            <div className="flex justify-between items-center">
+          <div className="bg-base-200 rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Wallet Overview</h2>
-              <div className="text-right">
+              <div className="text-left sm:text-right w-full sm:w-auto">
                 <p className="text-sm">Total Value</p>
                 <p className="text-lg font-bold">${totalValue.toFixed(2)}</p>
                 <p className="text-sm">Lockin Balance</p>
@@ -378,15 +378,15 @@ export function HomeContent() {
           <div className="bg-base-200 rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Investment Thesis</h2>
-              <div className="space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm w-full sm:w-auto"
                   onClick={handleGenerateNewThesis}
                 >
                   Generate New
                 </button>
                 <button
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm w-full sm:w-auto"
                   onClick={handleTweetThis}
                 >
                   Tweet

@@ -22,6 +22,33 @@ ChartJS.register(
 );
 
 const GoogleTrendsProjection = ({ trendsData, dataNames }: any) => {
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45,
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          boxWidth: 12,
+          font: {
+            size: 11
+          }
+        }
+      }
+    }
+  };
+
   const data = {
     labels: trendsData?.map((data: { formattedTime: any; }) => data.formattedTime),
     datasets: [
@@ -51,8 +78,10 @@ const GoogleTrendsProjection = ({ trendsData, dataNames }: any) => {
 
   return (
     <div>
-      <h2>Google Trends Projections of Coin Keywords</h2>
-      <Line data={data} />
+      <h2 className="text-lg font-semibold mb-4 text-center">Google Trends Projections of Coin Keywords</h2>
+      <div className="h-[300px] w-full">
+        <Line data={data} options={options} />
+      </div>
     </div>
   );
 };

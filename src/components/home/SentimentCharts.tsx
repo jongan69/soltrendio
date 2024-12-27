@@ -22,6 +22,39 @@ ChartJS.register(
 );
 
 const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore }: any) => {
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: {
+            size: 10
+          }
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          boxWidth: 12,
+          font: {
+            size: 11
+          }
+        }
+      }
+    }
+  };
+
   const data = {
     labels: ['Racism', 'Hate Speech', 'Drug Use'],
     datasets: [
@@ -43,7 +76,11 @@ const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore }: any) =>
     ],
   };
 
-  return <Bar data={data} />;
+  return (
+    <div className="h-[300px] w-full">
+      <Bar data={data} options={options} />
+    </div>
+  );
 };
 
 export default SentimentCharts;
