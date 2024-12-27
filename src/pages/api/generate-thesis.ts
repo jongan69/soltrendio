@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       temperature: 0.8,
-      max_tokens: 8000
+      max_tokens: 4000
     };
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
