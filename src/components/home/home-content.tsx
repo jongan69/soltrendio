@@ -19,7 +19,7 @@ import {
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import axios from "axios";
-import { NETWORK } from "@utils/endpoints";
+// import { NETWORK } from "@utils/endpoints";
 import { getTokenInfo } from "../../utils/getTokenInfo";
 import { isSolanaAddress } from "../../utils/isSolanaAddress";
 import { handleTweetThis } from "@utils/handleTweet";
