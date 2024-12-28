@@ -43,11 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       color: '#FF69B4'
     };
 
+    // Adjust title position and size
     titleSlide.addText('🚀 Investment Thesis 💰', {
       x: 0.5,
-      y: 0.5,
+      y: 0.8,  // Moved down slightly
       w: 9,
-      h: 1,
+      h: 0.8,  // Reduced height to prevent overlap
       fontSize: 44,
       bold: true,
       color: '#FFFFFF',
@@ -58,16 +59,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Split thesis into sentences for distribution
     const thesisSentences = thesis.split(/[.!?]+/).filter(Boolean).map((s: string) => s.trim());
     
-    // Add main thesis overview
+    // Adjust thesis overview position and size
     titleSlide.addText(thesis, {
       x: 0.5,
-      y: 2,
+      y: 2.2,  // Moved down to create more space from title
       w: 9,
-      h: 2,
+      h: 2.5,  // Increased height for better text wrapping
       fontSize: 16,
       color: '#FFFFFF',
       align: 'center',
       italic: true,
+      breakLine: true,  // Enable text wrapping
+      lineSpacing: 20,  // Add space between lines
     });
 
     // Add token data slides with distributed thesis parts
@@ -80,11 +83,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Add fun emoji based on token value trend
       const trendEmoji = token.usdValue > 100 ? '🤑' : token.usdValue > 50 ? '😊' : '🤔';
       
-      // Add token name with emoji
+      // Adjust token name position
       slide.addText(`${trendEmoji} ${token.name || 'Unknown'} ${trendEmoji}`, {
         x: 0.5,
-        y: 0.3,
+        y: 0.5,  // Moved slightly down
         w: 9,
+        h: 0.8,  // Fixed height
         fontSize: 32,
         bold: true,
         color: '#FFFFFF',
@@ -92,16 +96,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         glow: { size: 5, color: '#FFFFFF', opacity: 0.5 }
       });
 
-      // Add token details in a fun shape
+      // Adjust details box position and size
       slide.addShape(pptx.ShapeType.roundRect, {
         x: 0.5,
-        y: 1.2,
+        y: 1.5,  // Moved down
         w: 9,
-        h: 1.5,
+        h: 1.8,  // Increased height
         fill: { color: 'rgba(255,255,255,0.9)' },
         line: { color: '#FFFFFF', width: 2 },
       });
 
+      // Adjust details text position
       slide.addText([
         { text: '💎 Symbol: ', options: { bold: true } },
         { text: token.symbol, options: { bold: false } },
@@ -109,23 +114,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { text: `$${token.usdValue.toFixed(2)}`, options: { bold: false } }
       ], {
         x: 1,
-        y: 1.4,
+        y: 1.7,  // Adjusted to match shape
         w: 8,
+        h: 1.4,  // Fixed height
         fontSize: 20,
         color: '#000000',
+        lineSpacing: 30,  // Add space between lines
       });
 
-      // Add relevant thesis part if available
+      // Adjust thesis sentence position
       if (thesisSentences[index]) {
         slide.addText(`💡 ${thesisSentences[index]}`, {
           x: 0.5,
-          y: 3,
+          y: 3.6,  // Moved down to avoid overlap
           w: 9,
+          h: 1.5,  // Fixed height
           fontSize: 16,
           color: '#FFFFFF',
           align: 'center',
           italic: true,
-          glow: { size: 3, color: '#FFFFFF', opacity: 0.3 }
+          glow: { size: 3, color: '#FFFFFF', opacity: 0.3 },
+          breakLine: true,  // Enable text wrapping
+          lineSpacing: 20,  // Add space between lines
         });
       }
     });
