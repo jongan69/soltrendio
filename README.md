@@ -1,7 +1,5 @@
 # SolTrendIO - Solana Wallet Analyzer & Thesis Generator
 
-![SolTrendIO Logo](https://ipfs.io/ipfs/Qmc2SJQW4K7UYYVLdoKSf4cGVZbuFGTF4dZiAdRtivNkpX)
-
 SolTrendIO is a powerful analytics tool that analyzes Solana wallets to generate investment theses, sentiment analysis, and market trend projections.
 
 ## Features
