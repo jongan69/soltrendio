@@ -203,31 +203,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
 
         // Helper function to ensure complete sentences
-        function getCompleteSentences(text: string): string[] {
-            // Split only on period followed by space to preserve symbols like "e.g." or "U.S.A"
-            const sentences = text.split('. ').filter(Boolean);
-            
-            return sentences
+        function getAndDistributeSentences(text: string, numSlides: number): string[][] {
+            // Split and clean sentences
+            const sentences = text.split('. ')
+                .filter(Boolean)
                 .map(s => s.trim())
-                .filter(s => 
-                    s.length > 10 && // Minimum length
-                    s.split(' ').length > 3 && // Minimum words
-                    /^[A-Z]/.test(s) // Starts with capital letter
-                )
-                .map(s => s.endsWith('.') ? s : `${s}.`); // Ensure period at end
-        }
+                .filter(s => s.length > 10 && /^[A-Z]/.test(s))
+                .map(s => s.endsWith('.') ? s : `${s}.`);
 
-        // Improved sentence distribution
-        function distributeCompleteSentences(sentences: string[], numSlides: number): string[][] {
-            const result: string[][] = new Array(numSlides).fill(null).map(() => []);
-            
-            // Distribute valid sentences evenly
-            sentences.forEach((sentence, index) => {
-                const slideIndex = index % numSlides;
-                result[slideIndex].push(sentence);
+            // Distribute evenly
+            const result: string[][] = new Array(numSlides).fill([]).map(() => [] as string[]);
+            sentences.forEach((sentence, i) => {
+                result[i % numSlides].push(sentence);
             });
-            
-            return result;
+
+            // Ensure no empty slides
+            return result.map(slideTexts => 
+                slideTexts.length ? slideTexts : [sentences[0] || '']);
         }
 
         // Split full thesis into complete sentences
@@ -411,10 +403,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 token.usdValue > 50 ? getRandomEmojis('medium', 3) :
                     getRandomEmojis('low', 2);
 
-            const completeSentences = getCompleteSentences(thesis);
-            const distributedSentences = distributeCompleteSentences(completeSentences, numSlides);
-
-            const slideSentences = distributedSentences[index] || [];
+            const completeSentences = getAndDistributeSentences(thesis, numSlides);
+            const slideSentences = completeSentences[index] || [];
             if (slideSentences.length > 0) {
                 const formattedText = slideSentences
                     .map((sentence: string) => {
@@ -508,7 +498,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ];
           });
 
-        // Add table
+        // Add table with adjusted dimensions
         summarySlide.addTable(
           [
             [
@@ -521,25 +511,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ],
           {
             x: 0.5,
-            y: 1.5,
+            y: 1.0,  // Moved up
             w: 9,
-            h: 3,
-            colW: [3, 2, 2, 2],
-            border: { type: 'solid', color: '000000', pt: 1 },
+            h: 3.5,  // Increased height
+            colW: [3.5, 1.5, 2, 2],  // Adjusted column widths
+            border: { type: 'solid', color: '000000', pt: 0.5 },  // Thinner borders
             align: 'center',
             valign: 'middle',
-            fontSize: 16,
-            rowH: 0.4
+            fontSize: 14,  // Slightly smaller font
+            rowH: 0.32,    // Reduced row height
+            margin: 0.1    // Reduced cell margin
           }
         );
 
-        // Add total value
+        // Move total value up
         summarySlide.addText(`Total Portfolio Value: $${totalValue.toFixed(2)}`, {
           x: 0.5,
-          y: 4.5,
+          y: 4.6,  // Adjusted position
           w: 9,
-          h: 0.5,
-          fontSize: 20,
+          h: 0.4,
+          fontSize: 18,
           bold: true,
           color: '000000',
           align: 'center'
