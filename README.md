@@ -1,57 +1,88 @@
-# Lockin.wtf [REVIEW@BLOWFISH.XYZ TICKET #2057]
+# SolTrendIO - Solana Wallet Analyzer & Thesis Generator
 
-![Lockin.wtf Logo](https://ipfs.io/ipfs/Qmc2SJQW4K7UYYVLdoKSf4cGVZbuFGTF4dZiAdRtivNkpX)
+![SolTrendIO Logo](https://ipfs.io/ipfs/Qmc2SJQW4K7UYYVLdoKSf4cGVZbuFGTF4dZiAdRtivNkpX)
 
-Lockin.wtf is a decentralized application (dApp) that allows you to view and manage your token holdings on the Solana blockchain.
+SolTrendIO is a powerful analytics tool that analyzes Solana wallets to generate investment theses, sentiment analysis, and market trend projections.
 
 ## Features
 
-### **🗝️ Connect and Validate Solana Wallet**
+### **📊 Comprehensive Wallet Analysis**
 
-Easily connect any Solana wallet supported by [@solana/wallet-adapter](https://github.com/solana-labs/wallet-adapter), such as [Phantom](https://phantom.app/) and [Backpack](https://www.backpack.app/). The dApp auto-connects to your wallet if it has been previously approved, enhancing user convenience.
+- Connect any Solana wallet or enter a wallet address manually
+- View detailed token holdings and total portfolio value
+- Automatic token metadata resolution and price fetching
+- Support for both tokens and NFTs
 
-To ensure security, the dApp requests a signature to validate wallet ownership upon connection. This signature process is client-side and safe, with no blockchain interaction.
+### **🤖 AI-Powered Investment Thesis**
 
-### **🔗 Retrieve Token Data**
+The app generates detailed investment theses based on:
+- Token distribution
+- Portfolio composition
+- Historical holding patterns
+- Market trends
 
-Once your wallet is connected, the dApp fetches and displays detailed information about the tokens in your wallet. This includes:
+### **📈 Advanced Analytics**
 
-- Fetching and parsing token accounts
-- Retrieving token metadata, including name, symbol, and logo
-- Calculating the USD value of your tokens using Jupiter Swap prices
-- Displaying the tokens in a user-friendly interface
+- **Sentiment Analysis**: Evaluates generated theses for various risk factors
+- **Google Trends Integration**: Shows search interest trends for your top tokens
+- **Market Projections**: Visual charts showing potential market direction
 
-All actions are performed using official Solana libraries such as [@solana/web3.js](https://solana-labs.github.io/solana-web3.js/) and the [Metaplex](https://github.com/metaplex-foundation/js) library.
+### **🔄 Real-time Updates**
 
-### **🔌 Rate Limiting for API Calls**
-
-To handle rate limits and ensure smooth operation, the dApp uses Bottleneck for rate limiting API calls to Solana RPC endpoints and other services.
-
-### **🎨 Customizable UI**
-
-The dApp uses [Tailwind CSS](https://tailwindcss.com/) and [daisyUI](https://daisyui.com/) for a flexible and rapid development experience. You can easily customize the theme by modifying the `daisy.themes` setting in `./tailwind.config.js` and setting the `data-theme` attribute in the `<html>` tag. Additionally, a theme switcher is provided for users to toggle between dark and light modes.
-
-For feedback on on-chain actions, the dApp integrates [react-hot-toast](https://react-hot-toast.com/).
+- Live price updates via Jupiter Swap
+- Automatic token metadata resolution
+- Real-time sentiment scoring
 
 ## Getting Started
 
-1. Get an API key from [Helius](https://helius.xyz/) to fetch wallet details.
-2. Add a `.env.local` file with your Helius API key:
+1. Get required API keys:
+   - Helius API for Solana data
+   - OpenAI API for thesis generation
+   - Google Trends API access
+
+2. Create a `.env.local` file:
 
 ```
-HELIUS_API_KEY=<your key>
-NEXT_PUBLIC_SOLANA_RPC_ENDPOINT=https://mainnet.helius-rpc.com/?api-key=<your key>
-UNKNOWN_IMAGE_URL=https://s3.coinmarketcap.com/static-gravity/image/5cc0b99a8dd84fbfa4e150d84b5531f2.png
+HELIUS_API_KEY=<your helius key>
+OPENAI_API_KEY=<your openai key>
+NEXT_PUBLIC_SOLANA_RPC_ENDPOINT=https://mainnet.helius-rpc.com/?api-key=<your helius key>
 ```
 
-3. Run `yarn dev` to start the development server.
-4. Make changes and have fun!
+3. Install dependencies:
+```bash
+yarn install
+```
 
-## Deploying
+4. Start development server:
+```bash
+yarn dev
+```
 
-1. Run `yarn build` locally to ensure everything compiles correctly.
-2. Use `https://favicon.io/favicon-converter/` to generate favicons.
-3. Link your preferred server provider to your repository (e.g., Vercel for the demo).
-4. Push to the `main` branch to automatically deploy a new version.
+## Development
 
-> _This project is built on the foundation of the [Create dApp Solana Next](https://github.com/thuglabs/create-dapp-solana-nextjs) template._# soltrendio
+The project uses:
+- Next.js for the framework
+- Solana Web3.js for blockchain interaction
+- TailwindCSS & DaisyUI for styling
+- Chart.js for visualizations
+- OpenAI API for thesis generation
+- Google Trends API for market analysis
+
+## Deployment
+
+1. Build the project:
+```bash
+yarn build
+```
+
+2. Deploy to your preferred hosting platform (Vercel recommended)
+
+3. Set environment variables on your hosting platform
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+
+## License
+
+MIT License - see LICENSE file for details
