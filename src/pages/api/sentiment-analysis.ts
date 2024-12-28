@@ -20,7 +20,9 @@ export default async function handler(req: { method: string; body: { text: any; 
     {
       "racism": <score>,
       "hateSpeech": <score>,
-      "drugUse": <score>
+      "drugUse": <score>,
+      "crudity": <score>,
+      "profanity": <score>
     }
     where scores are integers between 0 and 100, where 0 indicates no presence and 100 indicates very high presence.
     Text: "${text}"

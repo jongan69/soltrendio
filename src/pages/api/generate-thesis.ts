@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getTokenInfo } from '../../utils/getTokenInfo';
-import { isSolanaAddress } from './isSolanaAddress';
+import { isSolanaAddress } from '../../utils/isSolanaAddress';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Set a longer timeout for the API route
   res.setHeader('Connection', 'keep-alive');

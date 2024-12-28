@@ -21,16 +21,20 @@ ChartJS.register(
   PointElement
 );
 
-const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore }: any) => {
+const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore }: any) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
       y: {
         beginAtZero: true,
+        max: 1,
         ticks: {
           font: {
             size: 10
+          },
+          callback: function(tickValue: number | string) {
+            return `${(Number(tickValue) * 100).toFixed(0)}%`;
           }
         }
       },
@@ -51,25 +55,34 @@ const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore }: any) =>
             size: 11
           }
         }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => `Score: ${(context.raw * 100).toFixed(0)}%`
+        }
       }
     }
   };
 
   const data = {
-    labels: ['Racism', 'Hate Speech', 'Drug Use'],
+    labels: ['Racism', 'Hate Speech', 'Drug Use', 'Crudity', 'Profanity'],
     datasets: [
       {
         label: 'Sentiment Score',
-        data: [racismScore, hateSpeechScore, drugUseScore],
+        data: [racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore],
         backgroundColor: [
           'rgba(255, 99, 132, 0.2)',
           'rgba(54, 162, 235, 0.2)',
           'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
         ],
         borderColor: [
           'rgba(255, 99, 132, 1)',
           'rgba(54, 162, 235, 1)',
           'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
         ],
         borderWidth: 1,
       },

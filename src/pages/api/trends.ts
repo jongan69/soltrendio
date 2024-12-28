@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import googleTrends from 'google-trends-api';
 import { getTokenInfo } from '../../utils/getTokenInfo';
-import { isSolanaAddress } from './isSolanaAddress';
+import { isSolanaAddress } from '../../utils/isSolanaAddress';
 type TrendsResponse = {
   default?: { timelineData: any[] };
   error?: string;
