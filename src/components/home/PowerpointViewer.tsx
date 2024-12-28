@@ -91,7 +91,7 @@ export default function PowerPointViewer({ summary, thesis }: PowerPointViewerPr
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center space-x-4 py-10">
                 <button
                     onClick={handleGeneratePptx}
                     disabled={loading}
