@@ -10,8 +10,8 @@ import {
 } from "@utils/globals";
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
 import {
-  Connection,
   PublicKey,
+  // Connection,
   // Transaction, 
   // SystemProgram, 
   PublicKeyInitData
@@ -44,7 +44,7 @@ export function HomeContent() {
   const [drugUseScore, setDrugUseScore] = useState<number>(0);
   const [trendsData, setTrendsData] = useState([]);
   const [topSymbols, setTopSymbols] = useState<string[]>([]);
-  const connection = new Connection(NETWORK);
+  // const connection = new Connection(NETWORK);
   const [crudityScore, setCrudityScore] = useState<number>(0);
   const [profanityScore, setProfanityScore] = useState<number>(0);
 
