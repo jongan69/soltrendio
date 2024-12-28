@@ -25,6 +25,7 @@ import { isSolanaAddress } from "../../utils/isSolanaAddress";
 import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
+import PowerpointViewer from "./PowerpointViewer";
 
 export function HomeContent() {
   const { publicKey, sendTransaction } = useWallet();
@@ -47,6 +48,7 @@ export function HomeContent() {
   // const connection = new Connection(NETWORK);
   const [crudityScore, setCrudityScore] = useState<number>(0);
   const [profanityScore, setProfanityScore] = useState<number>(0);
+  const [summary, setSummary] = useState<any>([]);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -244,7 +246,7 @@ export function HomeContent() {
   const generateThesis = async (tokens: any[]) => {
     try {
       const summarizedData = await summarizeTokenData(tokens);
-
+      setSummary(summarizedData);
       const response = await fetch("/api/generate-thesis", {
         method: "POST",
         headers: {
@@ -475,6 +477,8 @@ export function HomeContent() {
           )}
         </div>
       )}
+
+      <PowerpointViewer summary={summary} thesis={thesis} />
 
       {/* Footer Stats */}
       {balance > 0 && (

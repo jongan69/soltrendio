@@ -11,6 +11,7 @@
     "find-deadcode": "ts-prune | grep -v '(used in module)'"
   },
   "dependencies": {
+    "@cyntler/react-doc-viewer": "^1.17.0",
     "@jup-ag/api": "^6.0.24",
     "@metaplex-foundation/js": "^0.20.1",
     "@project-serum/anchor": "^0.26.0",
@@ -34,11 +35,14 @@
     "google-trends-api": "^4.9.2",
     "jito-ts": "^4.1.1",
     "mongodb": "^6.12.0",
+    "mongoose": "^8.9.2",
     "next": "15.1.2",
     "openai": "^4.53.2",
+    "pptxgenjs": "^3.12.0",
     "react": "18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
+    "react-file-viewer": "^1.2.1",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^6.1.6",
     "swr": "^2.0.0",
