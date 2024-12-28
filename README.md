@@ -41,7 +41,6 @@ The app generates detailed investment theses based on:
 2. Create a `.env.local` file:
 
 ```
-HELIUS_API_KEY=<your helius key>
 OPENAI_API_KEY=<your openai key>
 NEXT_PUBLIC_SOLANA_RPC_ENDPOINT=https://mainnet.helius-rpc.com/?api-key=<your helius key>
 ```
