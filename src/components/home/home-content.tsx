@@ -4,22 +4,22 @@ import { toast } from "react-hot-toast";
 import { Circles } from "react-loader-spinner";
 import { useTokenBalance } from "@utils/hooks/useTokenBalance";
 import {
-  // DEFAULT_WALLET,
+  DEFAULT_WALLET,
   FEE_ADDRESS,
   DEFAULT_TOKEN
 } from "@utils/globals";
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
 import {
   PublicKey,
-  // Connection,
-  // Transaction, 
-  // SystemProgram, 
+  Connection,
+  Transaction, 
+  SystemProgram, 
   PublicKeyInitData
 } from "@solana/web3.js";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import axios from "axios";
-// import { NETWORK } from "@utils/endpoints";
+import { NETWORK } from "@utils/endpoints";
 import { getTokenInfo } from "../../utils/getTokenInfo";
 import { isSolanaAddress } from "../../utils/isSolanaAddress";
 import { handleTweetThis } from "@utils/handleTweet";
@@ -45,10 +45,11 @@ export function HomeContent() {
   const [drugUseScore, setDrugUseScore] = useState<number>(0);
   const [trendsData, setTrendsData] = useState([]);
   const [topSymbols, setTopSymbols] = useState<string[]>([]);
-  // const connection = new Connection(NETWORK);
+  const connection = new Connection(NETWORK);
   const [crudityScore, setCrudityScore] = useState<number>(0);
   const [profanityScore, setProfanityScore] = useState<number>(0);
   const [summary, setSummary] = useState<any>([]);
+  const [waitingForConfirmation, setWaitingForConfirmation] = useState<boolean>(false);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -277,34 +278,63 @@ export function HomeContent() {
   };
 
   const handleGenerateNewThesis = async () => {
-    // Logic for generating a new thesis for a small fee
-    // if (specificTokenBalance === 0 && publicKey) {
-    // Charge a small Solana transaction if the specific token balance is 0
-    // try {
-    // const transaction = new Transaction().add(
-    //   SystemProgram.transfer({
-    //     fromPubkey: publicKey,
-    //     toPubkey: new PublicKey(DEFAULT_WALLET),
-    //     lamports: 1000, // Small fee in lamports
-    //   })
-    // );
-
-    // const signature = await sendTransaction(transaction, connection);
-    // await connection.confirmTransaction({
-    //   signature,
-    //   blockhash: transaction.recentBlockhash!,
-    //   lastValidBlockHeight: transaction.lastValidBlockHeight!
-    // });
-    //     toast.success("Fee transaction successful, generating new thesis...");
-    //   } catch (error) {
-    //     toast.error("Transaction failed, please try again");
-    //     console.error(error);
-    //     return;
-    //   }
-    // }
+    if (!publicKey) {
+      toast.error("Please connect your wallet to regenerate thesis. Address-only viewing does not support regeneration.");
+      return;
+    }
 
     setLoading(true);
+    setWaitingForConfirmation(true);
+
     try {
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(DEFAULT_WALLET),
+          lamports: 1000000, // Small fee in lamports
+        })
+      );
+
+      let transactionConfirmed = false;
+
+      try {
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
+        const signature = await sendTransaction(transaction, connection);
+        
+        // Wait for transaction confirmation
+        const confirmation = await connection.confirmTransaction(signature);
+        
+        if (confirmation.value.err) {
+          throw new Error("Transaction failed");
+        }
+        
+        transactionConfirmed = true;
+        setWaitingForConfirmation(false);
+        toast.success("Fee payment confirmed, generating new thesis...");
+      } catch (error: any) {
+        console.error("Transaction error:", error);
+        // Check for user rejection
+        if (error?.message?.includes("User rejected")) {
+          toast.error("Transaction cancelled by user");
+        } else {
+          toast.error("Failed to process fee payment. Please ensure you have enough SOL");
+        }
+        setWaitingForConfirmation(false);
+        setLoading(false);
+        return;
+      }
+
+      // Only proceed if transaction was confirmed
+      if (!transactionConfirmed) {
+        setWaitingForConfirmation(false);
+        setLoading(false);
+        return;
+      }
+
+      // Generate new thesis only after successful payment
       const newThesis = await generateThesis(tokens);
       setThesis(newThesis);
 
@@ -313,14 +343,14 @@ export function HomeContent() {
 
       toast.success("New Thesis Generated");
     } catch (error) {
-      toast.error("Error generating new thesis");
-      console.error(error);
+      console.error("Error generating thesis:", error);
+      toast.error("Failed to generate new thesis");
+      setWaitingForConfirmation(false);
     } finally {
       setLoading(false);
+      setWaitingForConfirmation(false);
     }
   };
-
-
 
   const handleAddressSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -332,7 +362,11 @@ export function HomeContent() {
   if (loading || !tokens || signState === "loading") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <p className="text-lg mb-4">Found {totalAccounts} Accounts, Generating Thesis...</p>
+        <p className="text-lg mb-4">
+          {waitingForConfirmation 
+            ? "Waiting for transaction confirmation..." 
+            : `Found ${totalAccounts} Accounts, Generating Thesis...`}
+        </p>
         <Circles color="#00BFFF" height={80} width={80} />
       </div>
     );
