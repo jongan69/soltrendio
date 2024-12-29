@@ -515,7 +515,7 @@ export function HomeContent() {
         </div>
       )}
 
-      <PowerpointViewer summary={summary} thesis={thesis} />
+      {summary && thesis && <PowerpointViewer summary={summary} thesis={thesis} />}
 
       {/* Footer Stats */}
       {balance > 0 && (
