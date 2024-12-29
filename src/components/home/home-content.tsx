@@ -304,9 +304,12 @@ export function HomeContent() {
 
         const signature = await sendTransaction(transaction, connection);
         
-        // Wait for transaction confirmation
-        const confirmation = await connection.confirmTransaction(signature);
-        
+        const latestBlockhash = await connection.getLatestBlockhash();
+        const confirmation = await connection.confirmTransaction({
+          signature,
+          ...latestBlockhash
+        });
+
         if (confirmation.value.err) {
           throw new Error("Transaction failed");
         }
