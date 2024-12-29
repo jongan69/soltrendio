@@ -365,7 +365,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             slide.addImage({
                 path: token.image,
                 x: 0.5,        // Start more to the left
-                y: 1.5,        // Position below the title
+                y: .8,        // Position below the title
                 w: 1.5,        // Slightly smaller width
                 h: 1.5,        // Keep aspect ratio square
                 sizing: {      // Add sizing for better image control
@@ -400,7 +400,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 { text: `${trendEmoji} Market Cap: ${formatMarketCap(token.marketCap)}`, options: { bold: true, color: '000000' } }
             ], {
                 x: 2.5,
-                y: 1.5,
+                y: 1,
                 w: 7,
                 h: 1.5,
                 fontSize: 20,
@@ -449,7 +449,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 if (formattedText) {
                     slide.addText(`${sparkles} ${formatSlideText(formattedText)} ${sparkles}`, {
                         x: 0.5,
-                        y: 2.5,
+                        y: 2.3,
                         w: 9,
                         h: 3.2,  // Increased height to use more space
                         fontSize: 15,
