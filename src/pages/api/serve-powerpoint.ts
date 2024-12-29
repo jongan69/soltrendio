@@ -16,11 +16,11 @@ const connectDB = async () => {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('Serve PowerPoint endpoint called:', {
-    method: req.method,
-    query: req.query,
-    headers: req.headers
-  });
+//   console.log('Serve PowerPoint endpoint called:', {
+//     method: req.method,
+//     query: req.query,
+//     headers: req.headers
+//   });
 
   try {
     await connectDB();

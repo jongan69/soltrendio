@@ -11,7 +11,7 @@ async function generateThesisSummary(thesis: string): Promise<string> {
         model: "gpt-3.5-turbo",
         messages: [{
             role: "user",
-            content: `Summarize this investment thesis in one clear, concise sentence: "${thesis}"`
+            content: `Summarize this investment thesis in one clear, concise but very stupid sentence: "${thesis}"`
         }],
         max_tokens: 60,
         temperature: 0.7,
@@ -358,23 +358,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 autoFit: true
             });
 
-            // Adjust details text position
+            // Add image with improved positioning and styling
+            slide.addImage({
+                path: token.image,
+                x: 0.5,        // Start more to the left
+                y: 1.5,        // Position below the title
+                w: 1.5,        // Slightly smaller width
+                h: 1.5,        // Keep aspect ratio square
+                sizing: {      // Add sizing for better image control
+                    type: 'contain',
+                    w: 1.5,
+                    h: 1.5
+                },
+                rounding: true,  // Make image circular
+                shadow: {        // Add subtle shadow
+                    type: 'outer',
+                    blur: 3,
+                    offset: 2,
+                    angle: 45,
+                    opacity: 0.3
+                }
+            });
+
+            // Adjust details text position to account for new image position
             slide.addText([
                 { text: `${trendEmoji} Symbol:`, options: { bold: true, color: '000000' } },
                 { text: token.symbol, options: { bold: false, color: '000000' } },
-                { text: `\n${trendEmoji} USD Value: `, options: { bold: true, color: '000000' } },
-                { text: `$${token.usdValue.toFixed(2)}`, options: { bold: false, color: '000000' } }
+                { text: `\n${trendEmoji} USD Value: $${token.usdValue.toFixed(2)}`, options: { bold: true, color: '000000' } },
+                { text: `${trendEmoji} Market Cap: $${(token.marketCap / 1e6).toFixed(2)}M`, options: { bold: true, color: '000000' } }
             ], {
-                x: 1.5,
-                y: 2,
-                w: 7,
-                h: 0.8,
+                x: 2.5,        // Move text to the right of the image
+                y: 1.5,        // Align with image vertically
+                w: 7,          // Adjust width to fill remaining space
+                h: 1.5,        // Match image height
                 fontSize: 20,
                 lineSpacing: 25,
-                align: 'center',
-                breakLine: false,
-                shrinkText: false,
-                autoFit: true
+                align: 'left',  // Left align for better readability
+                breakLine: true,
+                shrinkText: true
             });
 
             // // Update the details text styling for better contrast
@@ -430,15 +451,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
             }
 
-            // Add progress bar
-            slide.addShape(pptx.ShapeType.rect, {
-                x: 0,
-                y: 0,
-                w: `${((index + 1) / Math.min(tokens.length, 10)) * 100}%`,
-                h: 0.1,
-                fill: { color: '000000', transparency: 50 }
-            });
-
             // Add subtle grid pattern
             for (let i = 0; i < 10; i++) {
                 slide.addShape(pptx.ShapeType.line, {
@@ -447,19 +459,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     w: 0,
                     h: 5.625,
                     line: { color: '000000', width: 0.25, transparency: 90 }
-                });
-            }
-
-            // Add token market cap or other relevant data
-            if (token.marketCap) {
-                slide.addText(`Market Cap: $${(token.marketCap / 1e6).toFixed(2)}M`, {
-                    x: 1.5,
-                    y: 1.6,  // Moved up from 2.0
-                    w: 7,
-                    h: 0.4,
-                    fontSize: 16,
-                    color: '000000',
-                    align: 'center'
                 });
             }
         });
@@ -487,6 +486,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Prepare table data and sort by value
         const tableData = tokens.slice(0, 10)
+          .filter(token => token.usdValue > 0)  // Filter out zero-value tokens
           .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))  // Sort descending
           .map(token => {
             const percentage = ((token.usdValue / totalValue) * 100).toFixed(2);
@@ -511,23 +511,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ],
           {
             x: 0.5,
-            y: 1.0,  // Moved up
+            y: 0.9,
             w: 9,
-            h: 3.5,  // Increased height
-            colW: [3.5, 1.5, 2, 2],  // Adjusted column widths
-            border: { type: 'solid', color: '000000', pt: 0.5 },  // Thinner borders
+            h: 3.0,         // Reduced overall height
+            colW: [3.5, 1.5, 2, 2],
+            border: { type: 'solid', color: '000000', pt: 0.5 },
             align: 'center',
             valign: 'middle',
-            fontSize: 14,  // Slightly smaller font
-            rowH: 0.32,    // Reduced row height
-            margin: 0.1    // Reduced cell margin
+            fontSize: 12,    // Reduced font size
+            rowH: 0.25,     // Reduced row height
+            margin: 0.05    // Reduced cell margin even more
           }
         );
 
         // Move total value up
         summarySlide.addText(`Total Portfolio Value: $${totalValue.toFixed(2)}`, {
           x: 0.5,
-          y: 4.6,  // Adjusted position
+          y: 5.0,  // Adjusted position
           w: 9,
           h: 0.4,
           fontSize: 18,
