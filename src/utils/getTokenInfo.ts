@@ -16,9 +16,9 @@ export async function getTokenInfo(address: string) {
         name: pair.baseToken.name,
         symbol: pair.baseToken.symbol,
         marketCap: pair.marketCap,
-        price: pair.price,
-        image: pair.info.imageUrl,
-        website: pair.info.websites.Website,
+        price: pair?.price,
+        image: pair.info?.imageUrl,
+        website: pair.info?.websites,
       };
     } catch (error) {
       console.error("Error fetching token info:", error);

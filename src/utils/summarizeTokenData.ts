@@ -29,10 +29,10 @@ export const summarizeTokenData = async (tokens: any[]) => {
         if (tokenInfo) {
           processedToken.name = tokenInfo.name;
           processedToken.symbol = tokenInfo.symbol;
-          processedToken.marketCap = tokenInfo.marketCap;
-          processedToken.price = tokenInfo.price;
-          processedToken.image = tokenInfo.image;
-          processedToken.website = tokenInfo.website;
+          processedToken.marketCap = tokenInfo.marketCap || 0;
+          processedToken.price = tokenInfo.price || 0;
+          processedToken.image = tokenInfo.image || '';
+          processedToken.website = tokenInfo.website || '';
         }
       }
       console.log('Processed token:', processedToken);

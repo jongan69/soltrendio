@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import PptxGenJS from 'pptxgenjs';
 import OpenAI from 'openai';
+import { isSolanaAddress } from '../../utils/isSolanaAddress';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -62,6 +63,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log('Number of tokens:', tokens.length);
+
+    const filteredTokens = tokens.filter((token: any) => !isSolanaAddress(token.name));
 
     try {
         const pptx = new PptxGenJS();
@@ -224,7 +227,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Split full thesis into complete sentences
         // const thesisParts = getCompleteSentences(thesis);
-        const numSlides = Math.min(tokens.length, 10);
+        const numSlides = Math.min(filteredTokens.length, 10);
         // const partsPerSlide = Math.ceil(thesisParts.length / numSlides);
 
         // Generate all images at once
@@ -315,7 +318,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Add token data slides with distributed thesis parts
-        tokens.slice(0, 10).forEach((token: any, index: number) => {
+        filteredTokens.slice(0, 10).forEach((token: any, index: number) => {
             const slide = pptx.addSlide();
 
             // Randomize background color
@@ -325,7 +328,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
 
             // Get emoji style based on value
-            const emojiStyle = token.usdValue > 100 ? 'high' : token.usdValue > 50 ? 'medium' : 'low';
+            const emojiStyle = filteredTokens[index].usdValue > 100 ? 'high' : filteredTokens[index].usdValue > 50 ? 'medium' : 'low';
             const trendEmoji = getRandomEmojis(emojiStyle);
 
             // Add website text
@@ -380,20 +383,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
             });
 
+            // Helper function to format market cap with fallback
+            const formatMarketCap = (marketCap: number | undefined): string => {
+                if (!marketCap || isNaN(marketCap)) {
+                    return 'N/A';
+                }
+                const capInMillions = marketCap / 1e6;
+                return isNaN(capInMillions) ? 'N/A' : `$${capInMillions.toFixed(2)}M`;
+            };
+
             // Adjust details text position to account for new image position
             slide.addText([
                 { text: `${trendEmoji} Symbol:`, options: { bold: true, color: '000000' } },
                 { text: token.symbol, options: { bold: false, color: '000000' } },
-                { text: `\n${trendEmoji} USD Value: $${token.usdValue.toFixed(2)}`, options: { bold: true, color: '000000' } },
-                { text: `${trendEmoji} Market Cap: $${(token.marketCap / 1e6).toFixed(2)}M`, options: { bold: true, color: '000000' } }
+                { text: `\n${trendEmoji} USD Value: $${(token.usdValue || 0).toFixed(2)}`, options: { bold: true, color: '000000' } },
+                { text: `${trendEmoji} Market Cap: ${formatMarketCap(token.marketCap)}`, options: { bold: true, color: '000000' } }
             ], {
-                x: 2.5,        // Move text to the right of the image
-                y: 1.5,        // Align with image vertically
-                w: 7,          // Adjust width to fill remaining space
-                h: 1.5,        // Match image height
+                x: 2.5,
+                y: 1.5,
+                w: 7,
+                h: 1.5,
                 fontSize: 20,
                 lineSpacing: 25,
-                align: 'left',  // Left align for better readability
+                align: 'left',
                 breakLine: true,
                 shrinkText: true
             });
@@ -482,10 +494,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
 
         // Calculate total value
-        const totalValue = tokens.reduce((sum, token) => sum + (token.usdValue || 0), 0);
+        const totalValue = filteredTokens.reduce((sum, token) => sum + (token.usdValue || 0), 0);
 
         // Prepare table data and sort by value
-        const tableData = tokens.slice(0, 10)
+        const tableData = filteredTokens.slice(0, 10)
           .filter(token => token.usdValue > 0)  // Filter out zero-value tokens
           .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))  // Sort descending
           .map(token => {
