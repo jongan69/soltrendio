@@ -76,7 +76,9 @@ export async function getTipAccounts(): Promise<string> {
   const tipAccounts = json.result;
 
   // Return a random address from the array
-  const randomIndex = Math.floor(Math.random() * tipAccounts.length);
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  const randomIndex = array[0] % tipAccounts.length;
   return tipAccounts[randomIndex];
 }
 
