@@ -547,9 +547,11 @@ export function HomeContent() {
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl overflow-x-hidden">
       {/* Connection Status Banner - Moved to top */}
       {!publicKey && !submittedAddress && (
-        <div className="bg-primary border-2 border-primary rounded-lg p-6 mb-8">
-          <h2 className="text-xl text-primary font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-black">
-            Please connect your wallet or submit your address to begin
+        <div className="bg-base-100 border-2 border-purple-500 rounded-lg p-6 mb-8 shadow-lg">
+          <h2 className="text-xl font-bold text-center">
+            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Please connect your wallet or submit your address to begin
+            </span>
           </h2>
         </div>
       )}
