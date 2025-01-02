@@ -38,6 +38,20 @@ async function generateThesisSummary(thesis: string): Promise<string> {
 //   }
 // }
 
+function calculateFontSize(text: string, maxLength: number = 500): number {
+    // Base font size is 15
+    const baseSize = 15;
+    const minSize = 11;
+    
+    if (text.length <= maxLength) {
+        return baseSize;
+    }
+    
+    // Gradually reduce font size based on text length
+    const reduction = Math.floor((text.length - maxLength) / 100);
+    return Math.max(baseSize - reduction, minSize);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(405).end();
@@ -444,21 +458,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         const contextEmojis = findRelevantEmojis(sentence);
                         return contextEmojis ? `${contextEmojis} ${sentence}` : sentence;
                     })
-                    .join(' ');  // Join with space instead of newline
+                    .join(' ');
 
                 if (formattedText) {
+                    // Calculate appropriate font size based on text length
+                    const dynamicFontSize = calculateFontSize(formattedText);
+                    
                     slide.addText(`${sparkles} ${formatSlideText(formattedText)} ${sparkles}`, {
                         x: 0.5,
                         y: 2.3,
                         w: 9,
-                        h: 3.2,  // Increased height to use more space
-                        fontSize: 15,
+                        h: 3.2,
+                        fontSize: dynamicFontSize,
                         color: '000000',
                         align: 'center',
                         bold: false,
                         breakLine: true,
-                        lineSpacing: 20,  // Reduced line spacing
-                        autoFit: true  // Enable auto-fitting
+                        lineSpacing: dynamicFontSize * 1.2, // Dynamic line spacing based on font size
+                        autoFit: true,
+                        shrinkText: true, // Enable text shrinking if needed
+                        wrap: true // Enable text wrapping
                     });
                 }
             }

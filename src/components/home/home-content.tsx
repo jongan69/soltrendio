@@ -11,15 +11,15 @@ import { Circles } from "react-loader-spinner";
 import { useTokenBalance } from "@utils/hooks/useTokenBalance";
 import {
   DEFAULT_WALLET,
-  FEE_ADDRESS,
-  DEFAULT_TOKEN
+  DEFAULT_TOKEN,
+  DEFAULT_TOKEN_NAME
 } from "@utils/globals";
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
 import {
   PublicKey,
   Connection,
-  Transaction, 
-  SystemProgram, 
+  Transaction,
+  SystemProgram,
   PublicKeyInitData,
   Keypair
 } from "@solana/web3.js";
@@ -33,7 +33,7 @@ import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
 import PowerpointViewer from "./PowerpointViewer";
-import { 
+import {
   createTransferInstruction,
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
@@ -48,14 +48,18 @@ const formatThesis = (text: string) => {
   ));
 };
 
-const hasValidScores = (scores: { 
-  racismScore: number, 
-  hateSpeechScore: number, 
-  drugUseScore: number, 
-  crudityScore: number, 
-  profanityScore: number 
+const hasValidScores = (scores: {
+  racismScore: number,
+  hateSpeechScore: number,
+  drugUseScore: number,
+  crudityScore: number,
+  profanityScore: number
 }) => {
-  return Object.values(scores).some(score => score > 0);
+  console.log("Checking scores:", scores);
+  const hasAnyScore = Object.values(scores).some(score => score > 0);
+  const hasCrudityScore = scores.crudityScore > 0;
+  console.log("Has any valid scores:", hasAnyScore, "Has crudity score:", hasCrudityScore);
+  return hasAnyScore || hasCrudityScore;
 };
 
 export function HomeContent() {
@@ -65,7 +69,6 @@ export function HomeContent() {
   const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
   const [loading, setLoading] = useState<boolean>(false);
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
-  const { balance } = useTokenBalance(FEE_ADDRESS);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [thesis, setThesis] = useState<string>("");
   const [specificTokenBalance, setSpecificTokenBalance] = useState<number>(0);
@@ -81,6 +84,7 @@ export function HomeContent() {
   const [profanityScore, setProfanityScore] = useState<number>(0);
   const [summary, setSummary] = useState<any>([]);
   const [waitingForConfirmation, setWaitingForConfirmation] = useState<boolean>(false);
+  const [feeTokenBalance, setFeeTokenBalance] = useState<number>(0);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -97,9 +101,9 @@ export function HomeContent() {
   const fetchSentimentAnalysis = async (text: string) => {
     try {
       const response = await axios.post("/api/sentiment-analysis", { text });
-      
+
       // Ensure we're handling both string and object responses
-      let parsedResponse = typeof response.data.thesis === 'string' 
+      let parsedResponse = typeof response.data.thesis === 'string'
         ? JSON.parse(response.data.thesis)
         : response.data.thesis;
 
@@ -153,6 +157,31 @@ export function HomeContent() {
       console.error("Error fetching Google Trends data:", error);
     }
   };
+
+  const fetchFeeWalletBalance = useCallback(async () => {
+    try {
+      const tokenAccounts = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
+      const tokenAccount = tokenAccounts.value.find(account =>
+        account.account.data.parsed.info.mint === DEFAULT_TOKEN
+      );
+
+      if (tokenAccount) {
+        const balance = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount;
+        setFeeTokenBalance(balance);
+      }
+    } catch (error) {
+      console.error("Error fetching fee wallet balance:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFeeWalletBalance();
+
+    // Refresh balance every 30 seconds
+    const interval = setInterval(fetchFeeWalletBalance, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchFeeWalletBalance]);
 
   useEffect(() => {
     const sign = async (walletAddress: PublicKeyInitData) => {
@@ -249,47 +278,50 @@ export function HomeContent() {
   const extractSentimentScores = (thesis: string) => {
     try {
       console.log('Full thesis:', thesis);
-      
-      const singleLineThesis = thesis.replace(/\n/g, ' ');
-      const scoreRegex = /Racism:\s*(\d+)(\/100)?\s*Crudity:\s*(\d+)(\/100)?\s*Profanity:\s*(\d+)(\/100)?\s*Drug\/[Aa]lcohol:\s*(\d+)(\/100)?\s*Hate [Ss]peech:\s*(\d+)(\/100)?/;
-      
-      const matches = singleLineThesis.match(scoreRegex);
-      console.log('Matches:', matches);
 
-      if (matches) {
-        // Helper function to process score based on whether it has /100
-        const processScore = (score: string, hasSlash100: string | undefined) => {
-          const num = Number(score);
-          // If it's already in /100 format, it's already normalized
-          // If it's just a number, we need to divide by 100
-          return hasSlash100 ? num / 100 : num / 100;
-        };
+      // First try the inline format with more flexible matching
+      const inlineRegex = /Racism:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Crudity:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Profanity:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Drug\/[Aa]lcohol:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Hate [Ss]peech:\s*(\d+)(?:\/100|\s*-[^\n]*)/i;
 
-        // Extract scores and convert to numbers immediately
+      // Then try the bullet point format
+      const bulletRegex = /[-•]\s*Racism:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Crudity:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Profanity:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Drug\/[Aa]lcohol:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Hate [Ss]peech:\s*(\d+)(?:\/100)?/i;
+
+      const inlineMatches = thesis.match(inlineRegex);
+      const bulletMatches = thesis.match(bulletRegex);
+
+      console.log('Inline matches:', inlineMatches);
+      console.log('Bullet matches:', bulletMatches);
+
+      const processScores = (matches: RegExpMatchArray) => {
         const scores = {
-          racism: processScore(matches[1], matches[2]),
-          crudity: processScore(matches[3], matches[4]),
-          profanity: processScore(matches[5], matches[6]),
-          drugUse: processScore(matches[7], matches[8]),
-          hateSpeech: processScore(matches[9], matches[10])
+          racism: Number(matches[1]) / 100,
+          crudity: Number(matches[2]) / 100,
+          profanity: Number(matches[3]) / 100,
+          drugUse: Number(matches[4]) / 100,
+          hateSpeech: Number(matches[5]) / 100
         };
 
-        console.log('Processed scores:', scores);
+        console.log('Processing scores:', scores);
 
-        // Force state updates to be synchronous
-        Promise.resolve().then(() => {
-          setRacismScore(scores.racism);
-          setCrudityScore(scores.crudity);
-          setProfanityScore(scores.profanity);
-          setDrugUseScore(scores.drugUse);
-          setHateSpeechScore(scores.hateSpeech);
-          
-          console.log('Updated States:', scores);
-        });
+        // Set scores synchronously
+        setRacismScore(scores.racism);
+        setCrudityScore(scores.crudity);
+        setProfanityScore(scores.profanity);
+        setDrugUseScore(scores.drugUse);
+        setHateSpeechScore(scores.hateSpeech);
 
-        return thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+(?:\/100)?/s, '').trim();
+        return scores;
+      };
+
+      let scores;
+      if (inlineMatches) {
+        scores = processScores(inlineMatches);
+        return thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+(?:\/100|\s*-[^\n]*)/s, '').trim();
+      } else if (bulletMatches) {
+        scores = processScores(bulletMatches);
+        return thesis.replace(/[-•]\s*Racism:.*$/, '').trim();
       }
 
+      // If no matches found, use sentiment analysis API
       fetchSentimentAnalysis(thesis);
       return thesis;
     } catch (error) {
@@ -347,14 +379,20 @@ export function HomeContent() {
         const modal = document.createElement('div');
         modal.innerHTML = `
           <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-base-200 p-6 rounded-lg shadow-xl">
+            <div class="bg-base-200 p-6 rounded-lg shadow-xl relative">
+              <button 
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" 
+                onclick="this.closest('.fixed').remove(); window.paymentChoice('cancel')"
+              >
+                ✕
+              </button>
               <h3 class="text-lg font-bold mb-4">Choose Payment Method</h3>
               <div class="flex flex-col gap-3">
                 <button class="btn btn-primary" onclick="this.closest('.fixed').remove(); window.paymentChoice('sol')">
                   Pay with SOL (0.001 SOL)
                 </button>
                 <button class="btn btn-secondary" onclick="this.closest('.fixed').remove(); window.paymentChoice('token')">
-                  Pay with ${DEFAULT_TOKEN} (1 Token)
+                  Pay with ${DEFAULT_TOKEN_NAME} (1 ${DEFAULT_TOKEN_NAME})
                 </button>
               </div>
             </div>
@@ -364,8 +402,15 @@ export function HomeContent() {
         window.paymentChoice = resolve;
       });
 
+      // Add check for cancelled payment
+      if (paymentChoice === 'cancel') {
+        setLoading(false);
+        setWaitingForConfirmation(false);
+        return;
+      }
+
       let transaction = new Transaction();
-      
+
       if (paymentChoice === 'sol') {
         // SOL payment
         transaction.add(
@@ -378,7 +423,7 @@ export function HomeContent() {
       } else {
         // Token payment
         const tokenAccounts = await fetchTokenAccounts(publicKey);
-        const tokenAccount = tokenAccounts.value.find(account => 
+        const tokenAccount = tokenAccounts.value.find(account =>
           account.account.data.parsed.info.mint === DEFAULT_TOKEN
         );
 
@@ -413,7 +458,7 @@ export function HomeContent() {
         transaction.feePayer = publicKey;
 
         const signature = await sendTransaction(transaction, connection);
-        
+
         const latestBlockhash = await connection.getLatestBlockhash();
         const confirmation = await connection.confirmTransaction({
           signature,
@@ -423,7 +468,7 @@ export function HomeContent() {
         if (confirmation.value.err) {
           throw new Error("Transaction failed");
         }
-        
+
         transactionConfirmed = true;
         setWaitingForConfirmation(false);
         toast.success("Fee payment confirmed, generating new thesis...");
@@ -475,8 +520,8 @@ export function HomeContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <p className="text-lg mb-4">
-          {waitingForConfirmation 
-            ? "Waiting for transaction confirmation..." 
+          {waitingForConfirmation
+            ? "Waiting for transaction confirmation..."
             : `Found ${totalAccounts} Accounts, Generating Thesis...`}
         </p>
         <Circles color="#00BFFF" height={80} width={80} />
@@ -499,8 +544,8 @@ export function HomeContent() {
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl overflow-x-hidden">
       {/* Connection Status Banner - Moved to top */}
       {!publicKey && !submittedAddress && (
-        <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mb-8">
-          <h2 className="text-xl text-primary font-bold text-center">
+        <div className="bg-primary border-2 border-primary rounded-lg p-6 mb-8">
+          <h2 className="text-xl text-primary font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-black">
             Please connect your wallet or submit your address to begin
           </h2>
         </div>
@@ -538,7 +583,7 @@ export function HomeContent() {
               <div className="text-left sm:text-right w-full sm:w-auto">
                 <p className="text-gray-700">Total Value</p>
                 <p className="text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
-                <p className="text-gray-700">Lockin Balance</p>
+                <p className="text-gray-700">{DEFAULT_TOKEN_NAME} Balance</p>
                 <p className="text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
               </div>
             </div>
@@ -571,20 +616,36 @@ export function HomeContent() {
           </div>
 
           {/* Sentiment Analysis */}
-          {hasValidScores({ racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore }) && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Sentiment Analysis</h2>
-              <div className="w-full overflow-x-hidden">
-                <SentimentCharts
-                  racismScore={racismScore}
-                  hateSpeechScore={hateSpeechScore}
-                  drugUseScore={drugUseScore}
-                  crudityScore={crudityScore}
-                  profanityScore={profanityScore}
-                />
+          {(() => {
+            const hasScores = racismScore > 0 ||
+              hateSpeechScore > 0 ||
+              drugUseScore > 0 ||
+              crudityScore > 0 ||
+              profanityScore > 0;
+            console.log('Current scores:', {
+              racismScore,
+              hateSpeechScore,
+              drugUseScore,
+              crudityScore,
+              profanityScore
+            });
+            console.log('Has scores:', hasScores);
+
+            return hasScores ? (
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Sentiment Analysis</h2>
+                <div className="w-full overflow-x-hidden">
+                  <SentimentCharts
+                    racismScore={racismScore}
+                    hateSpeechScore={hateSpeechScore}
+                    drugUseScore={drugUseScore}
+                    crudityScore={crudityScore}
+                    profanityScore={profanityScore}
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            ) : null;
+          })()}
 
           {/* Google Trends */}
           <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
@@ -596,6 +657,7 @@ export function HomeContent() {
               />
             </div>
           </div>
+          {summary && thesis && <PowerpointViewer summary={summary} thesis={thesis} />}
         </div>
       ) : (
         <div className="text-center space-y-6">
@@ -628,13 +690,13 @@ export function HomeContent() {
         </div>
       )}
 
-      {summary && thesis && <PowerpointViewer summary={summary} thesis={thesis} />}
+
 
       {/* Footer Stats */}
-      {balance > 0 && (
+      {feeTokenBalance > 0 && (
         <div className="text-center mt-8 p-4 bg-base-200 rounded-lg">
           <p className="text-sm">
-            Total LOCKINS Generated: <span className="font-bold">{balance.toFixed(5)}</span>
+            Total {DEFAULT_TOKEN_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(5)}</span>
           </p>
         </div>
       )}

@@ -16,6 +16,7 @@ import { fetcher } from "@utils/use-data-fetch";
 import { toast } from "react-hot-toast";
 import { Modal } from "@components/layout/modal";
 import { Footer } from "@components/layout/footer";
+import { DEFAULT_TOKEN_NAME } from "@utils/globals";
 
 
 const Home: NextPage = () => {
@@ -144,8 +145,8 @@ const Home: NextPage = () => {
       <Modal
         onClick={onTxClick}
         butttonState={txState}
-        headerContent="$LOCKIN to someone you love"
-        buttonContent="Send $LOCKIN"
+        headerContent={`${DEFAULT_TOKEN_NAME} to someone you love`}
+        buttonContent={`Send ${DEFAULT_TOKEN_NAME}`}
         isToken={true}
         id="bonk-modal"
       />
