@@ -8,7 +8,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Circles } from "react-loader-spinner";
-import { useTokenBalance } from "@utils/hooks/useTokenBalance";
+// import { useTokenBalance } from "@utils/hooks/useTokenBalance";
 import {
   DEFAULT_WALLET,
   DEFAULT_TOKEN,
@@ -22,8 +22,7 @@ import {
   Connection,
   Transaction,
   SystemProgram,
-  PublicKeyInitData,
-  Keypair
+  PublicKeyInitData
 } from "@solana/web3.js";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
@@ -36,20 +35,11 @@ import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
 import PowerpointViewer from "./PowerpointViewer";
 import {
-  createTransferInstruction,
-  getOrCreateAssociatedTokenAccount,
-  getAssociatedTokenAddress
+  createTransferInstruction
 } from '@solana/spl-token';
 import ReactMarkdown from 'react-markdown';
 
-const formatThesis = (text: string) => {
-  return text.split('\n').map((line, i) => (
-    <React.Fragment key={i}>
-      {line}
-      {i !== text.split('\n').length - 1 && <br />}
-    </React.Fragment>
-  ));
-};
+
 
 const hasValidScores = (scores: {
   racismScore: number,
@@ -443,7 +433,7 @@ export function HomeContent() {
         // Token payment
         const tokenMint = paymentChoice === 'token1' ? DEFAULT_TOKEN : DEFAULT_TOKEN_2;
         const tokenName = paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME : DEFAULT_TOKEN_2_NAME;
-        
+
         const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
         const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
           account.account.data.parsed.info.mint === tokenMint
@@ -459,16 +449,16 @@ export function HomeContent() {
         }
 
         console.log("Token account found:", tokenAccountFromWallet.pubkey.toBase58(), tokenAccountToWallet.pubkey.toBase58());
-        
+
         // Lockin has 9 decimals, RETARDIO has 6
         let amountInLamports = tokenMint === DEFAULT_TOKEN ? 1 * Math.pow(10, 9) : 1 * Math.pow(10, 6);
 
-          transaction.add(
-            createTransferInstruction(
-              tokenAccountFromWallet.pubkey,
-              tokenAccountToWallet.pubkey,
-              publicKey,
-              amountInLamports
+        transaction.add(
+          createTransferInstruction(
+            tokenAccountFromWallet.pubkey,
+            tokenAccountToWallet.pubkey,
+            publicKey,
+            amountInLamports
           )
         );
       }
@@ -500,9 +490,9 @@ export function HomeContent() {
         if (error?.message?.includes("User rejected")) {
           toast.error("Transaction cancelled by user");
         } else {
-          const paymentType = paymentChoice === 'sol' ? 'SOL' : 
-                            paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME : 
-                            DEFAULT_TOKEN_2_NAME;
+          const paymentType = paymentChoice === 'sol' ? 'SOL' :
+            paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME :
+              DEFAULT_TOKEN_2_NAME;
           toast.error(`Failed to process ${paymentType} payment. Please ensure you have enough balance`);
         }
         setWaitingForConfirmation(false);
@@ -643,19 +633,13 @@ export function HomeContent() {
 
           {/* Sentiment Analysis */}
           {(() => {
-            const hasScores = racismScore > 0 ||
-              hateSpeechScore > 0 ||
-              drugUseScore > 0 ||
-              crudityScore > 0 ||
-              profanityScore > 0;
-            console.log('Current scores:', {
+            const hasScores = hasValidScores({
               racismScore,
               hateSpeechScore,
               drugUseScore,
               crudityScore,
               profanityScore
             });
-            console.log('Has scores:', hasScores);
 
             return hasScores ? (
               <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
