@@ -22,6 +22,14 @@ ChartJS.register(
 );
 
 const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore }: any) => {
+  console.log('Chart Scores:', {
+    racism: racismScore,
+    hateSpeech: hateSpeechScore,
+    drugUse: drugUseScore,
+    crudity: crudityScore,
+    profanity: profanityScore
+  });
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -71,20 +79,20 @@ const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore, cruditySc
         label: 'Sentiment Score',
         data: [racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore],
         backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
+          'rgba(255, 99, 255, 0.5)',
+          'rgba(54, 162, 235, 0.5)',
+          'rgba(255, 99, 132, 0.5)',
+          'rgba(153, 102, 255, 0.5)',
+          'rgba(255, 159, 64, 0.5)',
         ],
         borderColor: [
-          'rgba(255, 99, 132, 1)',
+          'rgba(255, 99, 255, 1)',
           'rgba(54, 162, 235, 1)',
-          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
           'rgba(153, 102, 255, 1)',
           'rgba(255, 159, 64, 1)',
         ],
-        borderWidth: 1,
+        borderWidth: 2,
       },
     ],
   };

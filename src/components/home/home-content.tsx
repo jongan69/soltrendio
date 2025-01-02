@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    paymentChoice: (choice: string) => void;
+  }
+}
+
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "react-hot-toast";
@@ -14,7 +20,8 @@ import {
   Connection,
   Transaction, 
   SystemProgram, 
-  PublicKeyInitData
+  PublicKeyInitData,
+  Keypair
 } from "@solana/web3.js";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
@@ -26,9 +33,33 @@ import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
 import PowerpointViewer from "./PowerpointViewer";
+import { 
+  createTransferInstruction,
+  getOrCreateAssociatedTokenAccount,
+} from '@solana/spl-token';
+import ReactMarkdown from 'react-markdown';
+
+const formatThesis = (text: string) => {
+  return text.split('\n').map((line, i) => (
+    <React.Fragment key={i}>
+      {line}
+      {i !== text.split('\n').length - 1 && <br />}
+    </React.Fragment>
+  ));
+};
+
+const hasValidScores = (scores: { 
+  racismScore: number, 
+  hateSpeechScore: number, 
+  drugUseScore: number, 
+  crudityScore: number, 
+  profanityScore: number 
+}) => {
+  return Object.values(scores).some(score => score > 0);
+};
 
 export function HomeContent() {
-  const { publicKey, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction, wallet } = useWallet();
   const [signState, setSignState] = useState<string>("initial");
   const [tokens, setTokens] = useState<TokenData[]>([]);
   const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
@@ -66,14 +97,22 @@ export function HomeContent() {
   const fetchSentimentAnalysis = async (text: string) => {
     try {
       const response = await axios.post("/api/sentiment-analysis", { text });
-      let parsedResponse = JSON.parse(response.data.thesis);
-      setRacismScore(parsedResponse.racism);
-      setCrudityScore(parsedResponse.crudity || 0);
-      setProfanityScore(parsedResponse.profanity || 0);
-      setDrugUseScore(parsedResponse.drugUse);
-      setHateSpeechScore(parsedResponse.hateSpeech);
+      
+      // Ensure we're handling both string and object responses
+      let parsedResponse = typeof response.data.thesis === 'string' 
+        ? JSON.parse(response.data.thesis)
+        : response.data.thesis;
+
+      // Normalize scores to 0-1 range if they're in 0-100 range
+      const normalizeScore = (score: number) => score > 1 ? score / 100 : score;
+
+      setRacismScore(normalizeScore(parsedResponse.racism));
+      setCrudityScore(normalizeScore(parsedResponse.crudity || 0));
+      setProfanityScore(normalizeScore(parsedResponse.profanity || 0));
+      setDrugUseScore(normalizeScore(parsedResponse.drugUse));
+      setHateSpeechScore(normalizeScore(parsedResponse.hateSpeech));
     } catch (error) {
-      console.log("Error fetching sentiment analysis:", error);
+      console.error("Error fetching sentiment analysis:", error);
       // Set default values in case of error
       setRacismScore(0);
       setCrudityScore(0);
@@ -109,7 +148,7 @@ export function HomeContent() {
       });
 
       const data = await response.json();
-      setTrendsData(data.default.timelineData);
+      setTrendsData(data?.default?.timelineData || []);
     } catch (error) {
       console.error("Error fetching Google Trends data:", error);
     }
@@ -210,36 +249,52 @@ export function HomeContent() {
   const extractSentimentScores = (thesis: string) => {
     try {
       console.log('Full thesis:', thesis);
-
-      const scoreRegex = /Racism:\s*(\d+)\/100.*?Crudity:\s*(\d+)\/100.*?Profanity:\s*(\d+)\/100.*?Drug\/Alcohol:\s*(\d+)\/100.*?Hate [Ss]peech:\s*(\d+)\/100/s;
-      const matches = thesis.match(scoreRegex);
+      
+      const singleLineThesis = thesis.replace(/\n/g, ' ');
+      const scoreRegex = /Racism:\s*(\d+)(\/100)?\s*Crudity:\s*(\d+)(\/100)?\s*Profanity:\s*(\d+)(\/100)?\s*Drug\/[Aa]lcohol:\s*(\d+)(\/100)?\s*Hate [Ss]peech:\s*(\d+)(\/100)?/;
+      
+      const matches = singleLineThesis.match(scoreRegex);
       console.log('Matches:', matches);
 
       if (matches) {
+        // Helper function to process score based on whether it has /100
+        const processScore = (score: string, hasSlash100: string | undefined) => {
+          const num = Number(score);
+          // If it's already in /100 format, it's already normalized
+          // If it's just a number, we need to divide by 100
+          return hasSlash100 ? num / 100 : num / 100;
+        };
+
         // Extract scores and convert to numbers immediately
         const scores = {
-          racism: Number(matches[1]) / 100,
-          crudity: Number(matches[2]) / 100,
-          profanity: Number(matches[3]) / 100,
-          drugUse: Number(matches[4]) / 100,
-          hateSpeech: Number(matches[5]) / 100
+          racism: processScore(matches[1], matches[2]),
+          crudity: processScore(matches[3], matches[4]),
+          profanity: processScore(matches[5], matches[6]),
+          drugUse: processScore(matches[7], matches[8]),
+          hateSpeech: processScore(matches[9], matches[10])
         };
 
         console.log('Processed scores:', scores);
 
-        // Update all sentiment scores
-        setRacismScore(scores.racism);
-        setCrudityScore(scores.crudity);
-        setProfanityScore(scores.profanity);
-        setDrugUseScore(scores.drugUse);
-        setHateSpeechScore(scores.hateSpeech);
+        // Force state updates to be synchronous
+        Promise.resolve().then(() => {
+          setRacismScore(scores.racism);
+          setCrudityScore(scores.crudity);
+          setProfanityScore(scores.profanity);
+          setDrugUseScore(scores.drugUse);
+          setHateSpeechScore(scores.hateSpeech);
+          
+          console.log('Updated States:', scores);
+        });
 
-        // Return thesis without the scores section
-        return thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+\/100/s, '').trim();
+        return thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+(?:\/100)?/s, '').trim();
       }
+
+      fetchSentimentAnalysis(thesis);
       return thesis;
     } catch (error) {
       console.error("Error extracting sentiment scores:", error);
+      fetchSentimentAnalysis(thesis);
       return thesis;
     }
   };
@@ -265,9 +320,9 @@ export function HomeContent() {
       // Try to extract sentiment scores and clean up thesis
       const cleanedThesis = extractSentimentScores(data.thesis);
 
-      // If we couldn't extract scores, use the sentiment analysis endpoint
+      // If we couldn't extract scores from thesis, explicitly call sentiment analysis
       if (cleanedThesis === data.thesis) {
-        await fetchSentimentAnalysis(data.thesis);
+        await fetchSentimentAnalysis(cleanedThesis);
       }
 
       return cleanedThesis;
@@ -287,13 +342,68 @@ export function HomeContent() {
     setWaitingForConfirmation(true);
 
     try {
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey(DEFAULT_WALLET),
-          lamports: 1000000, // Small fee in lamports
-        })
-      );
+      // Let user choose payment method
+      const paymentChoice = await new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.innerHTML = `
+          <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-base-200 p-6 rounded-lg shadow-xl">
+              <h3 class="text-lg font-bold mb-4">Choose Payment Method</h3>
+              <div class="flex flex-col gap-3">
+                <button class="btn btn-primary" onclick="this.closest('.fixed').remove(); window.paymentChoice('sol')">
+                  Pay with SOL (0.001 SOL)
+                </button>
+                <button class="btn btn-secondary" onclick="this.closest('.fixed').remove(); window.paymentChoice('token')">
+                  Pay with ${DEFAULT_TOKEN} (1 Token)
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        window.paymentChoice = resolve;
+      });
+
+      let transaction = new Transaction();
+      
+      if (paymentChoice === 'sol') {
+        // SOL payment
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(DEFAULT_WALLET),
+            lamports: 1000000, // 0.001 SOL
+          })
+        );
+      } else {
+        // Token payment
+        const tokenAccounts = await fetchTokenAccounts(publicKey);
+        const tokenAccount = tokenAccounts.value.find(account => 
+          account.account.data.parsed.info.mint === DEFAULT_TOKEN
+        );
+
+        if (!tokenAccount) {
+          throw new Error("No token account found for payment");
+        }
+
+        const tokenAccountPubkey = new PublicKey(tokenAccount.pubkey);
+        const destinationAccount = await getOrCreateAssociatedTokenAccount(
+          connection,
+          Keypair.generate(),
+          new PublicKey(DEFAULT_TOKEN),
+          new PublicKey(DEFAULT_WALLET),
+          false
+        );
+
+        transaction.add(
+          createTransferInstruction(
+            tokenAccountPubkey,
+            destinationAccount.address,
+            publicKey,
+            1 * Math.pow(10, 9) // Assuming 9 decimals, adjust if different
+          )
+        );
+      }
 
       let transactionConfirmed = false;
 
@@ -319,11 +429,10 @@ export function HomeContent() {
         toast.success("Fee payment confirmed, generating new thesis...");
       } catch (error: any) {
         console.error("Transaction error:", error);
-        // Check for user rejection
         if (error?.message?.includes("User rejected")) {
           toast.error("Transaction cancelled by user");
         } else {
-          toast.error("Failed to process fee payment. Please ensure you have enough SOL");
+          toast.error(`Failed to process ${paymentChoice === 'sol' ? 'SOL' : DEFAULT_TOKEN} payment. Please ensure you have enough balance`);
         }
         setWaitingForConfirmation(false);
         setLoading(false);
@@ -423,59 +532,63 @@ export function HomeContent() {
       {hasFetchedData ? (
         <div className="space-y-8">
           {/* Token Balance Card */}
-          <div className="bg-base-200 rounded-lg p-4 sm:p-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-xl font-bold">Wallet Overview</h2>
+              <h2 className="text-xl font-bold text-gray-900">Wallet Overview</h2>
               <div className="text-left sm:text-right w-full sm:w-auto">
-                <p className="text-sm">Total Value</p>
-                <p className="text-lg font-bold">${totalValue.toFixed(2)}</p>
-                <p className="text-sm">Lockin Balance</p>
-                <p className="text-lg font-bold">{specificTokenBalance}</p>
+                <p className="text-gray-700">Total Value</p>
+                <p className="text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
+                <p className="text-gray-700">Lockin Balance</p>
+                <p className="text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
               </div>
             </div>
           </div>
 
           {/* Thesis Section */}
-          <div className="bg-base-200 rounded-lg p-4 sm:p-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-              <h2 className="text-xl font-bold">Investment Thesis</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Investment Thesis
+              </h2>
               <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 w-full sm:w-auto">
                 <button
-                  className="btn btn-primary btn-sm w-full sm:w-auto"
+                  className="btn bg-gradient-to-r from-purple-500 to-pink-500 border-none text-white hover:from-purple-600 hover:to-pink-600 shadow-lg"
                   onClick={handleGenerateNewThesis}
                 >
                   Generate New
                 </button>
                 <button
-                  className="btn btn-secondary btn-sm w-full sm:w-auto"
+                  className="btn bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 shadow-lg"
                   onClick={() => handleTweetThis(thesis)}
                 >
                   Tweet
                 </button>
               </div>
             </div>
-            <div className="prose prose-sm max-w-none break-words overflow-x-hidden">
-              {thesis}
+            <div className="prose prose-sm max-w-none break-words overflow-x-hidden whitespace-pre-line text-gray-900">
+              <ReactMarkdown>{thesis}</ReactMarkdown>
             </div>
           </div>
 
           {/* Sentiment Analysis */}
-          <div className="bg-base-200 rounded-lg p-4 sm:p-6 overflow-x-hidden">
-            <h2 className="text-xl font-bold mb-4">Sentiment Analysis</h2>
-            <div className="w-full overflow-x-hidden">
-              <SentimentCharts
-                racismScore={racismScore}
-                hateSpeechScore={hateSpeechScore}
-                drugUseScore={drugUseScore}
-                crudityScore={crudityScore}
-                profanityScore={profanityScore}
-              />
+          {hasValidScores({ racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore }) && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Sentiment Analysis</h2>
+              <div className="w-full overflow-x-hidden">
+                <SentimentCharts
+                  racismScore={racismScore}
+                  hateSpeechScore={hateSpeechScore}
+                  drugUseScore={drugUseScore}
+                  crudityScore={crudityScore}
+                  profanityScore={profanityScore}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Google Trends */}
-          <div className="bg-base-200 rounded-lg p-4 sm:p-6 overflow-x-hidden">
-            <h2 className="text-xl font-bold mb-4">Google Trends Projection</h2>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Google Trends Projection</h2>
             <div className="w-full overflow-x-hidden">
               <GoogleTrendsProjection
                 trendsData={trendsData}

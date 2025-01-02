@@ -45,6 +45,7 @@
     "react-file-viewer": "^1.2.1",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^6.1.6",
+    "react-markdown": "^9.0.1",
     "swr": "^2.0.0",
     "tailwind": "^4.0.0",
     "theme-change": "^2.3.0",

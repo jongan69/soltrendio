@@ -21,7 +21,17 @@ ChartJS.register(
   PointElement
 );
 
-const GoogleTrendsProjection = ({ trendsData, dataNames }: any) => {
+interface TrendsDataPoint {
+  formattedTime: string;
+  value: number[];
+}
+
+interface GoogleTrendsProjectionProps {
+  trendsData: TrendsDataPoint[];
+  dataNames: string[];
+}
+
+const GoogleTrendsProjection = ({ trendsData, dataNames }: GoogleTrendsProjectionProps) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -49,31 +59,30 @@ const GoogleTrendsProjection = ({ trendsData, dataNames }: any) => {
     }
   };
 
+  const colors = [
+    {
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)',
+    },
+    {
+      backgroundColor: 'rgba(255, 99, 132, 0.2)',
+      borderColor: 'rgba(255, 99, 132, 1)',
+    },
+    {
+      backgroundColor: 'rgba(54, 162, 235, 0.2)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+    },
+  ];
+
   const data = {
     labels: trendsData?.map((data: { formattedTime: any; }) => data.formattedTime),
-    datasets: [
-      {
-        label: dataNames[0],
-        data: trendsData?.map((data: { value: any[]; }) => data.value[0]),
-        fill: false,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-      },
-      {
-        label: dataNames[1],
-        data: trendsData?.map((data: { value: any[]; }) => data.value[1]),
-        fill: false,
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-      },
-      {
-        label: dataNames[2],
-        data: trendsData?.map((data: { value: any[]; }) => data.value[2]),
-        fill: false,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-      },
-    ],
+    datasets: dataNames.map((name: string, index: number) => ({
+      label: name,
+      data: trendsData?.map((data: { value: any[]; }) => data.value[index]),
+      fill: false,
+      backgroundColor: colors[index].backgroundColor,
+      borderColor: colors[index].borderColor,
+    })),
   };
 
   return (
