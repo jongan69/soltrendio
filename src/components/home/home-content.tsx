@@ -56,7 +56,7 @@ const hasValidScores = (scores: {
 };
 
 export function HomeContent() {
-  const { publicKey, sendTransaction, wallet } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const [signState, setSignState] = useState<string>("initial");
   const [tokens, setTokens] = useState<TokenData[]>([]);
   const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
@@ -114,21 +114,39 @@ export function HomeContent() {
       }
 
       // Normalize scores to 0-1 range if they're in 0-100 range
-      const normalizeScore = (score: number) => score > 1 ? score / 100 : score;
+      const normalizeScore = (score: number) => {
+        if (score === undefined || score === null) return 0;
+        return score > 1 ? score / 100 : score;
+      };
 
-      setRacismScore(normalizeScore(parsedResponse.racism));
-      setCrudityScore(normalizeScore(parsedResponse.crudity || 0));
-      setProfanityScore(normalizeScore(parsedResponse.profanity || 0));
-      setDrugUseScore(normalizeScore(parsedResponse.drugUse));
-      setHateSpeechScore(normalizeScore(parsedResponse.hateSpeech));
+      const scores = {
+        racism: normalizeScore(parsedResponse.racism || 0),
+        crudity: normalizeScore(parsedResponse.crudity || 0),
+        profanity: normalizeScore(parsedResponse.profanity || 0),
+        drugUse: normalizeScore(parsedResponse.drugUse || 0),
+        hateSpeech: normalizeScore(parsedResponse.hateSpeech || 0)
+      };
+
+      console.log("Setting scores:", scores);
+
+      setRacismScore(scores.racism);
+      setCrudityScore(scores.crudity);
+      setProfanityScore(scores.profanity);
+      setDrugUseScore(scores.drugUse);
+      setHateSpeechScore(scores.hateSpeech);
+
+      return scores;
     } catch (error) {
       console.error("Error fetching sentiment analysis:", error);
-      // Set default values in case of error
+      const defaultScores = { racism: 0, crudity: 0, profanity: 0, drugUse: 0, hateSpeech: 0 };
+
       setRacismScore(0);
       setCrudityScore(0);
       setProfanityScore(0);
       setDrugUseScore(0);
       setHateSpeechScore(0);
+
+      return defaultScores;
     }
   };
 
@@ -201,22 +219,16 @@ export function HomeContent() {
           let pubKey: PublicKey;
           try {
             pubKey = new PublicKey(walletAddress);
-            console.log("Valid public key created:", pubKey.toBase58());
           } catch (e) {
             throw new Error("Invalid wallet address");
           }
 
-          console.log("Fetching token accounts for:", pubKey.toBase58());
           const tokenAccounts = await fetchTokenAccounts(pubKey);
-          console.log("Token accounts received:", tokenAccounts);
-
           if (!tokenAccounts?.value) {
             throw new Error("No token accounts found");
           }
 
           setTotalAccounts(tokenAccounts.value.length);
-          console.log("Total accounts found:", tokenAccounts.value.length);
-
           const tokenDataPromises = tokenAccounts.value.map((tokenAccount) =>
             handleTokenData(pubKey, tokenAccount, apiLimiter).then((tokenData) => {
               updateTotalValue(tokenData.usdValue);
@@ -283,21 +295,11 @@ export function HomeContent() {
 
   const extractSentimentScores = (thesis: string) => {
     try {
-      console.log('Full thesis:', thesis);
+      // Updated regex to be more flexible with spacing and line endings
+      const inlineRegex = /Racism:\s*(\d+)\/100[\s\n]*Crudity:\s*(\d+)\/100[\s\n]*Profanity:\s*(\d+)\/100[\s\n]*Drug(?:\/Alcohol)?:\s*(\d+)\/100[\s\n]*Hate [Ss]peech:\s*(\d+)\/100/i;
 
-      // First try the inline format with more flexible matching
-      const inlineRegex = /Racism:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Crudity:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Profanity:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Drug\/[Aa]lcohol:\s*(\d+)(?:\/100|\s*-[^\n]*)\s*\n?Hate [Ss]peech:\s*(\d+)(?:\/100|\s*-[^\n]*)/i;
-
-      // Then try the bullet point format
-      const bulletRegex = /[-•]\s*Racism:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Crudity:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Profanity:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Drug\/[Aa]lcohol:\s*(\d+)(?:\/100)?[^\n]*\n[-•]\s*Hate [Ss]peech:\s*(\d+)(?:\/100)?/i;
-
-      const inlineMatches = thesis.match(inlineRegex);
-      const bulletMatches = thesis.match(bulletRegex);
-
-      console.log('Inline matches:', inlineMatches);
-      console.log('Bullet matches:', bulletMatches);
-
-      const processScores = (matches: RegExpMatchArray) => {
+      const matches = thesis.match(inlineRegex);
+      if (matches) {
         const scores = {
           racism: Number(matches[1]) / 100,
           crudity: Number(matches[2]) / 100,
@@ -306,34 +308,24 @@ export function HomeContent() {
           hateSpeech: Number(matches[5]) / 100
         };
 
-        console.log('Processing scores:', scores);
+        console.log("Extracted scores:", scores);
 
-        // Set scores synchronously
         setRacismScore(scores.racism);
         setCrudityScore(scores.crudity);
         setProfanityScore(scores.profanity);
         setDrugUseScore(scores.drugUse);
         setHateSpeechScore(scores.hateSpeech);
 
-        return scores;
-      };
-
-      let scores;
-      if (inlineMatches) {
-        scores = processScores(inlineMatches);
-        return thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+(?:\/100|\s*-[^\n]*)/s, '').trim();
-      } else if (bulletMatches) {
-        scores = processScores(bulletMatches);
-        return thesis.replace(/[-•]\s*Racism:.*$/, '').trim();
+        return {
+          cleanedThesis: thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+\/100/s, '').trim(),
+          scores
+        };
       }
 
-      // If no matches found, use sentiment analysis API
-      fetchSentimentAnalysis(thesis);
-      return thesis;
+      return null;
     } catch (error) {
       console.error("Error extracting sentiment scores:", error);
-      fetchSentimentAnalysis(thesis);
-      return thesis;
+      return null;
     }
   };
 
@@ -343,27 +335,22 @@ export function HomeContent() {
       setSummary(summarizedData);
       const response = await fetch("/api/generate-thesis", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tokens: summarizedData }),
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
+      if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-
-      // Try to extract sentiment scores and clean up thesis
-      const cleanedThesis = extractSentimentScores(data.thesis);
-
-      // If we couldn't extract scores from thesis, explicitly call sentiment analysis
-      if (cleanedThesis === data.thesis) {
-        await fetchSentimentAnalysis(cleanedThesis);
+      console.log("Thesis data:", data.thesis);
+      // Try to extract scores from thesis first
+      const extracted = extractSentimentScores(data.thesis);
+      if (extracted) {
+        return extracted.cleanedThesis;
       }
-
-      return cleanedThesis;
+      
+      // If extraction failed, use API
+      await fetchSentimentAnalysis(data.thesis);
+      return data.thesis;
     } catch (error) {
       console.error("Error generating thesis:", error);
       return "An error occurred while generating the thesis.";
@@ -699,9 +686,6 @@ export function HomeContent() {
           )}
         </div>
       )}
-
-
-
       {/* Footer Stats */}
       {feeTokenBalance > 0 && (
         <div className="text-center mt-8 p-4 bg-base-200 rounded-lg">
