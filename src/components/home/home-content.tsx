@@ -12,7 +12,9 @@ import { useTokenBalance } from "@utils/hooks/useTokenBalance";
 import {
   DEFAULT_WALLET,
   DEFAULT_TOKEN,
-  DEFAULT_TOKEN_NAME
+  DEFAULT_TOKEN_NAME,
+  DEFAULT_TOKEN_2,
+  DEFAULT_TOKEN_2_NAME
 } from "@utils/globals";
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
 import {
@@ -36,6 +38,7 @@ import PowerpointViewer from "./PowerpointViewer";
 import {
   createTransferInstruction,
   getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddress
 } from '@solana/spl-token';
 import ReactMarkdown from 'react-markdown';
 
@@ -102,10 +105,23 @@ export function HomeContent() {
     try {
       const response = await axios.post("/api/sentiment-analysis", { text });
 
-      // Ensure we're handling both string and object responses
-      let parsedResponse = typeof response.data.thesis === 'string'
-        ? JSON.parse(response.data.thesis)
-        : response.data.thesis;
+      // Handle the response data safely
+      let parsedResponse = response.data.thesis;
+      if (typeof parsedResponse === 'string') {
+        try {
+          // Remove any control characters before parsing
+          parsedResponse = JSON.parse(parsedResponse.replace(/[\x00-\x1F\x7F-\x9F]/g, ''));
+        } catch (parseError) {
+          console.error("Error parsing sentiment response:", parseError);
+          parsedResponse = {
+            racism: 0,
+            crudity: 0,
+            profanity: 0,
+            drugUse: 0,
+            hateSpeech: 0
+          };
+        }
+      }
 
       // Normalize scores to 0-1 range if they're in 0-100 range
       const normalizeScore = (score: number) => score > 1 ? score / 100 : score;
@@ -391,8 +407,11 @@ export function HomeContent() {
                 <button class="btn btn-primary" onclick="this.closest('.fixed').remove(); window.paymentChoice('sol')">
                   Pay with SOL (0.001 SOL)
                 </button>
-                <button class="btn btn-secondary" onclick="this.closest('.fixed').remove(); window.paymentChoice('token')">
+                <button class="btn btn-secondary" onclick="this.closest('.fixed').remove(); window.paymentChoice('token1')">
                   Pay with ${DEFAULT_TOKEN_NAME} (1 ${DEFAULT_TOKEN_NAME})
+                </button>
+                <button class="btn btn-accent" onclick="this.closest('.fixed').remove(); window.paymentChoice('token2')">
+                  Pay with ${DEFAULT_TOKEN_2_NAME} (1 ${DEFAULT_TOKEN_2_NAME})
                 </button>
               </div>
             </div>
@@ -420,32 +439,36 @@ export function HomeContent() {
             lamports: 1000000, // 0.001 SOL
           })
         );
-      } else {
+      } else if (paymentChoice === 'token1' || paymentChoice === 'token2') {
         // Token payment
-        const tokenAccounts = await fetchTokenAccounts(publicKey);
-        const tokenAccount = tokenAccounts.value.find(account =>
-          account.account.data.parsed.info.mint === DEFAULT_TOKEN
+        const tokenMint = paymentChoice === 'token1' ? DEFAULT_TOKEN : DEFAULT_TOKEN_2;
+        const tokenName = paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME : DEFAULT_TOKEN_2_NAME;
+        
+        const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
+        const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
+          account.account.data.parsed.info.mint === tokenMint
         );
 
-        if (!tokenAccount) {
-          throw new Error("No token account found for payment");
+        const tokenAccountsToWallet = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
+        const tokenAccountToWallet = tokenAccountsToWallet.value.find(account =>
+          account.account.data.parsed.info.mint === tokenMint
+        );
+
+        if (!tokenAccountFromWallet || !tokenAccountToWallet) {
+          throw new Error(`No ${tokenName} account found for payment`);
         }
 
-        const tokenAccountPubkey = new PublicKey(tokenAccount.pubkey);
-        const destinationAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          Keypair.generate(),
-          new PublicKey(DEFAULT_TOKEN),
-          new PublicKey(DEFAULT_WALLET),
-          false
-        );
+        console.log("Token account found:", tokenAccountFromWallet.pubkey.toBase58(), tokenAccountToWallet.pubkey.toBase58());
+        
+        // Lockin has 9 decimals, RETARDIO has 6
+        let amountInLamports = tokenMint === DEFAULT_TOKEN ? 1 * Math.pow(10, 9) : 1 * Math.pow(10, 6);
 
-        transaction.add(
-          createTransferInstruction(
-            tokenAccountPubkey,
-            destinationAccount.address,
-            publicKey,
-            1 * Math.pow(10, 9) // Assuming 9 decimals, adjust if different
+          transaction.add(
+            createTransferInstruction(
+              tokenAccountFromWallet.pubkey,
+              tokenAccountToWallet.pubkey,
+              publicKey,
+              amountInLamports
           )
         );
       }
@@ -477,7 +500,10 @@ export function HomeContent() {
         if (error?.message?.includes("User rejected")) {
           toast.error("Transaction cancelled by user");
         } else {
-          toast.error(`Failed to process ${paymentChoice === 'sol' ? 'SOL' : DEFAULT_TOKEN} payment. Please ensure you have enough balance`);
+          const paymentType = paymentChoice === 'sol' ? 'SOL' : 
+                            paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME : 
+                            DEFAULT_TOKEN_2_NAME;
+          toast.error(`Failed to process ${paymentType} payment. Please ensure you have enough balance`);
         }
         setWaitingForConfirmation(false);
         setLoading(false);
