@@ -1,10 +1,32 @@
-import axios from "axios";
+export const saveWalletToDb = async (
+  address: string, 
+  totalValue?: number,
+  topHoldings?: Array<{
+    symbol: string,
+    balance: number,
+    usdValue: number
+  }>
+) => {
+  try {
+    const response = await fetch('/api/db/save-wallet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        address,
+        totalValue: totalValue || 0,
+        topHoldings: topHoldings || [],
+        timestamp: new Date().toISOString()
+      }),
+    });
 
-export const saveWalletToDb = async (address: string) => {
-    try {
-      await axios.post('/api/save-wallet', { address });
-      console.log('Wallet saved successfully');
-    } catch (error) {
-      console.error('Error saving wallet:', error);
+    if (!response.ok) {
+      throw new Error('Failed to save wallet data');
     }
-  };
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving wallet to database:', error);
+  }
+};

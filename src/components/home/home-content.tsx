@@ -1,14 +1,7 @@
-declare global {
-  interface Window {
-    paymentChoice: (choice: 'sol' | 'token1' | 'token2' | 'token3' | 'cancel') => void;
-  }
-}
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Circles } from "react-loader-spinner";
-// import { useTokenBalance } from "@utils/hooks/useTokenBalance";
 import {
   DEFAULT_WALLET,
   DEFAULT_TOKEN,
@@ -18,7 +11,7 @@ import {
   DEFAULT_TOKEN_3,
   DEFAULT_TOKEN_3_NAME
 } from "@utils/globals";
-import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
+import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
 import {
   PublicKey,
   Connection,
@@ -30,32 +23,20 @@ import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import axios from "axios";
 import { NETWORK } from "@utils/endpoints";
-import { getTokenInfo } from "../../utils/getTokenInfo";
-import { isSolanaAddress } from "../../utils/isSolanaAddress";
+import { getTokenInfo } from "@utils/getTokenInfo";
+import { isSolanaAddress } from "@utils/isSolanaAddress";
 import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
+import { hasValidScores } from "@utils/validateScore";
 import PowerpointViewer from "./PowerpointViewer";
 import {
   createTransferInstruction
 } from '@solana/spl-token';
 import ReactMarkdown from 'react-markdown';
 
-
-
-const hasValidScores = (scores: {
-  racismScore: number,
-  hateSpeechScore: number,
-  drugUseScore: number,
-  crudityScore: number,
-  profanityScore: number
-}) => {
-  console.log("Checking scores:", scores);
-  const hasAnyScore = Object.values(scores).some(score => score > 0);
-  const hasCrudityScore = scores.crudityScore > 0;
-  console.log("Has any valid scores:", hasAnyScore, "Has crudity score:", hasCrudityScore);
-  return hasAnyScore || hasCrudityScore;
-};
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
 
 export function HomeContent() {
   const { publicKey, sendTransaction } = useWallet();
@@ -80,6 +61,7 @@ export function HomeContent() {
   const [summary, setSummary] = useState<any>([]);
   const [waitingForConfirmation, setWaitingForConfirmation] = useState<boolean>(false);
   const [feeTokenBalance, setFeeTokenBalance] = useState<number>(0);
+  const [canGeneratePowerpoint, setCanGeneratePowerpoint] = useState<boolean>(false);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -95,7 +77,7 @@ export function HomeContent() {
 
   const fetchSentimentAnalysis = async (text: string) => {
     try {
-      const response = await axios.post("/api/sentiment-analysis", { text });
+      const response = await axios.post("/api/analyze/sentiment-analysis", { text });
 
       // Handle the response data safely
       let parsedResponse = response.data.thesis;
@@ -169,7 +151,7 @@ export function HomeContent() {
       setTopSymbols(processedSymbols);
       console.log("Looking for keywords:", processedSymbols);
 
-      const response = await fetch('/api/trends', {
+      const response = await fetch('/api/analyze/trends', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,10 +184,8 @@ export function HomeContent() {
 
   useEffect(() => {
     fetchFeeWalletBalance();
-
-    // Refresh balance every 30 seconds
-    const interval = setInterval(fetchFeeWalletBalance, 30000);
-
+    // Refresh balance every 60 seconds
+    const interval = setInterval(fetchFeeWalletBalance, 60000);
     return () => clearInterval(interval);
   }, [fetchFeeWalletBalance]);
 
@@ -231,6 +211,7 @@ export function HomeContent() {
           }
 
           setTotalAccounts(tokenAccounts.value.length);
+
           const tokenDataPromises = tokenAccounts.value.map((tokenAccount) =>
             handleTokenData(pubKey, tokenAccount, apiLimiter).then((tokenData) => {
               updateTotalValue(tokenData.usdValue);
@@ -241,6 +222,17 @@ export function HomeContent() {
           const tokens = await Promise.all(tokenDataPromises);
           console.log("Tokens:", tokens);
           setTokens(tokens);
+
+          // Get top 10 holdings sorted by USD value
+          const topHoldings = tokens
+            .sort((a, b) => b.usdValue - a.usdValue)
+            .slice(0, 10)
+            .map(token => ({
+              symbol: token.symbol || '',
+              balance: token.amount,
+              usdValue: token.usdValue,
+              isNft: token.isNft
+            }));
 
           // Check the balance of the specific token
           const specificTokenAccount = tokenAccounts.value.find(account =>
@@ -258,6 +250,13 @@ export function HomeContent() {
           // Fetch sentiment analysis and Google Trends data
           if (thesis) await fetchSentimentAnalysis(thesis);
           if (tokens) await fetchGoogleTrends(tokens);
+
+          // After calculating total value and top holdings, save to the database
+          await saveWalletToDb(
+            walletAddress.toString(), 
+            totalValue,
+            topHoldings
+          );
 
           setSignState("success");
           toast.success("Token Data Retrieved", { id: signToastId });
@@ -331,19 +330,43 @@ export function HomeContent() {
     }
   };
 
-  const generateThesis = async (tokens: any[]) => {
+  const generateThesis = async (tokens: any[], retryCount = 0): Promise<string> => {
     try {
       const summarizedData = await summarizeTokenData(tokens);
       setSummary(summarizedData);
-      const response = await fetch("/api/generate-thesis", {
+      
+      const response = await fetch("/api/analyze/generate-thesis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tokens: summarizedData }),
       });
 
-      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.ok) {
+        if (response.status === 500 && retryCount < MAX_RETRIES) {
+          // Calculate delay with exponential backoff
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+          
+          console.log(`Attempt ${retryCount + 1} failed, retrying in ${delay}ms...`);
+          
+          // Show retry toast
+          toast.loading(
+            `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 
+            { duration: delay }
+          );
+          
+          // Wait for the delay
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Recursive retry
+          return generateThesis(tokens, retryCount + 1);
+        }
+        
+        throw new Error(`Network response was not ok: ${response.status}`);
+      }
+
       const data = await response.json();
       console.log("Thesis data:", data.thesis);
+      
       // Try to extract scores from thesis first
       const extracted = extractSentimentScores(data.thesis);
       if (extracted) {
@@ -354,8 +377,24 @@ export function HomeContent() {
       await fetchSentimentAnalysis(data.thesis);
       return data.thesis;
     } catch (error) {
-      console.error("Error generating thesis:", error);
-      return "An error occurred while generating the thesis.";
+      console.error(`Error generating thesis (attempt ${retryCount + 1}):`, error);
+      
+      if (retryCount < MAX_RETRIES) {
+        // If it's a non-500 error but we still want to retry
+        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        
+        toast.loading(
+          `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 
+          { duration: delay }
+        );
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return generateThesis(tokens, retryCount + 1);
+      }
+      
+      // If we've exhausted all retries, show error and return fallback message
+      toast.error("Failed to generate thesis after multiple attempts");
+      return "An error occurred while generating the thesis. Please try again later.";
     }
   };
 
@@ -524,6 +563,10 @@ export function HomeContent() {
     await saveWalletToDb(manualAddress);
   };
 
+  useEffect(() => {
+    setCanGeneratePowerpoint(specificTokenBalance >= 10);
+  }, [specificTokenBalance]);
+
   // Loading State
   if (loading || !tokens || signState === "loading") {
     return (
@@ -662,7 +705,78 @@ export function HomeContent() {
               />
             </div>
           </div>
-          {summary && thesis && <PowerpointViewer summary={summary} thesis={thesis} />}
+          {summary && thesis && publicKey && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+              {canGeneratePowerpoint ? (
+                <PowerpointViewer 
+                  summary={summary} 
+                  thesis={thesis} 
+                  cost={10}
+                  onGenerate={async () => {
+                    try {
+                      // Create transaction for 10 tokens
+                      const transaction = new Transaction();
+                      
+                      const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
+                      const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
+                        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
+                      );
+
+                      const tokenAccountsToWallet = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
+                      const tokenAccountToWallet = tokenAccountsToWallet.value.find(account =>
+                        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
+                      );
+
+                      if (!tokenAccountFromWallet || !tokenAccountToWallet) {
+                        throw new Error(`No ${DEFAULT_TOKEN_3_NAME} account found for payment`);
+                      }
+
+                      const amountInLamports = 10 * Math.pow(10, 6); // Assuming 6 decimals
+
+                      transaction.add(
+                        createTransferInstruction(
+                          tokenAccountFromWallet.pubkey,
+                          tokenAccountToWallet.pubkey,
+                          publicKey,
+                          amountInLamports
+                        )
+                      );
+
+                      const { blockhash } = await connection.getLatestBlockhash();
+                      transaction.recentBlockhash = blockhash;
+                      transaction.feePayer = publicKey;
+
+                      const signature = await sendTransaction(transaction, connection);
+
+                      const confirmation = await connection.confirmTransaction({
+                        signature,
+                        ...(await connection.getLatestBlockhash())
+                      });
+
+                      if (confirmation.value.err) {
+                        throw new Error("Transaction failed");
+                      }
+
+                      // Update the specific token balance after successful transaction
+                      setSpecificTokenBalance(prev => prev - 10);
+                      
+                      return true; // Allow PowerPoint generation to proceed
+                    } catch (error) {
+                      console.error("Payment error:", error);
+                      toast.error(`Failed to process ${DEFAULT_TOKEN_3_NAME} payment. Please ensure you have enough balance`);
+                      return false;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-lg font-semibold mb-2">PowerPoint Generation Locked</p>
+                  <p>You need at least 10 {DEFAULT_TOKEN_3_NAME} tokens to generate a PowerPoint presentation.</p>
+                  <p className="text-sm mt-2">Current balance: {specificTokenBalance} {DEFAULT_TOKEN_3_NAME}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center space-y-6">

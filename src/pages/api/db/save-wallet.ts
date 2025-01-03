@@ -15,7 +15,7 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { address } = req.body;
+  const { address, totalValue, topHoldings, timestamp } = req.body;
 
   if (!address) {
     return res.status(400).json({ message: 'Wallet address is required' });
@@ -30,7 +30,10 @@ export default async function handler(
     // Save wallet with timestamp
     await walletsCollection.insertOne({
       address,
+      totalValue,
+      topHoldings,
       createdAt: new Date(),
+      lastSeen: timestamp
     });
 
     await client.close();

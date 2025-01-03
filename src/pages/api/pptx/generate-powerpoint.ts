@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import PptxGenJS from 'pptxgenjs';
 import OpenAI from 'openai';
-import { isSolanaAddress } from '../../utils/isSolanaAddress';
+import { isSolanaAddress } from '../../../utils/isSolanaAddress';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -60,9 +60,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Full request body:', JSON.stringify(req.body, null, 2));
 
     const { tokens, thesis } = req.body;
-    console.log('Tokens type:', typeof tokens);
-    console.log('Tokens value:', tokens);
-    console.log('Thesis value:', thesis);
+    console.log('Tokens:', tokens);
+    console.log('Thesis:', thesis);
+
 
     // Add validation logging
     if (!tokens) {
@@ -79,6 +79,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Number of tokens:', tokens.length);
 
     const filteredTokens = tokens.filter((token: any) => !isSolanaAddress(token.name));
+
+    // Separate NFTs and regular tokens
+    const regularTokens = filteredTokens.filter((token: any) => !token.isNft);
+    const nftTokens = filteredTokens.filter((token: any) => token.isNft);
 
     try {
         const pptx = new PptxGenJS();
@@ -178,9 +182,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Title slide with concise summary
         titleSlide.addText('🚀 Investment Thesis 💰', {
-            x: 0.5,
+            x: 0.2,
             y: 0.5,
-            w: 9,
+            w: 9.6,
             h: 0.6,
             fontSize: 48,
             bold: true,
@@ -192,9 +196,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Add concise summary
         titleSlide.addText(thesisSummary, {
-            x: 0.5,
+            x: 0.2,
             y: 2.5,
-            w: 9,
+            w: 9.6,
             h: 1.5,
             fontSize: 30,
             color: '000000',
@@ -299,40 +303,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Helper function to ensure proper text wrapping and layout with minimal empty space
-        function formatSlideText(text: string, maxCharsPerLine: number = 80): string {  // Increased max chars
-            // Remove extra spaces and normalize whitespace
+        function formatSlideText(text: string, maxCharsPerLine: number = 120): string {  // Increased from 80
             const cleanText = text.replace(/\s+/g, ' ').trim();
             const words = cleanText.split(' ');
             let lines: string[] = [];
             let currentLine = '';
 
             words.forEach(word => {
-                // If adding this word doesn't exceed max length, add it to current line
                 if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
                     currentLine += (currentLine ? ' ' : '') + word;
                 } else {
-                    // If current line isn't empty, push it and start new line
                     if (currentLine) {
                         lines.push(currentLine.trim());
                     }
-                    // Start new line with current word
                     currentLine = word;
                 }
             });
 
-            // Add the last line if it exists
             if (currentLine) {
                 lines.push(currentLine.trim());
             }
 
-            // Filter out empty lines and join with minimal spacing
             return lines
                 .filter(line => line.length > 0)
                 .join('\n');
         }
 
-        // Add token data slides with distributed thesis parts
-        filteredTokens.slice(0, 10).forEach((token: any, index: number) => {
+        // Filter out tokens with 0 USD value before creating slides
+        const filteredTokensWithValue = filteredTokens
+            .filter((token: any) => token.usdValue && token.usdValue > 0)
+            .slice(0, 10);
+
+        // Update the forEach loop to use filteredTokensWithValue
+        filteredTokensWithValue.forEach((token: any, index: number) => {
             const slide = pptx.addSlide();
 
             // Randomize background color
@@ -407,12 +410,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
 
             // Adjust details text position to account for new image position
-            slide.addText([
+            const textDetails = [
                 { text: `${trendEmoji} Symbol:`, options: { bold: true, color: '000000' } },
                 { text: token.symbol, options: { bold: false, color: '000000' } },
                 { text: `\n${trendEmoji} USD Value: $${(token.usdValue || 0).toFixed(2)}`, options: { bold: true, color: '000000' } },
-                { text: `${trendEmoji} Market Cap: ${formatMarketCap(token.marketCap)}`, options: { bold: true, color: '000000' } }
-            ], {
+            ];
+
+            // Only add market cap if it's available and valid
+            if (token.marketCap && !isNaN(token.marketCap)) {
+                textDetails.push({ text: `${trendEmoji} Market Cap: ${formatMarketCap(token.marketCap)}`, options: { bold: true, color: '000000' } });
+            }
+
+            slide.addText(textDetails, {
                 x: 2.5,
                 y: 1,
                 w: 7,
@@ -461,23 +470,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     .join(' ');
 
                 if (formattedText) {
-                    // Calculate appropriate font size based on text length
                     const dynamicFontSize = calculateFontSize(formattedText);
                     
                     slide.addText(`${sparkles} ${formatSlideText(formattedText)} ${sparkles}`, {
-                        x: 0.5,
+                        x: 0.2,
                         y: 2.3,
-                        w: 9,
+                        w: 9.6,
                         h: 3.2,
                         fontSize: dynamicFontSize,
                         color: '000000',
-                        align: 'center',
+                        align: 'left',
                         bold: false,
                         breakLine: true,
-                        lineSpacing: dynamicFontSize * 1.2, // Dynamic line spacing based on font size
+                        lineSpacing: dynamicFontSize * 1.1,
                         autoFit: true,
-                        shrinkText: true, // Enable text shrinking if needed
-                        wrap: true // Enable text wrapping
+                        shrinkText: true,
+                        wrap: true,
+                        margin: 0
                     });
                 }
             }
@@ -494,12 +503,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         });
 
-        // After the token slides loop, add summary slide
-        const summarySlide = pptx.addSlide();
-        summarySlide.background = { color: 'FFFFFF' };  // White background for readability
+        // Add regular tokens summary slide
+        const tokenSummarySlide = pptx.addSlide();
+        tokenSummarySlide.background = { color: 'FFFFFF' };
 
-        // Add title
-        summarySlide.addText('Portfolio Breakdown 📊', {
+        // Add title for regular tokens
+        tokenSummarySlide.addText('Token Portfolio Breakdown 📊', {
             x: 0.5,
             y: 0.2,
             w: 9,
@@ -512,74 +521,156 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             shrinkText: false
         });
 
-        // Calculate total value
-        const totalValue = filteredTokens.reduce((sum, token) => sum + (token.usdValue || 0), 0);
+        // Calculate total value for regular tokens
+        const totalTokenValue = regularTokens.reduce((sum, token) => sum + (token.usdValue || 0), 0);
 
-        // Prepare table data and sort by value
-        const tableData = filteredTokens.slice(0, 10)
-          .filter(token => token.usdValue > 0)  // Filter out zero-value tokens
-          .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))  // Sort descending
-          .map(token => {
-            const percentage = ((token.usdValue / totalValue) * 100).toFixed(2);
-            return [
-              { text: token.name || 'Unknown', options: { bold: true, color: '000000' } },
-              { text: token.symbol, options: { color: '000000' } },
-              { text: `$${token.usdValue.toFixed(2)}`, options: { color: '000000' } },
-              { text: `${percentage}%`, options: { color: '000000' } }
-            ];
-          });
+        // Prepare table data for regular tokens
+        const tokenTableData = regularTokens
+            .filter(token => token.usdValue > 0)
+            .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+            .map(token => {
+                const percentage = ((token.usdValue / totalTokenValue) * 100).toFixed(2);
+                return [
+                    { text: token.name || 'Unknown', options: { bold: true, color: '000000' } },
+                    { text: token.symbol, options: { color: '000000' } },
+                    { text: `$${token.usdValue.toFixed(2)}`, options: { color: '000000' } },
+                    { text: `${percentage}%`, options: { color: '000000' } }
+                ];
+            });
 
-        // Add table with adjusted dimensions
-        summarySlide.addTable(
-          [
-            [
-              { text: 'Token Name', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
-              { text: 'Symbol', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
-              { text: 'USD Value', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
-              { text: 'Portfolio %', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } }
-            ],
-            ...tableData
-          ],
-          {
-            x: 0.5,
-            y: 0.9,
-            w: 9,
-            h: 3.0,         // Reduced overall height
-            colW: [3.5, 1.5, 2, 2],
-            border: { type: 'solid', color: '000000', pt: 0.5 },
-            align: 'center',
-            valign: 'middle',
-            fontSize: 12,    // Reduced font size
-            rowH: 0.25,     // Reduced row height
-            margin: 0.05    // Reduced cell margin even more
-          }
-        );
+        // Add regular tokens table
+        if (tokenTableData.length > 0) {
+            tokenSummarySlide.addTable(
+                [
+                    [
+                        { text: 'Token Name', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'Symbol', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'USD Value', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'Portfolio %', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } }
+                    ],
+                    ...tokenTableData
+                ],
+                {
+                    x: 0.5,
+                    y: 0.9,
+                    w: 9,
+                    h: 3.0,
+                    colW: [3.5, 1.5, 2, 2],
+                    border: { type: 'solid', color: '000000', pt: 0.5 },
+                    align: 'center',
+                    valign: 'middle',
+                    fontSize: 12,
+                    rowH: 0.25,
+                    margin: 0.05
+                }
+            );
 
-        // Move total value up
-        summarySlide.addText(`Total Portfolio Value: $${totalValue.toFixed(2)}`, {
-          x: 0.5,
-          y: 5.0,  // Adjusted position
-          w: 9,
-          h: 0.4,
-          fontSize: 18,
-          bold: true,
-          color: '000000',
-          align: 'center'
-        });
+            tokenSummarySlide.addText(`Total Token Portfolio: $${totalTokenValue.toFixed(2)}`, {
+                x: 0.5,
+                y: 5.0,
+                w: 9,
+                h: 0.4,
+                fontSize: 18,
+                bold: true,
+                color: '000000',
+                align: 'center'
+            });
+        }
 
-        // Add website text to summary slide
-        summarySlide.addText('soltrendio.com', {
-            x: 8.0,
-            y: 0.2,
-            w: 1.7,
-            h: 0.3,
-            fontSize: 12,
-            color: '000000',
-            fontFace: 'Helvetica',
-            bold: true,
-            align: 'right',
-            breakLine: false,
-            shrinkText: false
+        // Before the if blocks, declare the variable
+        let nftSummarySlide: any;
+
+        // Add NFT summary slide if there are NFTs
+        if (nftTokens.length > 0) {
+            nftSummarySlide = pptx.addSlide();
+            nftSummarySlide.background = { color: 'FFFFFF' };
+
+            // Add title for NFTs
+            nftSummarySlide.addText('NFT Portfolio Breakdown 🖼️', {
+                x: 0.5,
+                y: 0.2,
+                w: 9,
+                h: 0.6,
+                fontSize: 32,
+                bold: true,
+                color: '000000',
+                align: 'center',
+                breakLine: false,
+                shrinkText: false
+            });
+
+            // Calculate total value for NFTs
+            const totalNftValue = nftTokens.reduce((sum, token) => sum + (token.usdValue || 0), 0);
+
+            // Prepare table data for NFTs
+            const nftTableData = nftTokens
+                .filter(token => token.usdValue > 0)
+                .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+                .map(token => {
+                    const percentage = ((token.usdValue / totalNftValue) * 100).toFixed(2);
+                    return [
+                        { text: token.name || 'Unknown', options: { bold: true, color: '000000' } },
+                        { text: token.symbol, options: { color: '000000' } },
+                        { text: `$${token.usdValue.toFixed(2)}`, options: { color: '000000' } },
+                        { text: `${percentage}%`, options: { color: '000000' } }
+                    ];
+                });
+
+            // Add NFT table
+            nftSummarySlide.addTable(
+                [
+                    [
+                        { text: 'NFT Collection', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'Symbol', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'Floor Price', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } },
+                        { text: 'Portfolio %', options: { bold: true, color: '000000', fill: { color: 'F5F5F5' } } }
+                    ],
+                    ...nftTableData
+                ],
+                {
+                    x: 0.5,
+                    y: 0.9,
+                    w: 9,
+                    h: 3.0,
+                    colW: [3.5, 1.5, 2, 2],
+                    border: { type: 'solid', color: '000000', pt: 0.5 },
+                    align: 'center',
+                    valign: 'middle',
+                    fontSize: 12,
+                    rowH: 0.25,
+                    margin: 0.05
+                }
+            );
+
+            nftSummarySlide.addText(`Total NFT Portfolio: $${totalNftValue.toFixed(2)}`, {
+                x: 0.5,
+                y: 5.0,
+                w: 9,
+                h: 0.4,
+                fontSize: 18,
+                bold: true,
+                color: '000000',
+                align: 'center'
+            });
+        }
+
+        // Add website text to both summary slides
+        [tokenSummarySlide, nftSummarySlide].forEach(slide => {
+            if (slide) {
+                slide.addText('soltrendio.com', {
+                    x: 8.0,
+                    y: 0.2,
+                    w: 1.7,
+                    h: 0.3,
+                    fontSize: 12,
+                    color: '000000',
+                    fontFace: 'Helvetica',
+                    bold: true,
+                    align: 'right',
+                    breakLine: false,
+                    shrinkText: false
+                });
+            }
         });
 
         // Generate PowerPoint as a base64 string

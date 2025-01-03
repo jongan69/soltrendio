@@ -34,7 +34,7 @@ export function Footer() {
             </svg>
           </a>
           <a
-            href="https://t.me/soltrendio"
+            href="https://t.me/soltrendioportal"
             target="_blank"
             rel="noreferrer"
             className="link link-primary"

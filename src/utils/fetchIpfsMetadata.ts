@@ -7,7 +7,7 @@ export const fetchIpfsMetadata = async (cid: string) => {
       return { imageUrl: DEFAULT_IMAGE_URL };
     }
 
-    const response = await fetch(`/api/ipfs-proxy?cid=${cid}`);
+    const response = await fetch(`/api/ipfs/ipfs-proxy?cid=${cid}`);
     if (!response.ok) return { imageUrl: DEFAULT_IMAGE_URL };
     return await response.json();
   } catch (error) {

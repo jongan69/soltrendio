@@ -46,15 +46,19 @@ export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
         metaplex.nfts().findByMint({ mintAddress: mintAddress })
       );
 
+      console.log("Token:", token);
+      const isNft = token.collection?.verified || false;
+      console.log("Is NFT:", isNft);
       return {
         name: token?.name,
         symbol: token?.symbol,
         logo: token.json?.image ?? DEFAULT_IMAGE_URL,
+        isNft,
       };
     }
   } catch (error) {
     console.error("Error fetching token metadata for:", mint, error);
-    return { name: mint, symbol: mint, logo: DEFAULT_IMAGE_URL };
+    return { name: mint, symbol: mint, logo: DEFAULT_IMAGE_URL, isNft: false };
   }
 }
 
@@ -66,8 +70,20 @@ export async function fetchTokenAccounts(publicKey: PublicKey) {
   );
 }
 
-export async function handleTokenData(
-  publicKey: PublicKey, tokenAccount: any, apiLimiter: any) {
+export async function fetchNftPrice(mintAddress: string) {
+  const response = await apiLimiter.schedule(() =>
+    fetch(`api/nfts/nftfloor`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ca: mintAddress }),
+    })
+  );
+  return response.json();
+}
+
+export async function handleTokenData(publicKey: PublicKey, tokenAccount: any, apiLimiter: any) {
   const mintAddress = tokenAccount.account.data.parsed.info.mint;
   const amount = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount || 0;
   const decimals = tokenAccount.account.data.parsed.info.tokenAmount.decimals;
@@ -82,17 +98,35 @@ export async function handleTokenData(
   );
 
   const metadata = await fetchTokenMetadata(new PublicKey(mintAddress), mintAddress);
-  const price = jupiterPrice.data[mintAddress]?.price || 0;
-  const usdValue = amount * price;
-  
-  return {
-    mintAddress,
-    tokenAddress: tokenAccountAddress.toString(),
-    amount,
-    decimals,
-    usdValue,
-    ...metadata,
-  };
+  console.log("Metadata:", metadata);
+
+  if (!metadata?.isNft) {
+    const price = jupiterPrice.data[mintAddress]?.price || 0;
+    const usdValue = amount * price;
+
+    return {
+      mintAddress,
+      tokenAddress: tokenAccountAddress.toString(),
+      amount,
+      decimals,
+      usdValue,
+      ...metadata,
+    };
+  } else {
+    console.log("NFT detected");
+    const nftData = await fetchNftPrice(mintAddress);
+    console.log("NFT Data:", nftData);
+    const nftPrice = nftData.usdValue ?? 0;
+    console.log(`NFT Floor Price of ${mintAddress}:`, nftPrice);
+    return {
+      mintAddress,
+      tokenAddress: tokenAccountAddress.toString(),
+      amount,
+      decimals,
+      usdValue: nftPrice,
+      ...metadata,
+    };
+  }
 }
 
 export const deserializeInstruction = (instruction: Instruction) => {

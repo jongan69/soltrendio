@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from 'mongoose';
-import { PowerPoint } from '../../models/PowerPoint';
+import { PowerPoint } from '../../../models/PowerPoint';
 
 // MongoDB connection
 const connectDB = async () => {

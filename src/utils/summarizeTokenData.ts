@@ -9,6 +9,8 @@ export const summarizeTokenData = async (tokens: any[]) => {
       amount: any; 
       usdValue: any;
       mintAddress: string;
+      isNft: boolean;
+      logo: string;
     }) => {
       console.log('Processing token:', token);
       const tokenInfo = await getTokenInfo(token.mintAddress);
@@ -20,8 +22,9 @@ export const summarizeTokenData = async (tokens: any[]) => {
         usdValue: token.usdValue,
         marketCap: tokenInfo?.marketCap || 0,
         price: tokenInfo?.price || 0,
-        image: tokenInfo?.image || '',
+        image: tokenInfo?.image || token.logo,
         website: tokenInfo?.website || '',
+        isNft: token.isNft,
       };
 
       // If symbol looks like a Solana address, try to fetch token info
@@ -31,7 +34,7 @@ export const summarizeTokenData = async (tokens: any[]) => {
           processedToken.symbol = tokenInfo.symbol;
           processedToken.marketCap = tokenInfo.marketCap || 0;
           processedToken.price = tokenInfo.price || 0;
-          processedToken.image = tokenInfo.image || '';
+          processedToken.image = tokenInfo.image || token.logo;
           processedToken.website = tokenInfo.website || '';
         }
       }
