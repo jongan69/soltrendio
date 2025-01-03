@@ -15,7 +15,7 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { address, domain } = req.body;
+  const { address, totalValue, topHoldings, timestamp, domain } = req.body;
 
   if (!address) {
     return res.status(400).json({ message: 'Wallet address is required' });
@@ -29,11 +29,18 @@ export default async function handler(
     // Ensure unique index exists
     await walletsCollection.createIndex({ "address": 1 }, { unique: true });
 
-    // Use updateOne with upsert instead of separate insert/update
+    // Update wallet with upsert
     const result = await walletsCollection.updateOne(
       { address },
       {
-        $set: { lastSeen: new Date(), domain: domain || null },
+        $set: {
+
+          address,
+          totalValue,
+          topHoldings,
+          lastSeen: timestamp,
+          domain: domain || null
+        },
         $setOnInsert: { createdAt: new Date() }
       },
       { upsert: true }
@@ -42,11 +49,11 @@ export default async function handler(
     await client.close();
 
     return res.status(200).json({ 
-      message: result.upsertedCount > 0 ? 'Wallet saved successfully' : 'Wallet updated successfully',
+      message: result.upsertedCount > 0 ? 'Wallet created successfully' : 'Wallet updated successfully',
       isNew: result.upsertedCount > 0
     });
   } catch (error) {
-    console.error('Error saving wallet:', error);
-    return res.status(500).json({ message: 'Error saving wallet' });
+    console.error('Error updating wallet:', error);
+    return res.status(500).json({ message: 'Error updating wallet' });
   }
 } 

@@ -34,6 +34,8 @@ import {
   createTransferInstruction
 } from '@solana/spl-token';
 import ReactMarkdown from 'react-markdown';
+import { updateWalletToDb } from "@utils/updateWallet";
+import { getDomainKeySync, NameRegistryState } from "@bonfida/spl-name-service";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -62,12 +64,14 @@ export function HomeContent() {
   const [waitingForConfirmation, setWaitingForConfirmation] = useState<boolean>(false);
   const [feeTokenBalance, setFeeTokenBalance] = useState<number>(0);
   const [canGeneratePowerpoint, setCanGeneratePowerpoint] = useState<boolean>(false);
+  const [originalDomain, setOriginalDomain] = useState<string>("");
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
       prevPublicKey.current = publicKey.toBase58();
       setSignState("initial");
-      saveWalletToDb(publicKey.toBase58());
+      saveWalletToDb(publicKey.toBase58())
+        .catch(error => console.error('Error saving wallet:', error));
     }
   }, [publicKey]);
 
@@ -136,11 +140,15 @@ export function HomeContent() {
 
   const fetchGoogleTrends = async (tokens: any) => {
     try {
-      // Sort tokens by usdValue in descending order and take the top 3
-      const topTokens = tokens?.sort((a: { usdValue: number }, b: { usdValue: number }) => b.usdValue - a.usdValue).slice(0, 3);
+      // Filter out tokens where symbol is an address and sort by usdValue
+      const filteredTokens = tokens?.filter((token: { symbol: string }) => 
+        token.symbol && !isSolanaAddress(token.symbol)
+      ).sort((a: { usdValue: number }, b: { usdValue: number }) => 
+        b.usdValue - a.usdValue
+      ).slice(0, 3);
 
       // Process symbols and resolve addresses
-      const processedSymbols = await Promise.all(topTokens.map(async (token: { symbol: any }) => {
+      const processedSymbols = await Promise.all(filteredTokens.map(async (token: { symbol: any }) => {
         if (isSolanaAddress(token.symbol)) {
           const tokenInfo = await getTokenInfo(token.symbol);
           return tokenInfo?.symbol || token.symbol;
@@ -212,8 +220,11 @@ export function HomeContent() {
 
           setTotalAccounts(tokenAccounts.value.length);
 
+          // Calculate total value separately
+          let calculatedTotalValue = 0;
           const tokenDataPromises = tokenAccounts.value.map((tokenAccount) =>
             handleTokenData(pubKey, tokenAccount, apiLimiter).then((tokenData) => {
+              calculatedTotalValue += tokenData.usdValue;
               updateTotalValue(tokenData.usdValue);
               return tokenData;
             })
@@ -225,6 +236,7 @@ export function HomeContent() {
 
           // Get top 10 holdings sorted by USD value
           const topHoldings = tokens
+            .filter(token => token.symbol && !isSolanaAddress(token.symbol))
             .sort((a, b) => b.usdValue - a.usdValue)
             .slice(0, 10)
             .map(token => ({
@@ -251,12 +263,17 @@ export function HomeContent() {
           if (thesis) await fetchSentimentAnalysis(thesis);
           if (tokens) await fetchGoogleTrends(tokens);
 
-          // After calculating total value and top holdings, save to the database
-          await saveWalletToDb(
+          console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, topHoldings);
+          // Use calculatedTotalValue instead of totalValue state
+          await updateWalletToDb(
             walletAddress.toString(),
-            totalValue,
-            topHoldings
-          );
+            calculatedTotalValue,
+            topHoldings,
+            originalDomain
+          ).catch(error => {
+            console.error('Error updating wallet data:', error);
+            // Don't throw here - we still want to show the data even if update fails
+          });
 
           setSignState("success");
           toast.success("Token Data Retrieved", { id: signToastId });
@@ -557,10 +574,53 @@ export function HomeContent() {
     }
   };
 
+  const getPublicKeyFromSolDomain = async (domain: string): Promise<string> => {
+    try {
+      const cleanDomain = domain.toLowerCase().replace('.sol', '');
+      const { pubkey } = getDomainKeySync(cleanDomain);
+      const owner = (await NameRegistryState.retrieve(connection, pubkey)).registry.owner.toBase58();
+      return owner;
+    } catch (error) {
+      console.error('Error resolving SNS domain:', error);
+      throw new Error('Invalid or non-existent .sol domain');
+    }
+  };
+
   const handleAddressSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    setSubmittedAddress(manualAddress);
-    await saveWalletToDb(manualAddress);
+    try {
+      let addressToUse = manualAddress.trim();
+      let solDomain = '';
+      
+      // Check if input is a .sol domain
+      if (addressToUse.toLowerCase().endsWith('.sol')) {
+        setLoading(true);
+        try {
+          solDomain = addressToUse; // Save original domain
+          addressToUse = await getPublicKeyFromSolDomain(addressToUse);
+          toast.success(`Resolved domain to: ${addressToUse}`);
+        } catch (error) {
+          toast.error('Invalid or non-existent .sol domain');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Validate final address
+      if (!isSolanaAddress(addressToUse)) {
+        toast.error('Please enter a valid Solana address or .sol domain');
+        return;
+      }
+      
+      await saveWalletToDb(addressToUse, solDomain); // Pass the domain name if it exists
+      setSubmittedAddress(addressToUse);
+      setOriginalDomain(solDomain);
+    } catch (error) {
+      console.error('Error saving wallet:', error);
+      toast.error('Failed to save wallet address');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -611,17 +671,21 @@ export function HomeContent() {
           <form onSubmit={handleAddressSubmit} className="w-full max-w-md mx-auto">
             <h2 className="text-base sm:text-xl font-bold mb-2 sm:mb-4">Connect Your Wallet</h2>
             <label className="block text-sm font-medium mb-2">
-              Enter your Solana wallet address:
+              Enter your Solana wallet address or .sol domain:
             </label>
             <input
               type="text"
               value={manualAddress}
               onChange={(e) => setManualAddress(e.target.value)}
               className="w-full p-2 border rounded-md mb-3 sm:mb-4 bg-base-100 text-sm"
-              placeholder="Solana address..."
+              placeholder="Solana address or .sol domain..."
             />
-            <button type="submit" className="btn btn-primary w-full text-sm sm:text-base">
-              Analyze Wallet
+            <button 
+              type="submit" 
+              className="btn btn-primary w-full text-sm sm:text-base"
+              disabled={loading}
+            >
+              {loading ? "Resolving..." : "Analyze Wallet"}
             </button>
           </form>
         </div>

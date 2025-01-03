@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '../db/connectDB';
-// import { connectToDatabase } from '@/utils/connectDB';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,28 +17,58 @@ export default async function handler(
     // Get total unique wallets count
     const uniqueWalletsCount = await wallets.countDocuments();
 
-    // Get average holdings
-    const averageResult = await wallets.aggregate([
+    // Get average totalValue and analyze topHoldings using MongoDB aggregation
+    const aggregationResult = await wallets.aggregate([
+      { $unwind: '$topHoldings' },
       {
         $group: {
           _id: null,
-          averageValue: { $avg: '$value' }
+          averageTotalValue: { $avg: '$totalValue' },
+          averageHoldingValue: { $avg: '$topHoldings.usdValue' },
+          allHoldings: {
+            $push: {
+              symbol: '$topHoldings.symbol',
+              value: '$topHoldings.usdValue'
+            }
+          }
         }
       }
     ]).toArray();
 
-    const averageValue = averageResult[0]?.averageValue || 0;
-
-    // Get largest holding
-    const largestHolding = await wallets.findOne(
+    // Get the largest wallet
+    const largestWallet = await wallets.findOne(
       {},
-      { sort: { value: -1 } }
+      { sort: { totalValue: -1 } }
     );
+
+    // Get top 5 holdings directly from MongoDB aggregation
+    const top5Result = await wallets.aggregate([
+      { $unwind: '$topHoldings' },
+      {
+        $group: {
+          _id: '$topHoldings.symbol',
+          totalValue: { $sum: '$topHoldings.usdValue' },
+          balance: { $sum: '$topHoldings.balance' }
+        }
+      },
+      { $sort: { totalValue: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 0,
+          symbol: '$_id',
+          value: '$totalValue',
+          totalBalance: '$balance'
+        }
+      }
+    ]).toArray();
 
     return res.status(200).json({
       uniqueWallets: uniqueWalletsCount,
-      averageValue: averageValue,
-      largestHolding: largestHolding?.value || 0
+      averageTotalValue: aggregationResult[0]?.averageTotalValue || 0,
+      averageHoldingValue: aggregationResult[0]?.averageHoldingValue || 0,
+      largestHolding: largestWallet?.totalValue || 0,
+      top5LargestHoldings: top5Result
     });
 
   } catch (error) {

@@ -1,12 +1,4 @@
-export const saveWalletToDb = async (
-  address: string, 
-  totalValue?: number,
-  topHoldings?: Array<{
-    symbol: string,
-    balance: number,
-    usdValue: number
-  }>
-) => {
+export const saveWalletToDb = async (address: string, domain?: string) => {
   try {
     const response = await fetch('/api/db/save-wallet', {
       method: 'POST',
@@ -15,18 +7,17 @@ export const saveWalletToDb = async (
       },
       body: JSON.stringify({ 
         address,
-        totalValue: totalValue || 0,
-        topHoldings: topHoldings || [],
-        timestamp: new Date().toISOString()
+        domain: domain || null
       }),
     });
-
+    
     if (!response.ok) {
-      throw new Error('Failed to save wallet data');
+      throw new Error('Failed to save wallet');
     }
-
+    
     return await response.json();
   } catch (error) {
-    console.error('Error saving wallet to database:', error);
+    console.error('Error saving wallet:', error);
+    throw error;
   }
 };

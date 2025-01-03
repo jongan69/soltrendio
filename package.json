@@ -11,6 +11,7 @@
     "find-deadcode": "ts-prune | grep -v '(used in module)'"
   },
   "dependencies": {
+    "@bonfida/spl-name-service": "^3.0.7",
     "@cyntler/react-doc-viewer": "^1.17.0",
     "@jup-ag/api": "^6.0.24",
     "@metaplex-foundation/js": "^0.20.1",
