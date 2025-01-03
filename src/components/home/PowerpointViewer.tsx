@@ -90,6 +90,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         <div className="space-y-4">
             <div className="flex items-center justify-center space-x-4 py-10">
                 <button
+                    disabled={loading}
                     onClick={handleGenerate}
                     className="btn bg-gradient-to-r from-purple-500 to-pink-500 border-none text-white hover:from-purple-600 hover:to-pink-600 shadow-lg"
                 >
