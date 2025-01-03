@@ -188,7 +188,7 @@ export function HomeContent() {
     try {
       const tokenAccounts = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
       const tokenAccount = tokenAccounts.value.find(account =>
-        account.account.data.parsed.info.mint === DEFAULT_TOKEN
+        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
       );
 
       if (tokenAccount) {
@@ -698,7 +698,7 @@ export function HomeContent() {
       {feeTokenBalance > 0 && (
         <div className="text-center mt-8 p-4 bg-base-200 rounded-lg">
           <p className="text-sm">
-            Total {DEFAULT_TOKEN_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(5)}</span>
+            Total {DEFAULT_TOKEN_3_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(5)}</span>
           </p>
         </div>
       )}
