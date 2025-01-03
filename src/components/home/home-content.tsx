@@ -668,7 +668,7 @@ export function HomeContent() {
         <div className="text-center space-y-6">
           <div className="bg-base-200 rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4">
-              Welcome to Wallet Analyzer
+              Welcome to Soltrendio 🚀
             </h2>
             <p className="text-lg">
               This app analyzes your wallet holdings to generate an investment thesis.
