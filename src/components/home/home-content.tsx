@@ -593,11 +593,11 @@ export function HomeContent() {
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl overflow-x-hidden">
-      {/* Connection Status Banner - Moved to top */}
+    <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-8 max-w-4xl overflow-x-hidden">
+      {/* Connection Status Banner - Updated padding */}
       {!publicKey && !submittedAddress && (
-        <div className="bg-base-100 border-2 border-purple-500 rounded-lg p-6 mb-8 shadow-lg">
-          <h2 className="text-xl font-bold text-center">
+        <div className="bg-base-100 border-2 border-purple-500 rounded-lg p-4 sm:p-6 mb-4 sm:mb-8 shadow-lg">
+          <h2 className="text-lg sm:text-xl font-bold text-center">
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Please connect your wallet or submit your address to begin
             </span>
@@ -605,11 +605,11 @@ export function HomeContent() {
         </div>
       )}
 
-      {/* Wallet Input Section */}
+      {/* Wallet Input Section - Updated spacing */}
       {!publicKey && !submittedAddress && (
-        <div className="bg-base-200 rounded-lg p-6 mb-8">
+        <div className="bg-base-200 rounded-lg p-4 sm:p-6 mb-4 sm:mb-8">
           <form onSubmit={handleAddressSubmit} className="w-full max-w-md mx-auto">
-            <h2 className="text-lg sm:text-xl font-bold mb-4">Connect Your Wallet</h2>
+            <h2 className="text-base sm:text-xl font-bold mb-2 sm:mb-4">Connect Your Wallet</h2>
             <label className="block text-sm font-medium mb-2">
               Enter your Solana wallet address:
             </label>
@@ -617,54 +617,54 @@ export function HomeContent() {
               type="text"
               value={manualAddress}
               onChange={(e) => setManualAddress(e.target.value)}
-              className="w-full p-2 border rounded-md mb-4 bg-base-100"
+              className="w-full p-2 border rounded-md mb-3 sm:mb-4 bg-base-100 text-sm"
               placeholder="Solana address..."
             />
-            <button type="submit" className="btn btn-primary w-full">
+            <button type="submit" className="btn btn-primary w-full text-sm sm:text-base">
               Analyze Wallet
             </button>
           </form>
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content - Updated spacing and responsiveness */}
       {hasFetchedData ? (
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-8">
           {/* Token Balance Card */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">Wallet Overview</h2>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Wallet Overview</h2>
               <div className="text-left sm:text-right w-full sm:w-auto">
-                <p className="text-gray-700">Total Value</p>
-                <p className="text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
-                <p className="text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
+                <p className="text-sm sm:text-base text-gray-700">Total Value</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
+                <p className="text-sm sm:text-base text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
               </div>
             </div>
           </div>
 
-          {/* Thesis Section */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          {/* Thesis Section - Updated button layout */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Investment Thesis
               </h2>
-              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 w-full sm:w-auto">
+              <div className="flex flex-row gap-2 w-full sm:w-auto">
                 <button
-                  className="btn bg-gradient-to-r from-purple-500 to-pink-500 border-none text-white hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                  className="btn btn-sm sm:btn-md bg-gradient-to-r from-purple-500 to-pink-500 border-none text-white hover:from-purple-600 hover:to-pink-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
                   onClick={handleGenerateNewThesis}
                 >
                   Generate New
                 </button>
                 <button
-                  className="btn bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 shadow-lg"
+                  className="btn btn-sm sm:btn-md bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
                   onClick={() => handleTweetThis(thesis)}
                 >
                   Tweet
                 </button>
               </div>
             </div>
-            <div className="prose prose-sm max-w-none break-words overflow-x-hidden whitespace-pre-line text-gray-900">
+            <div className="prose prose-sm sm:prose max-w-none break-words overflow-x-hidden whitespace-pre-line text-gray-900 text-sm sm:text-base">
               <ReactMarkdown>{thesis}</ReactMarkdown>
             </div>
           </div>
@@ -680,7 +680,7 @@ export function HomeContent() {
             });
 
             return hasScores ? (
-              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Sentiment Analysis</h2>
                 <div className="w-full overflow-x-hidden">
                   <SentimentCharts
@@ -696,7 +696,7 @@ export function HomeContent() {
           })()}
 
           {/* Google Trends */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Google Trends Projection</h2>
             <div className="w-full overflow-x-hidden">
               <GoogleTrendsProjection
@@ -706,7 +706,7 @@ export function HomeContent() {
             </div>
           </div>
           {summary && thesis && publicKey && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
               {canGeneratePowerpoint ? (
                 <PowerpointViewer 
                   summary={summary} 
@@ -808,10 +808,10 @@ export function HomeContent() {
           )}
         </div>
       )}
-      {/* Footer Stats */}
+      {/* Footer Stats - Updated padding */}
       {feeTokenBalance > 0 && (
-        <div className="text-center mt-8 p-4 bg-base-200 rounded-lg">
-          <p className="text-sm">
+        <div className="text-center mt-4 sm:mt-8 p-3 sm:p-4 bg-base-200 rounded-lg">
+          <p className="text-xs sm:text-sm">
             Total {DEFAULT_TOKEN_3_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(5)}</span>
           </p>
         </div>
