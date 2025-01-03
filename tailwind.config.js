@@ -9,7 +9,7 @@ module.exports = {
     // If you change the default themes don't forget to update in globals and theme-toggle files
     themes: [
       "night",
-      "retro",
+      // "retro",
 
       // uncomment to enable
       // "dark",
@@ -24,7 +24,7 @@ module.exports = {
       // "garden",
       // "forest",
       // "aqua",
-      // "lofi",
+      "lofi",
       // "pastel",
       // "fantasy",
       // "wireframe",

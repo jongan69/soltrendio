@@ -26,7 +26,7 @@ export function ThemeToggle() {
 
   return (
     <label className="swap swap-rotate p-4">
-      <input type="checkbox" data-toggle-theme="night,retro" />
+      <input type="checkbox" data-toggle-theme="night,lofi" />
       <svg
         className={`${
           theme === DEFAULT_THEME ? "swap-off" : "swap-on"
