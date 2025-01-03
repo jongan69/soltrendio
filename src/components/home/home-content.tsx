@@ -253,7 +253,7 @@ export function HomeContent() {
 
           // After calculating total value and top holdings, save to the database
           await saveWalletToDb(
-            walletAddress.toString(), 
+            walletAddress.toString(),
             totalValue,
             topHoldings
           );
@@ -334,7 +334,7 @@ export function HomeContent() {
     try {
       const summarizedData = await summarizeTokenData(tokens);
       setSummary(summarizedData);
-      
+
       const response = await fetch("/api/analyze/generate-thesis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -345,53 +345,53 @@ export function HomeContent() {
         if (response.status === 500 && retryCount < MAX_RETRIES) {
           // Calculate delay with exponential backoff
           const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-          
+
           console.log(`Attempt ${retryCount + 1} failed, retrying in ${delay}ms...`);
-          
+
           // Show retry toast
           toast.loading(
-            `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 
+            `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`,
             { duration: delay }
           );
-          
+
           // Wait for the delay
           await new Promise(resolve => setTimeout(resolve, delay));
-          
+
           // Recursive retry
           return generateThesis(tokens, retryCount + 1);
         }
-        
+
         throw new Error(`Network response was not ok: ${response.status}`);
       }
 
       const data = await response.json();
       console.log("Thesis data:", data.thesis);
-      
+
       // Try to extract scores from thesis first
       const extracted = extractSentimentScores(data.thesis);
       if (extracted) {
         return extracted.cleanedThesis;
       }
-      
+
       // If extraction failed, use API
       await fetchSentimentAnalysis(data.thesis);
       return data.thesis;
     } catch (error) {
       console.error(`Error generating thesis (attempt ${retryCount + 1}):`, error);
-      
+
       if (retryCount < MAX_RETRIES) {
         // If it's a non-500 error but we still want to retry
         const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-        
+
         toast.loading(
-          `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 
+          `Thesis generation failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`,
           { duration: delay }
         );
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
         return generateThesis(tokens, retryCount + 1);
       }
-      
+
       // If we've exhausted all retries, show error and return fallback message
       toast.error("Failed to generate thesis after multiple attempts");
       return "An error occurred while generating the thesis. Please try again later.";
@@ -523,9 +523,9 @@ export function HomeContent() {
         } else {
           const paymentType = paymentChoice === 'sol' ? 'SOL' :
             paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME :
-            paymentChoice === 'token2' ? DEFAULT_TOKEN_2_NAME :
-            DEFAULT_TOKEN_3_NAME;
-          toast.error(`Failed to process ${paymentType} payment. Please ensure you have enough balance`);
+              paymentChoice === 'token2' ? DEFAULT_TOKEN_2_NAME :
+                DEFAULT_TOKEN_3_NAME;
+          toast.error(`Failed to process ${paymentType} payment: ${error instanceof Error ? error.message : `${error}`}`);
         }
         setWaitingForConfirmation(false);
         setLoading(false);
@@ -708,15 +708,15 @@ export function HomeContent() {
           {summary && thesis && publicKey && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
               {canGeneratePowerpoint ? (
-                <PowerpointViewer 
-                  summary={summary} 
-                  thesis={thesis} 
+                <PowerpointViewer
+                  summary={summary}
+                  thesis={thesis}
                   cost={10}
                   onGenerate={async () => {
                     try {
                       // Create transaction for 10 tokens
                       const transaction = new Transaction();
-                      
+
                       const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
                       const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
                         account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
@@ -744,7 +744,6 @@ export function HomeContent() {
 
                       const { blockhash } = await connection.getLatestBlockhash();
                       transaction.recentBlockhash = blockhash;
-                      transaction.feePayer = publicKey;
 
                       const signature = await sendTransaction(transaction, connection);
 
@@ -759,7 +758,7 @@ export function HomeContent() {
 
                       // Update the specific token balance after successful transaction
                       setSpecificTokenBalance(prev => prev - 10);
-                      
+
                       return true; // Allow PowerPoint generation to proceed
                     } catch (error) {
                       console.error("Payment error:", error);
@@ -812,7 +811,7 @@ export function HomeContent() {
       {feeTokenBalance > 0 && (
         <div className="text-center mt-4 sm:mt-8 p-3 sm:p-4 bg-base-200 rounded-lg">
           <p className="text-xs sm:text-sm">
-            Total {DEFAULT_TOKEN_3_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(5)}</span>
+            Total {DEFAULT_TOKEN_3_NAME} Generated: <span className="font-bold">{feeTokenBalance.toFixed(2)}</span>
           </p>
         </div>
       )}
