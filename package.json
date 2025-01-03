@@ -52,7 +52,8 @@
     "tailwind": "^4.0.0",
     "theme-change": "^2.3.0",
     "ts-prune": "^0.10.3",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "twitter-api-v2": "^1.19.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.26",
