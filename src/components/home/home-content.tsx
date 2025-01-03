@@ -763,7 +763,7 @@ export function HomeContent() {
                       return true; // Allow PowerPoint generation to proceed
                     } catch (error) {
                       console.error("Payment error:", error);
-                      toast.error(`Failed to process ${DEFAULT_TOKEN_3_NAME} payment. Please ensure you have enough balance`);
+                      toast.error(`Failed to process ${DEFAULT_TOKEN_3_NAME} payment: ${error instanceof Error ? error.message : `${error}`}`);
                       return false;
                     }
                   }}
