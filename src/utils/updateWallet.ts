@@ -8,6 +8,7 @@ export const updateWalletToDb = async (
   }>,
   domain: string | null
 ) => {
+  console.log('Updating wallet in database:', address, totalValue, topHoldings, domain);
   try {
     const response = await fetch('/api/db/update-wallet', {
       method: 'POST',

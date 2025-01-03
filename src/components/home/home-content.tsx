@@ -36,6 +36,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { updateWalletToDb } from "@utils/updateWallet";
 import { getDomainKeySync, NameRegistryState } from "@bonfida/spl-name-service";
+import { StatsTicker } from './StatsTicker';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -654,6 +655,10 @@ export function HomeContent() {
 
   return (
     <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-8 max-w-4xl overflow-x-hidden">
+      <div className="mb-4 sm:mb-8">
+        <StatsTicker />
+      </div>
+
       {/* Connection Status Banner - Updated padding */}
       {!publicKey && !submittedAddress && (
         <div className="bg-base-100 border-2 border-purple-500 rounded-lg p-4 sm:p-6 mb-4 sm:mb-8 shadow-lg">

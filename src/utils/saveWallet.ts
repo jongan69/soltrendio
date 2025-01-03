@@ -1,4 +1,5 @@
 export const saveWalletToDb = async (address: string, domain?: string) => {
+  console.log('Saving wallet to database:', address, domain);
   try {
     const response = await fetch('/api/db/save-wallet', {
       method: 'POST',

@@ -29,19 +29,30 @@ export default async function handler(
     // Ensure unique index exists
     await walletsCollection.createIndex({ "address": 1 }, { unique: true });
 
+    // First get the current wallet data
+    const currentWallet = await walletsCollection.findOne({ address });
+    
+    // Only update previousTotalValue if the new value is different
+    const shouldUpdatePrevious = currentWallet && 
+      Math.abs(currentWallet.totalValue - totalValue) > 0.01; // Small threshold for floating point comparison
+
     // Update wallet with upsert
     const result = await walletsCollection.updateOne(
       { address },
       {
         $set: {
-
           address,
           totalValue,
           topHoldings,
           lastSeen: timestamp,
-          domain: domain || null
+          previousTotalValue: shouldUpdatePrevious ? currentWallet.totalValue : (currentWallet?.previousTotalValue || totalValue),
+          domain: domain || null,
+          lastValueChange: shouldUpdatePrevious ? timestamp : (currentWallet?.lastValueChange || timestamp)
         },
-        $setOnInsert: { createdAt: new Date() }
+        $setOnInsert: { 
+          createdAt: new Date(),
+          firstTotalValue: totalValue
+        }
       },
       { upsert: true }
     );
