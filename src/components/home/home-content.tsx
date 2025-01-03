@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    paymentChoice: (choice: string) => void;
+    paymentChoice: (choice: 'sol' | 'token1' | 'token2' | 'token3' | 'cancel') => void;
   }
 }
 
@@ -14,7 +14,9 @@ import {
   DEFAULT_TOKEN,
   DEFAULT_TOKEN_NAME,
   DEFAULT_TOKEN_2,
-  DEFAULT_TOKEN_2_NAME
+  DEFAULT_TOKEN_2_NAME,
+  DEFAULT_TOKEN_3,
+  DEFAULT_TOKEN_3_NAME
 } from "@utils/globals";
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "../../utils/tokenUtils";
 import {
@@ -242,7 +244,7 @@ export function HomeContent() {
 
           // Check the balance of the specific token
           const specificTokenAccount = tokenAccounts.value.find(account =>
-            account.account.data.parsed.info.mint === DEFAULT_TOKEN
+            account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
           );
           const specificTokenAmount = specificTokenAccount
             ? specificTokenAccount.account.data.parsed.info.tokenAmount.uiAmount
@@ -368,7 +370,7 @@ export function HomeContent() {
 
     try {
       // Let user choose payment method
-      const paymentChoice = await new Promise((resolve) => {
+      const paymentChoice = await new Promise<'sol' | 'token1' | 'token2' | 'token3' | 'cancel'>((resolve) => {
         const modal = document.createElement('div');
         modal.innerHTML = `
           <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -389,6 +391,9 @@ export function HomeContent() {
                 </button>
                 <button class="btn btn-accent" onclick="this.closest('.fixed').remove(); window.paymentChoice('token2')">
                   Pay with ${DEFAULT_TOKEN_2_NAME} (1 ${DEFAULT_TOKEN_2_NAME})
+                </button>
+                <button class="btn btn-info" onclick="this.closest('.fixed').remove(); window.paymentChoice('token3')">
+                  Pay with ${DEFAULT_TOKEN_3_NAME} (1 ${DEFAULT_TOKEN_3_NAME})
                 </button>
               </div>
             </div>
@@ -416,29 +421,29 @@ export function HomeContent() {
             lamports: 1000000, // 0.001 SOL
           })
         );
-      } else if (paymentChoice === 'token1' || paymentChoice === 'token2') {
+      } else if (['token1', 'token2', 'token3'].includes(paymentChoice)) {
         // Token payment
-        const tokenMint = paymentChoice === 'token1' ? DEFAULT_TOKEN : DEFAULT_TOKEN_2;
-        const tokenName = paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME : DEFAULT_TOKEN_2_NAME;
+        const tokenConfig = {
+          token1: { mint: DEFAULT_TOKEN, name: DEFAULT_TOKEN_NAME, decimals: 9 },
+          token2: { mint: DEFAULT_TOKEN_2, name: DEFAULT_TOKEN_2_NAME, decimals: 6 },
+          token3: { mint: DEFAULT_TOKEN_3, name: DEFAULT_TOKEN_3_NAME, decimals: 6 }
+        }[paymentChoice];
 
         const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
         const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
-          account.account.data.parsed.info.mint === tokenMint
+          account.account.data.parsed.info.mint === tokenConfig.mint
         );
 
         const tokenAccountsToWallet = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
         const tokenAccountToWallet = tokenAccountsToWallet.value.find(account =>
-          account.account.data.parsed.info.mint === tokenMint
+          account.account.data.parsed.info.mint === tokenConfig.mint
         );
 
         if (!tokenAccountFromWallet || !tokenAccountToWallet) {
-          throw new Error(`No ${tokenName} account found for payment`);
+          throw new Error(`No ${tokenConfig.name} account found for payment`);
         }
 
-        console.log("Token account found:", tokenAccountFromWallet.pubkey.toBase58(), tokenAccountToWallet.pubkey.toBase58());
-
-        // Lockin has 9 decimals, RETARDIO has 6
-        let amountInLamports = tokenMint === DEFAULT_TOKEN ? 1 * Math.pow(10, 9) : 1 * Math.pow(10, 6);
+        const amountInLamports = 1 * Math.pow(10, tokenConfig.decimals);
 
         transaction.add(
           createTransferInstruction(
@@ -479,7 +484,8 @@ export function HomeContent() {
         } else {
           const paymentType = paymentChoice === 'sol' ? 'SOL' :
             paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME :
-              DEFAULT_TOKEN_2_NAME;
+            paymentChoice === 'token2' ? DEFAULT_TOKEN_2_NAME :
+            DEFAULT_TOKEN_3_NAME;
           toast.error(`Failed to process ${paymentType} payment. Please ensure you have enough balance`);
         }
         setWaitingForConfirmation(false);
@@ -588,7 +594,7 @@ export function HomeContent() {
               <div className="text-left sm:text-right w-full sm:w-auto">
                 <p className="text-gray-700">Total Value</p>
                 <p className="text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
-                <p className="text-gray-700">{DEFAULT_TOKEN_NAME} Balance</p>
+                <p className="text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
                 <p className="text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
               </div>
             </div>

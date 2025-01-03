@@ -1,6 +1,6 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { DEFAULT_TOKEN_NAME } from "@utils/globals";
+import { DEFAULT_TOKEN_3_NAME } from "@utils/globals";
 import classNames from "classnames";
 
 type Props = {
@@ -33,7 +33,7 @@ export function Menu({ twitterHandle, className }: Props) {
               htmlFor="bonk-modal"
               className="btn-ghost lg:btn mb-1 lg:mr-1 lg:mb-0"
             >
-              Send {DEFAULT_TOKEN_NAME}
+              Send {DEFAULT_TOKEN_3_NAME}
             </label>
           </li>
           <li>

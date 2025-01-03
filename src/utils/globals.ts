@@ -9,6 +9,9 @@ export const DEFAULT_TOKEN_NAME = "Lockin";
 export const DEFAULT_TOKEN_2 = "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx"; // RETARDIO
 export const DEFAULT_TOKEN_2_NAME = "RETARDIO";
 
+export const DEFAULT_TOKEN_3 = "BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"; // TREND
+export const DEFAULT_TOKEN_3_NAME = "TREND";
+
 
 export const REFERAL_WALLET = "2J8jsZmyTRwCYfX4aAKqdh763Y2UHMudnRh7b9Z9hBXE"; // Jupiter Swap Referral Key
 
