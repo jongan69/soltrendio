@@ -36,7 +36,8 @@ export default async function handler(
 
     try {
         const trends = await getTrends();
-        const tweetMessage = formatTrendsTweet(trends);
+        const tweetMessage = await formatTrendsTweet(trends);
+        console.log(tweetMessage);
         await postTweet(tweetMessage);
         return res.status(200).json({
             message: 'Cron job completed successfully',
