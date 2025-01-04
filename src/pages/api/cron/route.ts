@@ -1,9 +1,11 @@
 import getTrends from '@utils/getTrends';
 import { postTweet } from '../twitter/tweet';
-import { NextResponse } from 'next/server';
+// import { NextResponse } from 'next/server';
 import { formatTrendsTweet } from '@utils/formatTweet';
 
-export async function GET() {
+export const dynamic = 'force-dynamic'; // static by default, unless reading the request
+
+export async function GET(request: Request) {
     try {
         // Get trends data
         const trends = await getTrends();
@@ -15,12 +17,15 @@ export async function GET() {
         console.log('Tweet message would be:', tweetMessage);
         await postTweet(tweetMessage);  // Comment this out during testing
 
-        return NextResponse.json({
+        return new Response(JSON.stringify({
             message: 'Cron job completed successfully',
             tweetMessage // Include the message in response for testing
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error('Cron job failed:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 }
