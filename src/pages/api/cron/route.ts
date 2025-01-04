@@ -1,8 +1,7 @@
 import getTrends from '@utils/getTrends';
 import { formatTrendsTweet } from '@utils/formatTweet';
 import Twitter from 'twitter-api-v2';
-
-export const dynamic = 'force-dynamic';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 const client = new Twitter({
     appKey: process.env.TWITTER_API_KEY!,
@@ -11,42 +10,45 @@ const client = new Twitter({
     accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
 });
 
-export async function postTweet(message: string) {
+async function postTweet(message: string) {
     try {
         await client.v2.tweet(message);
         console.log('Successfully tweeted:', message);
-    } catch (error) {
-        console.error('Error posting tweet:', error);
+    } catch (error: any) {
+        // Log detailed Twitter API error information
+        console.error('Twitter API Error:', {
+            code: error.code,
+            message: error.message,
+            data: error.data,
+            rateLimit: error.rateLimit
+        });
         throw error;
     }
 }
 
-export async function GET(request: Request) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        console.log('Unauthorized cron job attempt');
-        return new Response('Unauthorized', { status: 401 });
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse
+) {
+    if (req.method !== 'GET') {
+        return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
         const trends = await getTrends();
-
         const tweetMessage = formatTrendsTweet(trends);
-
         await postTweet(tweetMessage);
-
-        return new Response(JSON.stringify({
+        return res.status(200).json({
             message: 'Cron job completed successfully',
             tweetMessage
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
         });
-    } catch (error) {
+
+    } catch (error: any) {
         console.error('Cron job failed:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Internal server error',
-            details: error instanceof Error ? error.message : String(error)
-        }), { status: 500 });
+        return res.status(error.code).json({
+            error: error.message,
+            details: `${error.data.title} Error: ${error.data.detail}`,
+            twitterRateLimit: error?.rateLimit
+        });
     }
 }
