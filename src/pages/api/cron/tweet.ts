@@ -46,9 +46,9 @@ export default async function handler(
 
     } catch (error: any) {
         console.error('Cron job failed:', error);
-        return res.status(error.code).json({
-            error: error.message,
-            details: `${error.data.title} Error: ${error.data.detail}`,
+        return res.status(error?.code).json({
+            error: error?.message,
+            details: `${error?.data?.title} Error: ${error?.data?.detail}`,
             twitterRateLimit: error?.rateLimit
         });
     }
