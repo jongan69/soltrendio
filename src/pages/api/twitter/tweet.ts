@@ -7,17 +7,12 @@ const client = new Twitter({
   accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
 });
 
-console.log(process.env.TWITTER_API_KEY);
-console.log(process.env.TWITTER_API_SECRET);
-console.log(process.env.TWITTER_ACCESS_TOKEN);
-console.log(process.env.TWITTER_ACCESS_TOKEN_SECRET); 
-
 export async function postTweet(message: string) {
   try {
     await client.v2.tweet(message);
     console.log('Successfully tweeted:', message);
   } catch (error) {
     console.error('Error posting tweet:', error);
-    throw error;
+    console.log(error);
   }
 } 
