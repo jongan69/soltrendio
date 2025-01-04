@@ -37,6 +37,7 @@ import ReactMarkdown from 'react-markdown';
 import { updateWalletToDb } from "@utils/updateWallet";
 import { getDomainKeySync, NameRegistryState } from "@bonfida/spl-name-service";
 import { StatsTicker } from './StatsTicker';
+import { PnLCard } from './PnLCard';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -140,6 +141,7 @@ export function HomeContent() {
   };
 
   const fetchGoogleTrends = async (tokens: any) => {
+    if (!tokens || tokens.length === 0) return;
     try {
       // Filter out tokens where symbol is an address and sort by usdValue
       const filteredTokens = tokens?.filter((token: { symbol: string }) => 
@@ -215,8 +217,24 @@ export function HomeContent() {
           }
 
           const tokenAccounts = await fetchTokenAccounts(pubKey);
-          if (!tokenAccounts?.value) {
-            throw new Error("No token accounts found");
+          
+          // Add immediate check for empty wallet
+          if (!tokenAccounts?.value || tokenAccounts.value.length === 0) {
+            // Reset all relevant states
+            setSignState("initial");
+            setTokens([]);
+            setTotalAccounts(0);
+            setTotalValue(0);
+            setThesis("");
+            setSpecificTokenBalance(0);
+            setSubmittedAddress("");
+            setManualAddress("");
+            setTrendsData([]);
+            setTopSymbols([]);
+            
+            toast.error("No tokens found in this wallet", { id: signToastId });
+            setLoading(false);
+            return;
           }
 
           setTotalAccounts(tokenAccounts.value.length);
@@ -774,6 +792,10 @@ export function HomeContent() {
               />
             </div>
           </div>
+
+          {/* Add PnL Card here */}
+          <PnLCard walletAddress={publicKey?.toBase58() || submittedAddress} />
+
           {summary && thesis && publicKey && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
               {canGeneratePowerpoint ? (
