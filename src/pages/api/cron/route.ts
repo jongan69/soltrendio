@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import getTrends from '@utils/getTrends';
-import { postTweet } from './twitter/tweet';
+import { postTweet } from '../twitter/tweet';
 import { formatNumber } from '@utils/formatNumber';
 
 export default async function handler(

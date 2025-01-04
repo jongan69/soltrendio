@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import cronHandler from './cron';
+import cronHandler from './cron/route';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow in development
