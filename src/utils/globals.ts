@@ -2,6 +2,8 @@ import { PublicKey } from "@solana/web3.js";
 
 export const DEFAULT_THEME = "night";
 
+export const SOLANA_ADDRESS = "So11111111111111111111111111111111111111112";
+
 export const DEFAULT_WALLET = "LockmjYWctcbeQCJt5u5z536xbmeU6n5XeQJhuPWxp2"; // Dustfolio
 export const DEFAULT_TOKEN = "8Ki8DpuWNxu9VsS3kQbarsCWMcFGWkzzA8pUPto9zBd5"; // Lockin
 export const DEFAULT_TOKEN_NAME = "Lockin";
