@@ -131,3 +131,5 @@ MIT License - see LICENSE file for details
 ## Support
 
 For support, please open an issue on GitHub or contact our support team.
+
+NOTE: Hobby accounts are limited to daily cron jobs. https://crontab.cronhub.io/
