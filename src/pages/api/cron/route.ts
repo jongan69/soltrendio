@@ -2,7 +2,7 @@ import getTrends from '@utils/getTrends';
 import { formatTrendsTweet } from '@utils/formatTweet';
 import Twitter from 'twitter-api-v2';
 
-export const dynamic = 'force-dynamic'; // static by default, unless reading the request
+export const dynamic = 'force-dynamic';
 
 const client = new Twitter({
     appKey: process.env.TWITTER_API_KEY!,
@@ -17,31 +17,36 @@ export async function postTweet(message: string) {
         console.log('Successfully tweeted:', message);
     } catch (error) {
         console.error('Error posting tweet:', error);
-        console.log(error);
+        throw error;
     }
 }
 
 export async function GET(request: Request) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        console.log('Unauthorized cron job attempt');
+        return new Response('Unauthorized', { status: 401 });
+    }
+
     try {
-        // Get trends data
         const trends = await getTrends();
 
-        // Format tweet message
         const tweetMessage = formatTrendsTweet(trends);
 
-        // For testing: just log the tweet instead of posting
-        console.log('Tweet message would be:', tweetMessage);
-        await postTweet(tweetMessage);  // Comment this out during testing
+        await postTweet(tweetMessage);
 
         return new Response(JSON.stringify({
             message: 'Cron job completed successfully',
-            tweetMessage // Include the message in response for testing
+            tweetMessage
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error('Cron job failed:', error);
-        return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+        return new Response(JSON.stringify({ 
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
+        }), { status: 500 });
     }
 }
