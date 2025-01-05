@@ -17,7 +17,7 @@ export default async function handler(
     const publicKey = new PublicKey(publicKeyStr);
     const signature = bs58.decode(encodedSignature);
 
-    console.log("Message received", messageStr);
+    // console.log("Message received", messageStr);
 
     // Verify that the bytes were signed using the private key that matches the known public key
     if (!sign.detached.verify(message, signature, publicKey.toBytes())) {

@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { tokens } = req.body;
-  console.log("Tokens:", tokens);
+  // console.log("Tokens:", tokens);
 
   // Process tokens and fetch missing information
   const processedTopTokens = (await Promise.all(
@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     //   max_tokens: 4000
     // };
     const requestBody = {
-      model: "gpt-3.5-turbo", // Using a faster model because life’s short, and so are attention spans
+      model: "gpt-4-turbo", // Using a faster model because life’s short, and so are attention spans
       messages: [
         {
           role: "system",
@@ -85,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       temperature: 1, // Crank up the heat to make the model even wilder
-      max_tokens: 4000, // Give it room to fully embrace the chaos
+      max_tokens: 4096, // Give it room to fully embrace the chaos
       // humor_mode: "chaotic-neutral" // Hypothetical feature for future models
     };
 

@@ -28,6 +28,7 @@ export interface TokenData {
   cid?: string;
   collectionName?: string;
   collectionLogo?: string;
+  description?: string;
 }
 
 export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
@@ -46,9 +47,9 @@ export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
         metaplex.nfts().findByMint({ mintAddress: mintAddress })
       );
 
-      console.log("Token:", token);
+      // console.log("Token:", token);
       const isNft = token.collection?.verified || false;
-      console.log("Is NFT:", isNft);
+      // console.log("Is NFT:", isNft);
       return {
         name: token?.name,
         symbol: token?.symbol,
@@ -98,7 +99,7 @@ export async function handleTokenData(publicKey: PublicKey, tokenAccount: any, a
   );
 
   const metadata = await fetchTokenMetadata(new PublicKey(mintAddress), mintAddress);
-  console.log("Metadata:", metadata);
+  // console.log("Metadata:", metadata);
 
   if (!metadata?.isNft) {
     const price = jupiterPrice.data[mintAddress]?.price || 0;
@@ -113,11 +114,11 @@ export async function handleTokenData(publicKey: PublicKey, tokenAccount: any, a
       ...metadata,
     };
   } else {
-    console.log("NFT detected");
+    // console.log("NFT detected");
     const nftData = await fetchNftPrice(mintAddress);
-    console.log("NFT Data:", nftData);
+    // console.log("NFT Data:", nftData);
     const nftPrice = nftData.usdValue ?? 0;
-    console.log(`NFT Floor Price of ${mintAddress}:`, nftPrice);
+    // console.log(`NFT Floor Price of ${mintAddress}:`, nftPrice);
     return {
       mintAddress,
       tokenAddress: tokenAccountAddress.toString(),

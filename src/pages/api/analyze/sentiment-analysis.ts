@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI();
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 export default async function handler(req: { method: string; body: { text: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; end: { (): any; new(): any; }; json: { (arg0: { thesis?: any; error?: string; }): void; new(): any; }; }; }) {
     if (req.method !== "POST") {
@@ -29,13 +31,16 @@ export default async function handler(req: { method: string; body: { text: any; 
     `,
                 }
             ],
-            model: "gpt-4",
+            model: "gpt-4-turbo",
+            temperature: 0.7,
+            max_tokens: 4096,
+            response_format: { type: "json_object" }
         });
 
         if (!completion) {
             throw new Error("Network response was not ok");
         }
-        
+
         const thesis = completion.choices[0].message.content;
         res.status(200).json({ thesis });
     } catch (error) {

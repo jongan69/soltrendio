@@ -1,7 +1,18 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import axios from "axios";
+
+// Web3.js
 import { useWallet } from "@solana/wallet-adapter-react";
-import { toast } from "react-hot-toast";
-import { Circles } from "react-loader-spinner";
+import { createTransferInstruction } from '@solana/spl-token';
+import {
+  PublicKey,
+  Connection,
+  Transaction,
+  SystemProgram,
+  PublicKeyInitData
+} from "@solana/web3.js";
+
+// Globals
 import {
   DEFAULT_WALLET,
   DEFAULT_TOKEN,
@@ -11,36 +22,37 @@ import {
   DEFAULT_TOKEN_3,
   DEFAULT_TOKEN_3_NAME
 } from "@utils/globals";
-import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
-import {
-  PublicKey,
-  Connection,
-  Transaction,
-  SystemProgram,
-  PublicKeyInitData
-} from "@solana/web3.js";
+import { NETWORK } from "@utils/endpoints";
+
+
+// UI Components
+import { toast } from "react-hot-toast";
+import { Circles } from "react-loader-spinner";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
-import axios from "axios";
-import { NETWORK } from "@utils/endpoints";
+import PowerpointViewer from "./PowerpointViewer";
+import ReactMarkdown from 'react-markdown';
+import { StatsTicker } from './StatsTicker';
+import { PnLCard } from './PnLCard';
+
+// Utils
+import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
 import { getTokenInfo } from "@utils/getTokenInfo";
 import { isSolanaAddress } from "@utils/isSolanaAddress";
 import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
 import { hasValidScores } from "@utils/validateScore";
-import PowerpointViewer from "./PowerpointViewer";
-import {
-  createTransferInstruction
-} from '@solana/spl-token';
-import ReactMarkdown from 'react-markdown';
 import { updateWalletToDb } from "@utils/updateWallet";
-import { getDomainKeySync, NameRegistryState } from "@bonfida/spl-name-service";
-import { StatsTicker } from './StatsTicker';
-import { PnLCard } from './PnLCard';
+import { getSimilarCoins } from "@utils/getSimilarCoins";
+import { normalizeScore } from "@utils/normalizeScore";
+import { getPublicKeyFromSolDomain } from "@utils/getPublicKeyFromDomain";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+
+
 
 export function HomeContent() {
   const { publicKey, sendTransaction } = useWallet();
@@ -67,6 +79,7 @@ export function HomeContent() {
   const [feeTokenBalance, setFeeTokenBalance] = useState<number>(0);
   const [canGeneratePowerpoint, setCanGeneratePowerpoint] = useState<boolean>(false);
   const [originalDomain, setOriginalDomain] = useState<string>("");
+  const [similarCoins, setSimilarCoins] = useState<any[]>([]);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -103,12 +116,6 @@ export function HomeContent() {
         }
       }
 
-      // Normalize scores to 0-1 range if they're in 0-100 range
-      const normalizeScore = (score: number) => {
-        if (score === undefined || score === null) return 0;
-        return score > 1 ? score / 100 : score;
-      };
-
       const scores = {
         racism: normalizeScore(parsedResponse.racism || 0),
         crudity: normalizeScore(parsedResponse.crudity || 0),
@@ -117,7 +124,7 @@ export function HomeContent() {
         hateSpeech: normalizeScore(parsedResponse.hateSpeech || 0)
       };
 
-      console.log("Setting scores:", scores);
+      // console.log("Setting scores:", scores);
 
       setRacismScore(scores.racism);
       setCrudityScore(scores.crudity);
@@ -144,9 +151,9 @@ export function HomeContent() {
     if (!tokens || tokens.length === 0) return;
     try {
       // Filter out tokens where symbol is an address and sort by usdValue
-      const filteredTokens = tokens?.filter((token: { symbol: string }) => 
+      const filteredTokens = tokens?.filter((token: { symbol: string }) =>
         token.symbol && !isSolanaAddress(token.symbol)
-      ).sort((a: { usdValue: number }, b: { usdValue: number }) => 
+      ).sort((a: { usdValue: number }, b: { usdValue: number }) =>
         b.usdValue - a.usdValue
       ).slice(0, 3);
 
@@ -160,7 +167,7 @@ export function HomeContent() {
       }));
 
       setTopSymbols(processedSymbols);
-      console.log("Looking for keywords:", processedSymbols);
+      // console.log("Looking for keywords:", processedSymbols);
 
       const response = await fetch('/api/analyze/trends', {
         method: 'POST',
@@ -217,7 +224,7 @@ export function HomeContent() {
           }
 
           const tokenAccounts = await fetchTokenAccounts(pubKey);
-          
+
           // Add immediate check for empty wallet
           if (!tokenAccounts?.value || tokenAccounts.value.length === 0) {
             // Reset all relevant states
@@ -231,7 +238,7 @@ export function HomeContent() {
             setManualAddress("");
             setTrendsData([]);
             setTopSymbols([]);
-            
+
             toast.error("No tokens found in this wallet", { id: signToastId });
             setLoading(false);
             return;
@@ -250,7 +257,7 @@ export function HomeContent() {
           );
 
           const tokens = await Promise.all(tokenDataPromises);
-          console.log("Tokens:", tokens);
+          // console.log("Tokens:", tokens);
           setTokens(tokens);
 
           // Get top 10 holdings sorted by USD value
@@ -282,7 +289,7 @@ export function HomeContent() {
           if (thesis) await fetchSentimentAnalysis(thesis);
           if (tokens) await fetchGoogleTrends(tokens);
 
-          console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, topHoldings);
+          // console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, topHoldings);
           // Use calculatedTotalValue instead of totalValue state
           await updateWalletToDb(
             walletAddress.toString(),
@@ -345,7 +352,7 @@ export function HomeContent() {
           hateSpeech: Number(matches[5]) / 100
         };
 
-        console.log("Extracted scores:", scores);
+        // console.log("Extracted scores:", scores);
 
         setRacismScore(scores.racism);
         setCrudityScore(scores.crudity);
@@ -382,7 +389,7 @@ export function HomeContent() {
           // Calculate delay with exponential backoff
           const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
 
-          console.log(`Attempt ${retryCount + 1} failed, retrying in ${delay}ms...`);
+          // console.log(`Attempt ${retryCount + 1} failed, retrying in ${delay}ms...`);
 
           // Show retry toast
           toast.loading(
@@ -401,7 +408,7 @@ export function HomeContent() {
       }
 
       const data = await response.json();
-      console.log("Thesis data:", data.thesis);
+      // console.log("Thesis data:", data.thesis);
 
       // Try to extract scores from thesis first
       const extracted = extractSentimentScores(data.thesis);
@@ -593,30 +600,18 @@ export function HomeContent() {
     }
   };
 
-  const getPublicKeyFromSolDomain = async (domain: string): Promise<string> => {
-    try {
-      const cleanDomain = domain.toLowerCase().replace('.sol', '');
-      const { pubkey } = getDomainKeySync(cleanDomain);
-      const owner = (await NameRegistryState.retrieve(connection, pubkey)).registry.owner.toBase58();
-      return owner;
-    } catch (error) {
-      console.error('Error resolving SNS domain:', error);
-      throw new Error('Invalid or non-existent .sol domain');
-    }
-  };
-
   const handleAddressSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     try {
       let addressToUse = manualAddress.trim();
       let solDomain = '';
-      
+
       // Check if input is a .sol domain
       if (addressToUse.toLowerCase().endsWith('.sol')) {
         setLoading(true);
         try {
           solDomain = addressToUse; // Save original domain
-          addressToUse = await getPublicKeyFromSolDomain(addressToUse);
+          addressToUse = await getPublicKeyFromSolDomain(addressToUse, connection);
           toast.success(`Resolved domain to: ${addressToUse}`);
         } catch (error) {
           toast.error('Invalid or non-existent .sol domain');
@@ -624,13 +619,13 @@ export function HomeContent() {
           return;
         }
       }
-      
+
       // Validate final address
       if (!isSolanaAddress(addressToUse)) {
         toast.error('Please enter a valid Solana address or .sol domain');
         return;
       }
-      
+
       await saveWalletToDb(addressToUse, solDomain); // Pass the domain name if it exists
       setSubmittedAddress(addressToUse);
       setOriginalDomain(solDomain);
@@ -645,6 +640,29 @@ export function HomeContent() {
   useEffect(() => {
     setCanGeneratePowerpoint(specificTokenBalance >= 10);
   }, [specificTokenBalance]);
+
+  useEffect(() => {
+    const fetchSimilarCoins = async () => {
+      if (tokens.length > 0) {
+        try {
+          const tokenData = tokens
+            .filter(token => token.symbol && token.name)
+            .map(token => ({
+              symbol: token.symbol!,
+              name: token.name!
+            }));
+          // console.log("Sending token data:", tokenData); // Debug log
+          const similarCoinsData = await getSimilarCoins(tokenData);
+          console.log("Received similar coins:", similarCoinsData); // Debug log
+          setSimilarCoins(similarCoinsData);
+        } catch (error) {
+          console.error("Error fetching similar coins:", error);
+        }
+      }
+    };
+
+    fetchSimilarCoins();
+  }, [tokens]);
 
   // Loading State
   if (loading || !tokens || signState === "loading") {
@@ -703,8 +721,8 @@ export function HomeContent() {
               className="w-full p-2 border rounded-md mb-3 sm:mb-4 bg-base-100 text-sm"
               placeholder="Solana address or .sol domain..."
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary w-full text-sm sm:text-base"
               disabled={loading}
             >
@@ -756,6 +774,59 @@ export function HomeContent() {
             </div>
           </div>
 
+          {/* Similar Coins */}
+          {similarCoins.length > 0 && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Similar Newly Listed Coins</h2>
+              <div className="space-y-4">
+                {similarCoins.map((coin, index) => (
+                  <div key={index} className="border-b border-gray-200 pb-4 last:border-0">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          {coin.newCoin.name} ({coin.newCoin.symbol})
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {coin.reason}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {coin.newCoin.description}
+                        </p>
+                        <div className="flex space-x-2 mt-2">
+                          {coin.link && (
+                            <a
+                              href={coin.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                            >
+                              View on Dexscreener
+                            </a>
+                          )}
+                          {coin.website && (
+                            <a
+                              href={coin.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm bg-green-500 text-white hover:bg-green-600"
+                            >
+                              Visit Website
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-purple-100 px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium text-purple-800">
+                          {(coin.similarityScore * 100).toFixed(0)}% Match
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Sentiment Analysis */}
           {(() => {
             const hasScores = hasValidScores({
@@ -783,7 +854,7 @@ export function HomeContent() {
           })()}
 
           {/* Google Trends */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+          {trendsData.length > 0 && <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Google Trends Projection</h2>
             <div className="w-full overflow-x-hidden">
               <GoogleTrendsProjection
@@ -791,7 +862,7 @@ export function HomeContent() {
                 dataNames={topSymbols}
               />
             </div>
-          </div>
+          </div>}
 
           {/* Add PnL Card here */}
           <PnLCard walletAddress={publicKey?.toBase58() || submittedAddress} />

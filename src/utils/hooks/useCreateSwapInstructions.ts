@@ -85,7 +85,7 @@ export async function getTipAccounts(): Promise<string> {
 export async function sendTxUsingJito(serializedTxs: (Uint8Array | Buffer | number[])[]): Promise<string> {
   let endpoint = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
 
-  console.log(serializedTxs.map(t => bs58.encode(t)));
+  // console.log(serializedTxs.map(t => bs58.encode(t)));
   let payload = {
     jsonrpc: "2.0",
     id: 1,
@@ -384,14 +384,14 @@ export const useCreateSwapInstructions = (
       const bundleStatus = await getBundleStatus(bundleId);
       setSelectedItems(new Set());
       if (bundleStatus.result.value.length > 0) {
-        console.log(`Completed sending transaction batch: ${JSON.stringify(bundleStatus)}`);
+        // console.log(`Completed sending transaction batch: ${JSON.stringify(bundleStatus)}`);
         setSelectedItems(new Set());
       } else {
-        console.error(`Jito Bundle Status Seems to be Null: ${JSON.stringify(bundleStatus)}`);
+        // console.error(`Jito Bundle Status Seems to be Null: ${JSON.stringify(bundleStatus)}`);
         setMessage(`Result Jito Bundle ID: ${bundleId} \nJito Bundle Status ${JSON.stringify(bundleStatus.result)}`);
       }
     } catch (error: any) {
-      console.error(`Error during chunked and bundled transaction: ${description}`, error.toString());
+      // console.error(`Error during chunked and bundled transaction: ${description}`, error.toString());
       throw new Error(`Error during chunked and bundled transaction: ${description}, ${error.toString()}`);
     }
   };

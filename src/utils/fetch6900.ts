@@ -4,7 +4,7 @@ export const fetch6900 = async () => {
         const options = {method: 'GET', headers: {accept: 'application/json', 'x-cg-api-key': 'CG-sPK8Q7SmhaM8CqiFuJ7sKaEc'}};
         const response = await fetch(url, options);
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         return data.spx6900.usd_market_cap;
     } catch (error) {
         console.error('Error fetching 6900 market cap:', error);

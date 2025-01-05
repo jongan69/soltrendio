@@ -14,7 +14,7 @@ export const summarizeTokenData = async (tokens: any[]) => {
     }) => {
       console.log('Processing token:', token);
       const tokenInfo = await getTokenInfo(token.mintAddress);
-      console.log('Token marketCap:', tokenInfo?.marketCap);
+      // console.log('Token marketCap:', tokenInfo?.marketCap);
       let processedToken = {
         symbol: token.symbol,
         name: token.name,

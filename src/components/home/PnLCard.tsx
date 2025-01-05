@@ -70,7 +70,7 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
       
       // Skip trades with zero amounts
       if (amountIn === 0 || amountOut === 0) {
-        console.log(`Skipping trade with zero amount: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
+        // console.log(`Skipping trade with zero amount: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
         return null;
       }
 
@@ -92,7 +92,7 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
 
       // Skip if we can't determine a valid price
       if (!isFinite(priceAtTrade) || isNaN(priceAtTrade)) {
-        console.log(`Skipping trade with invalid price: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
+        // console.log(`Skipping trade with invalid price: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
         return null;
       }
 
@@ -106,35 +106,35 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
       
       // Skip if we can't determine valid SOL values
       if (!isFinite(valueInSolAtTrade) || !isFinite(valueInSolNow)) {
-        console.log(`Skipping trade with invalid SOL values: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
+        // console.log(`Skipping trade with invalid SOL values: ${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`);
         return null;
       }
 
       const tradePnL = valueInSolNow - valueInSolAtTrade;
       
-      console.log('PnL Calculation:', {
-        pair: `${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`,
-        amountIn: formatNumber(amountIn),
-        amountOut: formatNumber(amountOut),
-        inPriceInSol: formatNumber(inPriceInSol),
-        outPriceInSol: formatNumber(outPriceInSol),
-        valueInSolAtTrade: formatNumber(valueInSolAtTrade),
-        valueInSolNow: formatNumber(valueInSolNow),
-        tradePnL: formatNumber(tradePnL)
-      });
+      // console.log('PnL Calculation:', {
+      //   pair: `${trade.tokenIn.symbol}/${trade.tokenOut.symbol}`,
+      //   amountIn: formatNumber(amountIn),
+      //   amountOut: formatNumber(amountOut),
+      //   inPriceInSol: formatNumber(inPriceInSol),
+      //   outPriceInSol: formatNumber(outPriceInSol),
+      //   valueInSolAtTrade: formatNumber(valueInSolAtTrade),
+      //   valueInSolNow: formatNumber(valueInSolNow),
+      //   tradePnL: formatNumber(tradePnL)
+      // });
       
-      console.log('Token prices:', {
-        tokenIn: {
-          symbol: trade.tokenIn.symbol,
-          priceNative: trade.tokenIn.priceNative,
-          rawPrice: trade.tokenIn.price
-        },
-        tokenOut: {
-          symbol: trade.tokenOut.symbol,
-          priceNative: trade.tokenOut.priceNative,
-          rawPrice: trade.tokenOut.price
-        }
-      });
+      // console.log('Token prices:', {
+      //   tokenIn: {
+      //     symbol: trade.tokenIn.symbol,
+      //     priceNative: trade.tokenIn.priceNative,
+      //     rawPrice: trade.tokenIn.price
+      //   },
+      //   tokenOut: {
+      //     symbol: trade.tokenOut.symbol,
+      //     priceNative: trade.tokenOut.priceNative,
+      //     rawPrice: trade.tokenOut.price
+      //   }
+      // });
 
       return {
         amountIn,
@@ -151,7 +151,7 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
   };
 
   useEffect(() => {
-    console.log('PnLCard mounted/updated with wallet:', walletAddress);
+    // console.log('PnLCard mounted/updated with wallet:', walletAddress);
     let mounted = true;
 
     const fetchData = async () => {

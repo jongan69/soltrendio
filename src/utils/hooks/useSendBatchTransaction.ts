@@ -18,7 +18,7 @@ export const useSendBatchTransaction = () => {
   ) => {
     try {
       setSending(true);
-      console.log(`Entering sendTransactionBatch: ${description}`);
+      // console.log(`Entering sendTransactionBatch: ${description}`);
 
       const { blockhash } = await connection.getLatestBlockhash({ commitment: 'processed' });
 
@@ -57,7 +57,7 @@ export const useSendBatchTransaction = () => {
         const { context: { slot: minContextSlot } } = await connection.getLatestBlockhashAndContext({ commitment: 'processed' });
         await sendTransaction(signedBatchTransaction[0], connection, { minContextSlot });
 
-        console.log("Completed sending batch transaction");
+        // console.log("Completed sending batch transaction");
         toast.success('Batch transaction confirmed successfully!');
       }
 
@@ -65,7 +65,7 @@ export const useSendBatchTransaction = () => {
     } catch (error: any) {
       setSending(false);
       console.error(`Error during transaction batch send: ${description}`, error.toString());
-      console.log("Failed Instructions:", instructions); // Log the instructions causing the error
+      // console.log("Failed Instructions:", instructions); // Log the instructions causing the error
       throw new Error(`Error during transaction batch send: ${description}, ${error.toString()}`);
     }
   }, []);

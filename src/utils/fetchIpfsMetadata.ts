@@ -3,7 +3,7 @@ const DEFAULT_IMAGE_URL = process.env.UNKNOWN_IMAGE_URL || "https://s3.coinmarke
 export const fetchIpfsMetadata = async (cid: string) => {
   try {
     if (!cid) {
-      console.log(`No IPFS CID provided: ${cid}`);
+      // console.log(`No IPFS CID provided: ${cid}`);
       return { imageUrl: DEFAULT_IMAGE_URL };
     }
 

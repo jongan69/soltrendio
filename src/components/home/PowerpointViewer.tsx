@@ -56,7 +56,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 });
                 const url = URL.createObjectURL(blob);
                 setPptxData(url);
-                console.log(url);
+                // console.log(url);
 
             } catch (error) {
                 console.error('Error in PowerPoint generation:', error);
