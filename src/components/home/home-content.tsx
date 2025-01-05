@@ -865,7 +865,7 @@ export function HomeContent() {
           </div>}
 
           {/* Add PnL Card here */}
-          {publicKey && <PnLCard walletAddress={publicKey?.toBase58() || submittedAddress} />}
+          {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
 
           {summary && thesis && publicKey && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
