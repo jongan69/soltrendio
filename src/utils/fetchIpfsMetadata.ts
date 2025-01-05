@@ -6,12 +6,16 @@ export const fetchIpfsMetadata = async (cid: string) => {
       // console.log(`No IPFS CID provided: ${cid}`);
       return { imageUrl: DEFAULT_IMAGE_URL };
     }
-
-    const response = await fetch(`/api/ipfs/ipfs-proxy?cid=${cid}`);
-    if (!response.ok) return { imageUrl: DEFAULT_IMAGE_URL };
-    return await response.json();
+    try {
+      const response = await fetch(`/api/ipfs/ipfs-proxy?cid=${cid}`);
+      if (!response.ok) return { imageUrl: DEFAULT_IMAGE_URL };
+      return await response.json();
+    } catch (error) {
+      console.error("Error Fetching IPFS Data Using Default:", DEFAULT_IMAGE_URL);
+      return { imageUrl: DEFAULT_IMAGE_URL };
+    }
   } catch (error) {
-    console.error("Error Fetching IPFS Data Using Default:", DEFAULT_IMAGE_URL);
+    console.error("Error Fetching IPFS Data:", error);
     return { imageUrl: DEFAULT_IMAGE_URL };
   }
 };
