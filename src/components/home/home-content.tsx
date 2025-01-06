@@ -124,6 +124,8 @@ export function HomeContent() {
   const [originalDomain, setOriginalDomain] = useState<string>("");
   const [similarCoins, setSimilarCoins] = useState<any[]>([]);
   const [createdPortId, setCreatedPortId] = useState<string | null>(null);
+  const [hasEligibleTokens, setHasEligibleTokens] = useState<boolean>(false);
+  const [isCreatingPortfolio, setIsCreatingPortfolio] = useState<boolean>(false);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -722,6 +724,17 @@ export function HomeContent() {
     fetchSimilarCoins();
   }, [tokens]);
 
+  useEffect(() => {
+    if (tokens && tokens.length > 0) {
+      const pumpTokens = tokens.filter(token => 
+        token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
+      );
+      setHasEligibleTokens(pumpTokens.length > 0);
+    } else {
+      setHasEligibleTokens(false);
+    }
+  }, [tokens]);
+
   // Loading State
   if (loading || !tokens || signState === "loading") {
     return (
@@ -753,22 +766,24 @@ export function HomeContent() {
       return;
     }
 
-    // Filter tokens that end with "pump"
-    const pumpTokens = tokens.filter(token => 
-      token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
-    );
-
-    if (pumpTokens.length === 0) {
-      toast.error("No eligible tokens found. Only tokens ending with 'pump' can be added.");
-      return;
-    }
-
-    // Take only the first 4 tokens, sorted by USD value
-    const topPumpTokens = pumpTokens
-      .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
-      .slice(0, 4);
-
+    setIsCreatingPortfolio(true); // Set loading state
+    
     try {
+      // Filter tokens that end with "pump"
+      const pumpTokens = tokens.filter(token => 
+        token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
+      );
+
+      if (pumpTokens.length === 0) {
+        toast.error("No eligible tokens found. Only tokens ending with 'pump' can be added.");
+        return;
+      }
+
+      // Take only the first 4 tokens, sorted by USD value
+      const topPumpTokens = pumpTokens
+        .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+        .slice(0, 4);
+
       const response = await fetch('/api/port/create', {
         method: 'POST',
         headers: {
@@ -791,6 +806,8 @@ export function HomeContent() {
     } catch (error) {
       console.error('Error creating portfolio:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create portfolio');
+    } finally {
+      setIsCreatingPortfolio(false); // Reset loading state
     }
   };
 
@@ -883,10 +900,12 @@ export function HomeContent() {
                   </a>
                 ) : (
                   <button
-                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-green-500 to-blue-500 border-none text-white hover:from-green-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
+                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-green-500 to-blue-500 border-none text-white hover:from-green-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-500 disabled:hover:to-blue-500"
                     onClick={handleCreatePortfolio}
+                    disabled={!hasEligibleTokens || isCreatingPortfolio}
+                    title={!hasEligibleTokens ? "No eligible tokens found. Only tokens ending with 'pump' can be added." : ""}
                   >
-                    Create Pump Portfolio
+                    {isCreatingPortfolio ? "Creating..." : "Create Portfolio"}
                   </button>
                 )}
               </div>
@@ -903,7 +922,7 @@ export function HomeContent() {
               <div className="space-y-4">
                 {similarCoins.map((coin, index) => (
                   <div key={index} className="border-b border-gray-200 pb-4 last:border-0">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                       <div>
                         <h3 className="text-lg font-semibold">
                           {coin.newCoin.name} ({coin.newCoin.symbol})
@@ -914,7 +933,7 @@ export function HomeContent() {
                         <p className="text-sm text-gray-600 mt-1">
                           {coin.newCoin.description}
                         </p>
-                        <div className="flex space-x-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2">
                           {coin.link && (
                             <a
                               href={coin.link}
@@ -937,7 +956,7 @@ export function HomeContent() {
                           )}
                         </div>
                       </div>
-                      <div className="bg-purple-100 px-3 py-1 rounded-full">
+                      <div className="bg-purple-100 px-3 py-1 rounded-full mt-2 sm:mt-0">
                         <span className="text-sm font-medium text-purple-800">
                           {(coin.similarityScore * 100).toFixed(0)}% Match
                         </span>
