@@ -15,7 +15,7 @@ export default async function handler(
   }
 
   try {
-    const { portfolioName, mintAddresses } = req.body as CreatePortfolioRequest;
+    const { portfolioName, mintAddresses, tokens } = req.body as CreatePortfolioRequest;
 
     // Validate request body
     if (!portfolioName || !mintAddresses || !Array.isArray(mintAddresses)) {
@@ -53,8 +53,9 @@ export default async function handler(
     // Save portfolio to MongoDB
     const portfolio = await portfoliosCollection.insertOne({
       portfolioName,
-      portfolioId: data.id,
       mintAddresses,
+      portfolioId: data.id,
+      tokens: tokens,
     });
     await client.close();
 

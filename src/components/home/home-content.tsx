@@ -791,7 +791,8 @@ export function HomeContent() {
         },
         body: JSON.stringify({
           portfolioName: generatePortfolioName(topPumpTokens),
-          mintAddresses: topPumpTokens.map(token => token.mintAddress)
+          mintAddresses: topPumpTokens.map(token => token.mintAddress),
+          tokens: topPumpTokens
         })
       });
 
