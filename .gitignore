@@ -15,6 +15,7 @@
 # production
 /build
 
+
 # misc
 .DS_Store
 *.pem
@@ -36,3 +37,7 @@ yarn-error.log*
 
 /scripts/node_modules
 /scripts/sp500_companies.csv
+/scripts/python/cann/cann_model.pth
+/scripts/python/cann/cann_metadata.json
+/scripts/python/ddqn/ddqn_model.pth
+/scripts/python/ddqn/ddqn_metadata.json
