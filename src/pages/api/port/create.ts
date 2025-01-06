@@ -5,6 +5,7 @@ interface CreatePortfolioRequest {
   portfolioName: string;
   mintAddresses: string[];
   tokens: any[];
+  createdBy: string;
 }
 
 export default async function handler(
@@ -16,7 +17,7 @@ export default async function handler(
   }
 
   try {
-    const { portfolioName, mintAddresses, tokens } = req.body as CreatePortfolioRequest;
+    const { portfolioName, mintAddresses, tokens, createdBy } = req.body as CreatePortfolioRequest;
 
     // Validate request body
     if (!portfolioName || !mintAddresses || !Array.isArray(mintAddresses)) {
@@ -57,6 +58,7 @@ export default async function handler(
       mintAddresses,
       portfolioId: data.id,
       tokens: tokens,
+      createdBy: createdBy,
     });
     await client.close();
 

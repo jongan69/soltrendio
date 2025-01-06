@@ -790,6 +790,7 @@ export function HomeContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          createdBy: publicKey?.toBase58(),
           portfolioName: generatePortfolioName(topPumpTokens),
           mintAddresses: topPumpTokens.map(token => token.mintAddress),
           tokens: topPumpTokens
