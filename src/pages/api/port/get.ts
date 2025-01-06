@@ -12,7 +12,7 @@ interface PortfolioPerformance {
 async function getPortfolioPerformance(portfolioId: string): Promise<PortfolioPerformance | null> {
     try {
         const response = await fetch(
-            `https://d3q4fpkflgd1hz.cloudfront.net//portfolios/performance/live/${portfolioId}`,
+            `https://d3q4fpkflgd1hz.cloudfront.net//portfolios/performance/${portfolioId}`,
             {
                 method: 'GET'
             }
