@@ -56,6 +56,7 @@ const INITIAL_RETRY_DELAY = 1000; // 1 second
 // Update the topHoldings interface
 interface TopHolding {
   symbol: string;
+  contractAddress: string;
   balance: number;
   usdValue: number;
   isNft: boolean;
@@ -285,6 +286,7 @@ export function HomeContent() {
 
               return {
                 symbol: token.symbol || '',
+                contractAddress: token.mintAddress || '',
                 balance: token.amount,
                 usdValue: token.usdValue,
                 isNft: token.isNft || false,

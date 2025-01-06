@@ -32,6 +32,7 @@ export async function getTokenInfo(address: string) {
       
       return {
         name: pair.baseToken.name,
+        contractAddress: address,
         symbol: pair.baseToken.symbol,
         decimals: pair.baseToken.decimals,
         marketCap: pair.marketCap,
