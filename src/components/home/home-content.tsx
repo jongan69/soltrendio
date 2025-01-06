@@ -64,6 +64,39 @@ interface TopHolding {
   marketCap?: number;
 }
 
+// Add this interface near other interfaces
+interface CreatePortfolioResponse {
+  message: string;
+  id: string;
+}
+
+const generatePortfolioName = (tokens: TokenData[]): string => {
+  // Get unique tickers, remove any numbers, and split into parts
+  const tickers = [...new Set(tokens.map(t => t.symbol || ''))]
+    .filter(Boolean)
+    .map(ticker => ticker.replace(/[0-9]/g, ''));
+  
+  // Split tickers into parts (2-3 chars each)
+  const parts = tickers.flatMap(ticker => {
+    const len = ticker.length;
+    return [
+      ticker.slice(0, Math.min(3, len)),
+      len > 3 ? ticker.slice(-2) : ''
+    ].filter(Boolean);
+  });
+
+  if (parts.length === 0) return `PUMP${Math.floor(Math.random() * 999)}`;
+
+  // Create a random combination (max 3 parts to keep it under 12 chars)
+  const numParts = Math.min(3, parts.length);
+  const shuffled = parts.sort(() => Math.random() - 0.5);
+  const combined = shuffled.slice(0, numParts).join('');
+
+  // Ensure it's not too long and add random number if too short
+  const name = combined.slice(0, 8);
+  return name.length < 4 ? `${name}${Math.floor(Math.random() * 999)}` : name;
+};
+
 export function HomeContent() {
   const { publicKey, sendTransaction } = useWallet();
   const [signState, setSignState] = useState<string>("initial");
@@ -90,6 +123,7 @@ export function HomeContent() {
   const [canGeneratePowerpoint, setCanGeneratePowerpoint] = useState<boolean>(false);
   const [originalDomain, setOriginalDomain] = useState<string>("");
   const [similarCoins, setSimilarCoins] = useState<any[]>([]);
+  const [createdPortId, setCreatedPortId] = useState<string | null>(null);
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -713,6 +747,53 @@ export function HomeContent() {
 
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
+  const handleCreatePortfolio = async () => {
+    if (!tokens || tokens.length === 0) {
+      toast.error("No tokens found to create portfolio");
+      return;
+    }
+
+    // Filter tokens that end with "pump"
+    const pumpTokens = tokens.filter(token => 
+      token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
+    );
+
+    if (pumpTokens.length === 0) {
+      toast.error("No eligible tokens found. Only tokens ending with 'pump' can be added.");
+      return;
+    }
+
+    // Take only the first 4 tokens, sorted by USD value
+    const topPumpTokens = pumpTokens
+      .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+      .slice(0, 4);
+
+    try {
+      const response = await fetch('/api/port/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolioName: generatePortfolioName(topPumpTokens),
+          mintAddresses: topPumpTokens.map(token => token.mintAddress)
+        })
+      });
+
+      const data: CreatePortfolioResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error('Failed to create portfolio');
+      }
+
+      setCreatedPortId(data.id);
+      toast.success(`${data.message} (Added ${topPumpTokens.length} tokens)`);
+    } catch (error) {
+      console.error('Error creating portfolio:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create portfolio');
+    }
+  };
+
   return (
     <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-8 max-w-4xl overflow-x-hidden">
       <div className="mb-4 sm:mb-8">
@@ -791,6 +872,23 @@ export function HomeContent() {
                 >
                   Tweet
                 </button>
+                {createdPortId ? (
+                  <a
+                    href={`https://port.fun/${createdPortId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-purple-500 to-blue-500 border-none text-white hover:from-purple-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
+                  >
+                    View Port
+                  </a>
+                ) : (
+                  <button
+                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-green-500 to-blue-500 border-none text-white hover:from-green-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
+                    onClick={handleCreatePortfolio}
+                  >
+                    Create Pump Portfolio
+                  </button>
+                )}
               </div>
             </div>
             <div className="prose prose-sm sm:prose max-w-none break-words overflow-x-hidden whitespace-pre-line text-gray-900 text-sm sm:text-base">
