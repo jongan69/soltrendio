@@ -15,7 +15,6 @@
 # production
 /build
 
-
 # misc
 .DS_Store
 *.pem
@@ -35,6 +34,19 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Python related
 /scripts/node_modules
 /scripts/sp500_companies.csv
 /scripts
+*.pyc
+__pycache__/
+venv/
+env/
+
+# Large binary files
+*.dylib
+*.so
+*.dll
+*.model
+*.pth
+*.onnx
