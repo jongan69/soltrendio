@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb';
 interface CreatePortfolioRequest {
   portfolioName: string;
   mintAddresses: string[];
+  tokens: any[];
 }
 
 export default async function handler(
