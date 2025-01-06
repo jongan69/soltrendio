@@ -12,12 +12,13 @@ interface PortfolioPerformance {
 async function getPortfolioPerformance(portfolioId: string): Promise<PortfolioPerformance | null> {
     try {
         const response = await fetch(
-            `https://d3q4fpkflgd1hz.cloudfront.net/portfolios/performance/${portfolioId}`,
+            `https://d3q4fpkflgd1hz.cloudfront.net//portfolios/performance/live/${portfolioId}`,
             {
                 method: 'GET'
             }
         );
 
+        console.log('Portfolio performance response:', response);
         if (!response.ok) return null;
         return await response.json();
     } catch (error) {
@@ -52,12 +53,12 @@ export default async function handler(
         // Fetch performance data for each portfolio
         const portfoliosWithPerformance = await Promise.all(
             portfolios.map(async (portfolio) => {
-                const performance = await getPortfolioPerformance(portfolio._id.toString());
-                console.log(`Performance for portfolio ${portfolio._id}:`, performance);
+                const performance = await getPortfolioPerformance(portfolio.portfolioId);
+                console.log(`Performance for portfolio ${portfolio.portfolioId}:`, performance);
 
                 return {
                     portfolio_name: portfolio.portfolioName,
-                    portfolio_id: portfolio._id,
+                    portfolio_id: portfolio.portfolioId,
                     mint_addresses: portfolio.mintAddresses,
                     created_at: portfolio.createdAt,
                     performance: performance ? {
@@ -71,7 +72,22 @@ export default async function handler(
             })
         );
 
-        // Sort portfolios by 24h performance
+        // Get top performers for each time frame
+        const getTopPerformers = (timeFrame: '30m' | '1h' | '6h' | '24h') => {
+            return portfoliosWithPerformance
+                .filter(p => p.performance && p.performance[timeFrame] !== 0)
+                .sort((a, b) => (b.performance?.[timeFrame] || 0) - (a.performance?.[timeFrame] || 0))
+                .slice(0, 5); // Get top 5 performers
+        };
+
+        const topPerformers = {
+            '30m': getTopPerformers('30m'),
+            '1h': getTopPerformers('1h'),
+            '6h': getTopPerformers('6h'),
+            '24h': getTopPerformers('24h')
+        };
+
+        // Sort all portfolios by 24h performance for the complete list
         const sortedPortfolios = portfoliosWithPerformance
             .filter(p => p.performance && p.performance['24h'] !== 0)
             .sort((a, b) => (b.performance?.['24h'] || 0) - (a.performance?.['24h'] || 0));
@@ -80,7 +96,7 @@ export default async function handler(
 
         return res.status(200).json({
             portfolios: sortedPortfolios,
-            bestPerformer: sortedPortfolios[0] || null
+            topPerformers
         });
 
     } catch (error) {

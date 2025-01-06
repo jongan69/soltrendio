@@ -43,7 +43,8 @@ export default async function handler(
     }
 
     const data = await response.json();
-
+    console.log('Portfolio creation response:', data);
+    console.log('Portfolio ID:', data.id);
     // Connect to MongoDB
     const client = await MongoClient.connect(process.env.MONGODB_URI as string);
     const db = client.db('walletAnalyzer');
@@ -52,6 +53,7 @@ export default async function handler(
     // Save portfolio to MongoDB
     const portfolio = await portfoliosCollection.insertOne({
       portfolioName,
+      portfolioId: data.id,
       mintAddresses,
     });
     await client.close();
