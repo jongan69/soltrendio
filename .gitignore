@@ -37,3 +37,4 @@ yarn-error.log*
 
 /scripts/node_modules
 /scripts/sp500_companies.csv
+/scripts
