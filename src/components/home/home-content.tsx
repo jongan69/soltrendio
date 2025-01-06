@@ -25,6 +25,8 @@ import {
 import { NETWORK } from "@utils/endpoints";
 
 
+
+
 // UI Components
 import { toast } from "react-hot-toast";
 import { Circles } from "react-loader-spinner";
@@ -51,8 +53,15 @@ import { getPublicKeyFromSolDomain } from "@utils/getPublicKeyFromDomain";
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 
-
-
+// Update the topHoldings interface
+interface TopHolding {
+  symbol: string;
+  balance: number;
+  usdValue: number;
+  isNft: boolean;
+  price?: number;
+  marketCap?: number;
+}
 
 export function HomeContent() {
   const { publicKey, sendTransaction } = useWallet();
@@ -264,13 +273,26 @@ export function HomeContent() {
           const topHoldings = tokens
             .filter(token => token.symbol && !isSolanaAddress(token.symbol))
             .sort((a, b) => b.usdValue - a.usdValue)
-            .slice(0, 10)
-            .map(token => ({
-              symbol: token.symbol || '',
-              balance: token.amount,
-              usdValue: token.usdValue,
-              isNft: token.isNft
-            }));
+            .slice(0, 10);
+
+          // Fetch additional token info for each holding
+          const enrichedTopHoldings = await Promise.all(
+            topHoldings.map(async (token): Promise<TopHolding> => {
+              let tokenInfo = null;
+              if (token.mintAddress) {
+                tokenInfo = await getTokenInfo(token.mintAddress);
+              }
+
+              return {
+                symbol: token.symbol || '',
+                balance: token.amount,
+                usdValue: token.usdValue,
+                isNft: token.isNft || false,
+                price: tokenInfo?.price || 0,
+                marketCap: tokenInfo?.marketCap || 0
+              };
+            })
+          );
 
           // Check the balance of the specific token
           const specificTokenAccount = tokenAccounts.value.find(account =>
@@ -289,12 +311,12 @@ export function HomeContent() {
           if (thesis) await fetchSentimentAnalysis(thesis);
           if (tokens) await fetchGoogleTrends(tokens);
 
-          // console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, topHoldings);
+          console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, enrichedTopHoldings);
           // Use calculatedTotalValue instead of totalValue state
           await updateWalletToDb(
             walletAddress.toString(),
             calculatedTotalValue,
-            topHoldings,
+            enrichedTopHoldings,
             originalDomain
           ).catch(error => {
             console.error('Error updating wallet data:', error);
