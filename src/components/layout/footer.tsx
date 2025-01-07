@@ -46,7 +46,7 @@ export function Footer() {
     <footer className="footer footer-center p-4 text-base-content">
       <div className="flex flex-col items-center gap-2">
         <p className="flex items-center gap-2">
-          Soltrendio was faily launched on
+          Soltrendio was fairly launched on
           <a
             href="https://pump.fun/coin/BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"
             target="_blank"
