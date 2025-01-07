@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '../db/connectDB';
+import { fetchJupiterSwap } from '@utils/fetchJupiterSwap';
+import { DEFAULT_TOKEN_3 } from '@utils/globals';
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,7 +15,8 @@ export default async function handler(
     const client = await connectToDatabase();
     const db = client.db('walletAnalyzer');
     const wallets = db.collection('wallets');
-
+    const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
+    const trendPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
     // Update the 24-hour stats calculation
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
@@ -335,6 +338,7 @@ export default async function handler(
     ]).toArray();
 
     return res.status(200).json({
+      trendPrice,
       totalUniqueWallets: uniqueWalletsCount,
       portfolioMetrics: {
         averagePortfolioValue: aggregationResult[0]?.averageTotalValue || 0,
