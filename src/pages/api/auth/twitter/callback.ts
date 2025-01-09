@@ -24,7 +24,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { oauth_token, oauth_verifier, wallet } = req.query;
+  const { oauth_token, oauth_verifier, wallet, origin } = req.query;
 
   if (!oauth_token || !oauth_verifier || !wallet) {
     return res.status(400).json({ error: 'Missing required parameters' });
@@ -69,6 +69,7 @@ export default async function handler(
       screenName
     });
 
+    console.log('origin', origin);
     // Close the popup and notify the parent window
     res.setHeader('Content-Type', 'text/html');
     res.send(`
@@ -79,7 +80,7 @@ export default async function handler(
               type: 'TWITTER_AUTH_SUCCESS', 
               screenName: '${screenName}',
               userId: '${userId}'
-            }, '*');
+            }, '${origin || '*'}');
             window.close();
           </script>
         </body>

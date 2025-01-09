@@ -29,7 +29,7 @@ export default async function handler(
   }
 
   try {
-    const { wallet } = req.body;
+    const { wallet, origin } = req.body;
     if (!wallet) {
       return res.status(400).json({ error: 'Wallet address is required' });
     }
@@ -43,7 +43,7 @@ export default async function handler(
       url: 'https://api.twitter.com/oauth/request_token',
       method: 'POST',
       data: { 
-        oauth_callback: `${CALLBACK_URL}?wallet=${wallet}`,
+        oauth_callback: `${CALLBACK_URL}?wallet=${wallet}&origin=${origin}`,
         oauth_nonce,
         oauth_timestamp,
         oauth_version: '1.0'

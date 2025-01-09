@@ -136,12 +136,67 @@ export function HomeContent() {
     isLinked: false
   });
 
+  // Effect for handling Twitter auth messages
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      console.log("Received message:", event.data);
+      if (event.data.type === 'TWITTER_AUTH_SUCCESS') {
+        setTwitterAuth({
+          isLinked: true,
+          username: event.data.screenName
+        });
+        
+        toast.success(`Successfully linked Twitter account @${event.data.screenName}`);
+        
+        if (publicKey) {
+          await checkTwitterStatus();
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [publicKey]); // Add publicKey to dependencies
+
+  // Effect for checking Twitter status on mount and wallet changes
+  useEffect(() => {
+    if (publicKey) {
+      checkTwitterStatus();
+    }
+  }, [publicKey]);
+
+  // Effect for wallet changes
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
       prevPublicKey.current = publicKey.toBase58();
       setSignState("initial");
       saveWalletToDb(publicKey.toBase58())
         .catch(error => console.error('Error saving wallet:', error));
+    }
+  }, [publicKey]);
+
+  // Helper function for checking Twitter status
+  const checkTwitterStatus = useCallback(async () => {
+    if (!publicKey) return;
+
+    try {
+      const response = await fetch('/api/auth/twitter/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          wallet: publicKey.toString()
+        })
+      });
+
+      const data = await response.json();
+      setTwitterAuth({
+        isLinked: data.isLinked,
+        username: data.username
+      });
+    } catch (error) {
+      console.error('Error checking Twitter status:', error);
     }
   }, [publicKey]);
 
@@ -751,6 +806,9 @@ export function HomeContent() {
         return;
       }
 
+      // Show loading toast
+      const loadingToast = toast.loading('Connecting to Twitter...');
+
       // Get OAuth URL from our API
       const response = await fetch('/api/auth/twitter/authorize', {
         method: 'POST',
@@ -758,9 +816,14 @@ export function HomeContent() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          wallet: publicKey.toString()
+          wallet: publicKey.toString(),
+          origin: window.location.origin
         })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate Twitter authentication');
+      }
 
       const { url } = await response.json();
       
@@ -770,45 +833,37 @@ export function HomeContent() {
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
       
-      window.open(
+      const popup = window.open(
         url,
         'Twitter Auth',
         `width=${width},height=${height},left=${left},top=${top}`
       );
+
+      // Check if popup was blocked
+      if (!popup) {
+        toast.error('Please allow popups for Twitter authentication', {
+          id: loadingToast
+        });
+        return;
+      }
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      // Start checking if popup closed
+      const checkPopupClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          // Always check Twitter status when popup closes
+          checkTwitterStatus();
+        }
+      }, 1000);
+
     } catch (error) {
       console.error('Twitter auth error:', error);
       toast.error('Failed to initiate Twitter authentication');
     }
   };
-
-  // Add this effect to check Twitter link status
-  useEffect(() => {
-    const checkTwitterStatus = async () => {
-      if (!publicKey) return;
-
-      try {
-        const response = await fetch('/api/auth/twitter/status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            wallet: publicKey.toString()
-          })
-        });
-
-        const data = await response.json();
-        setTwitterAuth({
-          isLinked: data.isLinked,
-          username: data.username
-        });
-      } catch (error) {
-        console.error('Error checking Twitter status:', error);
-      }
-    };
-
-    checkTwitterStatus();
-  }, [publicKey]);
 
   // Loading State
   if (loading || !tokens || signState === "loading") {
@@ -1166,20 +1221,27 @@ export function HomeContent() {
                     <span className="text-sm text-gray-600">
                       Linked to @{twitterAuth.username}
                     </span>
-                    <button
-                      onClick={() => {/* Add unlink handler if needed */}}
-                      className="btn btn-sm btn-outline btn-error"
+                    <svg 
+                      className="w-5 h-5 text-green-500" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                     >
-                      Unlink
-                    </button>
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M5 13l4 4L19 7" 
+                      />
+                    </svg>
                   </div>
                 ) : (
                   <button
                     onClick={handleTwitterAuth}
-                    className="btn btn-sm sm:btn-md bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white border-none"
+                    className="btn btn-sm sm:btn-md bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white border-none flex items-center gap-2"
                   >
                     <svg
-                      className="w-5 h-5 mr-2"
+                      className="w-5 h-5"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >

@@ -1,7 +1,17 @@
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI!;
-const client = new MongoClient(uri);
+
+// Create a single client instance that can be reused
+let client: MongoClient | null = null;
+
+async function getMongoClient() {
+  if (!client) {
+    client = new MongoClient(uri);
+    await client.connect();
+  }
+  return client;
+}
 
 interface TwitterCredentials {
   accessToken: string;
@@ -12,8 +22,8 @@ interface TwitterCredentials {
 
 export async function saveTwitterCredentials(walletAddress: string, credentials: TwitterCredentials) {
   try {
-    await client.connect();
-    const database = client.db('walletAnalyzer'); 
+    const mongoClient = await getMongoClient();
+    const database = mongoClient.db('walletAnalyzer'); 
     const wallets = database.collection('wallets');
 
     // Update the wallet document with Twitter credentials
@@ -36,15 +46,13 @@ export async function saveTwitterCredentials(walletAddress: string, credentials:
   } catch (error) {
     console.error('Error saving Twitter credentials:', error);
     throw error;
-  } finally {
-    await client.close();
   }
 }
 
 export async function getTwitterCredentials(walletAddress: string) {
   try {
-    await client.connect();
-    const database = client.db('walletAnalyzer');
+    const mongoClient = await getMongoClient();
+    const database = mongoClient.db('walletAnalyzer');
     const wallets = database.collection('wallets');
 
     const wallet = await wallets.findOne({ address: walletAddress });
@@ -53,7 +61,13 @@ export async function getTwitterCredentials(walletAddress: string) {
   } catch (error) {
     console.error('Error getting Twitter credentials:', error);
     throw error;
-  } finally {
+  }
+}
+
+// Optional: Add a cleanup function to close the connection when the app shuts down
+export async function closeMongoConnection() {
+  if (client) {
     await client.close();
+    client = null;
   }
 } 
