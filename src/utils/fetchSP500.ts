@@ -1,8 +1,7 @@
-import { MongoClient } from 'mongodb';
+import { connectToDatabase } from '@pages/api/db/connectDB';
 import yahooFinance from 'yahoo-finance2';
 
 // MongoDB configuration
-const MONGO_URI = process.env.MONGODB_URI;
 const DB_NAME = 'stockData';
 const COLLECTION_NAME = 'sp500Companies';
 
@@ -10,11 +9,9 @@ const COLLECTION_NAME = 'sp500Companies';
  * Fetch and save market caps for S&P 500 companies
  */
 export const fetchSP500MarketCap = async (): Promise<number> => {
-  const client = new MongoClient(MONGO_URI as string);
-
+  // Connect to MongoDB
+  const client = await connectToDatabase();
   try {
-    // Connect to MongoDB
-    await client.connect();
     const db = client.db(DB_NAME);
     const collection = db.collection(COLLECTION_NAME);
 

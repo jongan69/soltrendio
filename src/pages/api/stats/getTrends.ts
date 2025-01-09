@@ -21,45 +21,45 @@ export default async function handler(
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     // Add this debugging section
-    const anyWallet = await wallets.findOne({});
-    console.log('Sample wallet fields:', {
-      availableFields: anyWallet ? Object.keys(anyWallet) : [],
-      sampleData: anyWallet
-    });
+    // const anyWallet = await wallets.findOne({});
+    // console.log('Sample wallet fields:', {
+    //   availableFields: anyWallet ? Object.keys(anyWallet) : [],
+    //   sampleData: anyWallet
+    // });
 
     // Check total number of documents
-    const totalDocs = await wallets.countDocuments();
-    console.log('Total documents in collection:', totalDocs);
+    // const totalDocs = await wallets.countDocuments();
+    // console.log('Total documents in collection:', totalDocs);
 
     // Check what fields we have in the collection
-    const distinctFields = await wallets.aggregate([
-      { 
-        $project: { 
-          fields: { $objectToArray: "$$ROOT" } 
-        }
-      },
-      { 
-        $unwind: "$fields" 
-      },
-      { 
-        $group: { 
-          _id: "$fields.k" 
-        } 
-      }
-    ]).toArray();
+    // const distinctFields = await wallets.aggregate([
+    //   { 
+    //     $project: { 
+    //       fields: { $objectToArray: "$$ROOT" } 
+    //     }
+    //   },
+    //   { 
+    //     $unwind: "$fields" 
+    //   },
+    //   { 
+    //     $group: { 
+    //       _id: "$fields.k" 
+    //     } 
+    //   }
+    // ]).toArray();
     
-    console.log('Available fields in collection:', distinctFields.map(f => f._id));
+    // console.log('Available fields in collection:', distinctFields.map(f => f._id));
 
-    const recentUpdates = await wallets.find({
-      lastValueChange: { $gte: twentyFourHoursAgo }
-    }).limit(5).toArray();
+    // const recentUpdates = await wallets.find({
+    //   lastValueChange: { $gte: twentyFourHoursAgo }
+    // }).limit(5).toArray();
 
-    console.log('Recent updates count:', recentUpdates.length);
-    console.log('First few recent updates:', recentUpdates.map(w => ({
-      lastValueChange: w.lastValueChange,
-      totalValue: w.totalValue,
-      previousTotalValue: w.previousTotalValue
-    })));
+    // console.log('Recent updates count:', recentUpdates.length);
+    // console.log('First few recent updates:', recentUpdates.map(w => ({
+    //   lastValueChange: w.lastValueChange,
+    //   totalValue: w.totalValue,
+    //   previousTotalValue: w.previousTotalValue
+    // })));
 
     // Add this debug query before the main aggregation
     const recentWalletUpdates = await wallets.find({
@@ -79,25 +79,25 @@ export default async function handler(
     );
 
     // Add this debug query to check date fields
-    const dateCheck = await wallets.aggregate([
-      {
-        $match: {
-          lastValueChange: { $exists: true }
-        }
-      },
-      {
-        $project: {
-          address: 1,
-          lastValueChange: 1,
-          totalValue: 1,
-          previousTotalValue: 1,
-          dateType: { $type: "$lastValueChange" }
-        }
-      },
-      { $limit: 5 }
-    ]).toArray();
+    // const dateCheck = await wallets.aggregate([
+    //   {
+    //     $match: {
+    //       lastValueChange: { $exists: true }
+    //     }
+    //   },
+    //   {
+    //     $project: {
+    //       address: 1,
+    //       lastValueChange: 1,
+    //       totalValue: 1,
+    //       previousTotalValue: 1,
+    //       dateType: { $type: "$lastValueChange" }
+    //     }
+    //   },
+    //   { $limit: 5 }
+    // ]).toArray();
 
-    console.log('Date field check:', JSON.stringify(dateCheck, null, 2));
+    // console.log('Date field check:', JSON.stringify(dateCheck, null, 2));
 
     // Modify the valueChanges stage to be more lenient and show what we're matching
     const last24HoursStats = await wallets.aggregate([
@@ -188,7 +188,7 @@ export default async function handler(
     ]).toArray();
 
     // Add this debug log
-    console.log('24 Hour Stats Raw:', JSON.stringify(last24HoursStats, null, 2));
+    // console.log('24 Hour Stats Raw:', JSON.stringify(last24HoursStats, null, 2));
 
     // Get total unique wallets count
     const uniqueWalletsCount = await wallets.countDocuments();

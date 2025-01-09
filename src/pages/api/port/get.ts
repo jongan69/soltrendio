@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MongoClient } from 'mongodb';
+import { connectToDatabase } from '../db/connectDB';
 
 interface PortfolioPerformance {
     thirtyMinutes: number;
@@ -38,7 +38,7 @@ export default async function handler(
     let client;
     try {
         // Connect to MongoDB
-        client = await MongoClient.connect(process.env.MONGODB_URI as string);
+        client = await connectToDatabase();
         const db = client.db('walletAnalyzer');
         const portfoliosCollection = db.collection('portfolios');   
 

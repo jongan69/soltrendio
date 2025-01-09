@@ -36,7 +36,7 @@ export default async function handler(
 
         const response = completion.choices[0].message.content;
         console.log("Raw AI response:", response);
-        
+
         try {
             const parsedResponse = JSON.parse(response || '{"similarCoins":[]}');
             console.log("Parsed response:", parsedResponse);
@@ -49,10 +49,10 @@ export default async function handler(
         }
     } catch (error: any) {
         console.error('Error in compare-tokens API:', error);
-        return res.status(500).json({ 
-            error: 'Failed to compare tokens', 
+        return res.status(500).json({
+            error: 'Failed to compare tokens',
             details: error.message,
-            response: error.response?.data 
+            response: error.response?.data
         });
     }
 } 

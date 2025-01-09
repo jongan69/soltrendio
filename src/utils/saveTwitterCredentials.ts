@@ -1,17 +1,4 @@
-import { MongoClient } from 'mongodb';
-
-const uri = process.env.MONGODB_URI!;
-
-// Create a single client instance that can be reused
-let client: MongoClient | null = null;
-
-async function getMongoClient() {
-  if (!client) {
-    client = new MongoClient(uri);
-    await client.connect();
-  }
-  return client;
-}
+import { connectToDatabase } from '@pages/api/db/connectDB';
 
 interface TwitterCredentials {
   accessToken: string;
@@ -22,8 +9,8 @@ interface TwitterCredentials {
 
 export async function saveTwitterCredentials(walletAddress: string, credentials: TwitterCredentials) {
   try {
-    const mongoClient = await getMongoClient();
-    const database = mongoClient.db('walletAnalyzer'); 
+    const client = await connectToDatabase();
+    const database = client.db('walletAnalyzer'); 
     const wallets = database.collection('wallets');
 
     // Update the wallet document with Twitter credentials
@@ -51,8 +38,8 @@ export async function saveTwitterCredentials(walletAddress: string, credentials:
 
 export async function getTwitterCredentials(walletAddress: string) {
   try {
-    const mongoClient = await getMongoClient();
-    const database = mongoClient.db('walletAnalyzer');
+    const client = await connectToDatabase();
+    const database = client.db('walletAnalyzer');
     const wallets = database.collection('wallets');
 
     const wallet = await wallets.findOne({ address: walletAddress });
@@ -63,11 +50,3 @@ export async function getTwitterCredentials(walletAddress: string) {
     throw error;
   }
 }
-
-// Optional: Add a cleanup function to close the connection when the app shuts down
-export async function closeMongoConnection() {
-  if (client) {
-    await client.close();
-    client = null;
-  }
-} 

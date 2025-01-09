@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { connectToDatabase } from './connectDB';
 
 const uri = process.env.MONGODB_URI;
 
@@ -22,7 +22,7 @@ export default async function handler(
   }
 
   try {
-    const client = await MongoClient.connect(uri as string);
+    const client = await connectToDatabase();
     const db = client.db('walletAnalyzer');
     const walletsCollection = db.collection('wallets');
 

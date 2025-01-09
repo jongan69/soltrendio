@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { connectToDatabase } from './connectDB';
 
 const uri = process.env.MONGODB_URI;
 
@@ -22,7 +22,7 @@ export default async function handler(
   }
 
   try {
-    const client = await MongoClient.connect(uri as string);
+    const client = await connectToDatabase();
     const db = client.db('walletAnalyzer');
     const walletsCollection = db.collection('wallets');
 
@@ -31,9 +31,9 @@ export default async function handler(
 
     // First get the current wallet data
     const currentWallet = await walletsCollection.findOne({ address });
-    
+
     // Only update previousTotalValue if the new value is different
-    const shouldUpdatePrevious = currentWallet && 
+    const shouldUpdatePrevious = currentWallet &&
       Math.abs(currentWallet.totalValue - totalValue) > 0.01; // Small threshold for floating point comparison
 
     // Update wallet with upsert
@@ -46,10 +46,10 @@ export default async function handler(
           topHoldings,
           lastSeen: timestamp,
           previousTotalValue: shouldUpdatePrevious ? currentWallet.totalValue : (currentWallet?.previousTotalValue || totalValue),
-          domain: domain || null,
+          domain: currentWallet?.domain || domain,
           lastValueChange: shouldUpdatePrevious ? timestamp : (currentWallet?.lastValueChange || timestamp)
         },
-        $setOnInsert: { 
+        $setOnInsert: {
           createdAt: new Date(),
           firstTotalValue: totalValue
         }
@@ -59,7 +59,7 @@ export default async function handler(
 
     await client.close();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: result.upsertedCount > 0 ? 'Wallet created successfully' : 'Wallet updated successfully',
       isNew: result.upsertedCount > 0
     });

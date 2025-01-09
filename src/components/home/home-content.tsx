@@ -3,12 +3,9 @@ import axios from "axios";
 
 // Web3.js
 import { useWallet } from "@solana/wallet-adapter-react";
-import { createTransferInstruction } from '@solana/spl-token';
 import {
   PublicKey,
   Connection,
-  Transaction,
-  SystemProgram,
   PublicKeyInitData
 } from "@solana/web3.js";
 
@@ -24,8 +21,10 @@ import {
 } from "@utils/globals";
 import { NETWORK } from "@utils/endpoints";
 
-
-
+// Types
+import { TopHolding } from "../../types/Topholdings";
+import { TwitterAuthState } from "../../types/Twitterauth";
+import { PremiumAnalytics } from "../../types/PremiumAnalytics";
 
 // UI Components
 import { toast } from "react-hot-toast";
@@ -33,15 +32,15 @@ import { Circles } from "react-loader-spinner";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import PowerpointViewer from "./PowerpointViewer";
-import ReactMarkdown from 'react-markdown';
 import { StatsTicker } from './StatsTicker';
 import { PnLCard } from './PnLCard';
+import { WalletInputForm } from './walllet-input';
+import { ThesisSection } from './thesis';
 
 // Utils
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
 import { getTokenInfo } from "@utils/getTokenInfo";
 import { isSolanaAddress } from "@utils/isSolanaAddress";
-import { handleTweetThis } from "@utils/handleTweet";
 import { saveWalletToDb } from "@utils/saveWallet";
 import { summarizeTokenData } from "@utils/summarizeTokenData";
 import { hasValidScores } from "@utils/validateScore";
@@ -49,65 +48,26 @@ import { updateWalletToDb } from "@utils/updateWallet";
 import { getSimilarCoins } from "@utils/getSimilarCoins";
 import { normalizeScore } from "@utils/normalizeScore";
 import { getPublicKeyFromSolDomain } from "@utils/getPublicKeyFromDomain";
+import { checkPremiumStatus } from "@utils/checkPremiumStatus";
+import { processTrendPayment } from "@utils/processTrendPayment";
+import { processSolTransfer } from "@utils/processSolTransfer";
+import { processTokenTransfer } from "@utils/processTokenTransfer";
+import { createPortfolio } from "@utils/createPortfolio";
+import { SimilarCoinsSection } from "./similar-coins";
+import { checkTwitterStatus } from "@utils/checkTwitterStatus";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 
-// Update the topHoldings interface
-interface TopHolding {
-  symbol: string;
-  contractAddress: string;
-  balance: number;
-  usdValue: number;
-  isNft: boolean;
-  price?: number;
-  marketCap?: number;
-}
-
-// Add this interface near other interfaces
-interface CreatePortfolioResponse {
-  message: string;
-  id: string;
-}
-
-// Add this interface near other interfaces
-interface TwitterAuthState {
-  isLinked: boolean;
-  username?: string;
-}
-
-const generatePortfolioName = (tokens: TokenData[]): string => {
-  // Get unique tickers, remove any numbers, and split into parts
-  const tickers = [...new Set(tokens.map(t => t.symbol || ''))]
-    .filter(Boolean)
-    .map(ticker => ticker.replace(/[0-9]/g, ''));
-  
-  // Split tickers into parts (2-3 chars each)
-  const parts = tickers.flatMap(ticker => {
-    const len = ticker.length;
-    return [
-      ticker.slice(0, Math.min(3, len)),
-      len > 3 ? ticker.slice(-2) : ''
-    ].filter(Boolean);
-  });
-
-  if (parts.length === 0) return `PUMP${Math.floor(Math.random() * 999)}`;
-
-  // Create a random combination (max 3 parts to keep it under 12 chars)
-  const numParts = Math.min(3, parts.length);
-  const shuffled = parts.sort(() => Math.random() - 0.5);
-  const combined = shuffled.slice(0, numParts).join('');
-
-  // Ensure it's not too long and add random number if too short
-  const name = combined.slice(0, 8);
-  return name.length < 4 ? `${name}${Math.floor(Math.random() * 999)}` : name;
-};
 
 export function HomeContent() {
+  const connection = new Connection(NETWORK);
   const { publicKey, sendTransaction } = useWallet();
+  const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
+
+
   const [signState, setSignState] = useState<string>("initial");
   const [tokens, setTokens] = useState<TokenData[]>([]);
-  const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
   const [loading, setLoading] = useState<boolean>(false);
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
   const [totalValue, setTotalValue] = useState<number>(0);
@@ -120,7 +80,6 @@ export function HomeContent() {
   const [drugUseScore, setDrugUseScore] = useState<number>(0);
   const [trendsData, setTrendsData] = useState([]);
   const [topSymbols, setTopSymbols] = useState<string[]>([]);
-  const connection = new Connection(NETWORK);
   const [crudityScore, setCrudityScore] = useState<number>(0);
   const [profanityScore, setProfanityScore] = useState<number>(0);
   const [summary, setSummary] = useState<any>([]);
@@ -135,6 +94,12 @@ export function HomeContent() {
   const [twitterAuth, setTwitterAuth] = useState<TwitterAuthState>({
     isLinked: false
   });
+  const [premiumAnalytics, setPremiumAnalytics] = useState<PremiumAnalytics | null>(null);
+  const [hasPremiumAccess, setHasPremiumAccess] = useState<boolean>(false);
+
+  const updateTotalValue = useCallback((usdValue: number) => {
+    setTotalValue((prevValue) => prevValue + usdValue);
+  }, []);
 
   // Effect for handling Twitter auth messages
   useEffect(() => {
@@ -147,10 +112,6 @@ export function HomeContent() {
         });
         
         toast.success(`Successfully linked Twitter account @${event.data.screenName}`);
-        
-        if (publicKey) {
-          await checkTwitterStatus();
-        }
       }
     };
 
@@ -160,9 +121,18 @@ export function HomeContent() {
 
   // Effect for checking Twitter status on mount and wallet changes
   useEffect(() => {
-    if (publicKey) {
-      checkTwitterStatus();
-    }
+    const checkStatus = async () => {
+      if (publicKey) {
+        const twitterStatus = await checkTwitterStatus(publicKey.toString());
+        setTwitterAuth(twitterStatus);
+        const hasPremiumAccess = await checkPremiumStatus(publicKey.toString());
+        setHasPremiumAccess(hasPremiumAccess);
+
+        console.log("hasPremiumAccess for publicKey", publicKey.toString(), hasPremiumAccess);
+      }
+    };
+    
+    checkStatus();
   }, [publicKey]);
 
   // Effect for wallet changes
@@ -174,35 +144,6 @@ export function HomeContent() {
         .catch(error => console.error('Error saving wallet:', error));
     }
   }, [publicKey]);
-
-  // Helper function for checking Twitter status
-  const checkTwitterStatus = useCallback(async () => {
-    if (!publicKey) return;
-
-    try {
-      const response = await fetch('/api/auth/twitter/status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          wallet: publicKey.toString()
-        })
-      });
-
-      const data = await response.json();
-      setTwitterAuth({
-        isLinked: data.isLinked,
-        username: data.username
-      });
-    } catch (error) {
-      console.error('Error checking Twitter status:', error);
-    }
-  }, [publicKey]);
-
-  const updateTotalValue = useCallback((usdValue: number) => {
-    setTotalValue((prevValue) => prevValue + usdValue);
-  }, []);
 
   const fetchSentimentAnalysis = async (text: string) => {
     try {
@@ -316,6 +257,7 @@ export function HomeContent() {
     const interval = setInterval(fetchFeeWalletBalance, 60000);
     return () => clearInterval(interval);
   }, [fetchFeeWalletBalance]);
+
 
   useEffect(() => {
     const sign = async (walletAddress: PublicKeyInitData) => {
@@ -565,6 +507,7 @@ export function HomeContent() {
     }
   };
 
+
   const handleGenerateNewThesis = async () => {
     if (!publicKey) {
       toast.error("Please connect your wallet to regenerate thesis. Address-only viewing does not support regeneration.");
@@ -573,6 +516,7 @@ export function HomeContent() {
 
     setLoading(true);
     setWaitingForConfirmation(true);
+    let selectedPayment = 'none';
 
     try {
       // Let user choose payment method
@@ -609,102 +553,38 @@ export function HomeContent() {
         window.paymentChoice = resolve;
       });
 
-      // Add check for cancelled payment
+      selectedPayment = paymentChoice;
+      
       if (paymentChoice === 'cancel') {
-        setLoading(false);
-        setWaitingForConfirmation(false);
         return;
       }
 
-      let transaction = new Transaction();
-
+      let confirmation;
       if (paymentChoice === 'sol') {
-        // SOL payment
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(DEFAULT_WALLET),
-            lamports: 1000000, // 0.001 SOL
-          })
-        );
-      } else if (['token1', 'token2', 'token3'].includes(paymentChoice)) {
-        // Token payment
+        confirmation = await processSolTransfer(publicKey, connection, 1000000, sendTransaction);
+      } else {
         const tokenConfig = {
           token1: { mint: DEFAULT_TOKEN, name: DEFAULT_TOKEN_NAME, decimals: 9 },
           token2: { mint: DEFAULT_TOKEN_2, name: DEFAULT_TOKEN_2_NAME, decimals: 6 },
           token3: { mint: DEFAULT_TOKEN_3, name: DEFAULT_TOKEN_3_NAME, decimals: 6 }
         }[paymentChoice];
 
-        const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
-        const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
-          account.account.data.parsed.info.mint === tokenConfig.mint
-        );
-
-        const tokenAccountsToWallet = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
-        const tokenAccountToWallet = tokenAccountsToWallet.value.find(account =>
-          account.account.data.parsed.info.mint === tokenConfig.mint
-        );
-
-        if (!tokenAccountFromWallet || !tokenAccountToWallet) {
-          throw new Error(`No ${tokenConfig.name} account found for payment`);
-        }
-
-        const amountInLamports = 1 * Math.pow(10, tokenConfig.decimals);
-
-        transaction.add(
-          createTransferInstruction(
-            tokenAccountFromWallet.pubkey,
-            tokenAccountToWallet.pubkey,
-            publicKey,
-            amountInLamports
-          )
+        confirmation = await processTokenTransfer(
+          publicKey, 
+          connection, 
+          tokenConfig.mint, 
+          1, 
+          tokenConfig.decimals, 
+          sendTransaction
         );
       }
 
-      let transactionConfirmed = false;
-
-      try {
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = publicKey;
-
-        const signature = await sendTransaction(transaction, connection);
-
-        const latestBlockhash = await connection.getLatestBlockhash();
-        const confirmation = await connection.confirmTransaction({
-          signature,
-          ...latestBlockhash
-        });
-
-        if (confirmation.value.err) {
-          throw new Error("Transaction failed");
-        }
-
-        transactionConfirmed = true;
-        setWaitingForConfirmation(false);
-        toast.success("Fee payment confirmed, generating new thesis...");
-      } catch (error: any) {
-        console.error("Transaction error:", error);
-        if (error?.message?.includes("User rejected")) {
-          toast.error("Transaction cancelled by user");
-        } else {
-          const paymentType = paymentChoice === 'sol' ? 'SOL' :
-            paymentChoice === 'token1' ? DEFAULT_TOKEN_NAME :
-              paymentChoice === 'token2' ? DEFAULT_TOKEN_2_NAME :
-                DEFAULT_TOKEN_3_NAME;
-          toast.error(`Failed to process ${paymentType} payment: ${error instanceof Error ? error.message : `${error}`}`);
-        }
-        setWaitingForConfirmation(false);
-        setLoading(false);
-        return;
+      if (confirmation.value.err) {
+        throw new Error("Transaction failed");
       }
 
-      // Only proceed if transaction was confirmed
-      if (!transactionConfirmed) {
-        setWaitingForConfirmation(false);
-        setLoading(false);
-        return;
-      }
+      setWaitingForConfirmation(false);
+      toast.success("Fee payment confirmed, generating new thesis...");
 
       // Generate new thesis only after successful payment
       const newThesis = await generateThesis(tokens);
@@ -714,10 +594,13 @@ export function HomeContent() {
       if (tokens) await fetchGoogleTrends(tokens);
 
       toast.success("New Thesis Generated");
-    } catch (error) {
-      console.error("Error generating thesis:", error);
-      toast.error("Failed to generate new thesis");
-      setWaitingForConfirmation(false);
+    } catch (error: any) {
+      console.error("Transaction error:", error);
+      if (error?.message?.includes("User rejected")) {
+        toast.error("Transaction cancelled by user");
+      } else {
+        toast.error(`Failed to process ${selectedPayment} payment: ${error instanceof Error ? error.message : `${error}`}`);
+      }
     } finally {
       setLoading(false);
       setWaitingForConfirmation(false);
@@ -851,17 +734,58 @@ export function HomeContent() {
       toast.dismiss(loadingToast);
 
       // Start checking if popup closed
-      const checkPopupClosed = setInterval(() => {
+      const checkPopupClosed = setInterval(async () => {
         if (popup.closed) {
           clearInterval(checkPopupClosed);
           // Always check Twitter status when popup closes
-          checkTwitterStatus();
+          const twitterStatus = await checkTwitterStatus(publicKey.toString());
+          setTwitterAuth(twitterStatus);
         }
       }, 1000);
 
     } catch (error) {
       console.error('Twitter auth error:', error);
       toast.error('Failed to initiate Twitter authentication');
+    }
+  };
+
+  const handlePremiumPurchase = async () => {
+    if (!publicKey) return;
+    
+    try {
+      setLoading(true);
+      const loadingToast = toast.loading('Processing premium purchase...');
+
+      const confirmation = await processTrendPayment(publicKey, connection, 100000, sendTransaction);
+
+      if (confirmation.value.err) {
+        throw new Error("Transaction failed");
+      }
+
+      // Update premium status
+      const response = await fetch('/api/premium/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          address: publicKey.toString(),
+          action: 'purchase',
+          confirmation: confirmation
+        })
+      });
+
+      const data = await response.json();
+      console.log("Premium purchase response:", data);
+      if (data.isPremium) {
+        setHasPremiumAccess(data.isPremium);
+        toast.success('Premium access granted!', { id: loadingToast });
+      } else {
+        throw new Error('Failed to verify premium purchase');
+      }
+    } catch (error) {
+      console.error('Premium purchase error:', error);
+      toast.error('Failed to process premium purchase');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -896,6 +820,11 @@ export function HomeContent() {
       return;
     }
 
+    if (!publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
     setIsCreatingPortfolio(true); // Set loading state
     
     try {
@@ -914,25 +843,7 @@ export function HomeContent() {
         .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
         .slice(0, 4);
 
-      const response = await fetch('/api/port/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          createdBy: publicKey?.toBase58(),
-          portfolioName: generatePortfolioName(topPumpTokens),
-          mintAddresses: topPumpTokens.map(token => token.mintAddress),
-          tokens: topPumpTokens
-        })
-      });
-
-      const data: CreatePortfolioResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error('Failed to create portfolio');
-      }
-
+      const data = await createPortfolio(publicKey, topPumpTokens);
       setCreatedPortId(data.id);
       toast.success(`${data.message} (Added ${topPumpTokens.length} tokens)`);
     } catch (error) {
@@ -962,28 +873,12 @@ export function HomeContent() {
 
       {/* Wallet Input Section - Updated spacing */}
       {!publicKey && !submittedAddress && (
-        <div className="bg-base-200 rounded-lg p-4 sm:p-6 mb-4 sm:mb-8">
-          <form onSubmit={handleAddressSubmit} className="w-full max-w-md mx-auto">
-            <h2 className="text-base sm:text-xl font-bold mb-2 sm:mb-4">Connect Your Wallet</h2>
-            <label className="block text-sm font-medium mb-2">
-              Enter your Solana wallet address or .sol domain:
-            </label>
-            <input
-              type="text"
-              value={manualAddress}
-              onChange={(e) => setManualAddress(e.target.value)}
-              className="w-full p-2 border rounded-md mb-3 sm:mb-4 bg-base-100 text-sm"
-              placeholder="Solana address or .sol domain..."
-            />
-            <button
-              type="submit"
-              className="btn btn-primary w-full text-sm sm:text-base"
-              disabled={loading}
-            >
-              {loading ? "Resolving..." : "Analyze Wallet"}
-            </button>
-          </form>
-        </div>
+        <WalletInputForm
+          onSubmit={handleAddressSubmit}
+          loading={loading}
+          manualAddress={manualAddress}
+          setManualAddress={setManualAddress}
+        />
       )}
 
       {/* Main Content - Updated spacing and responsiveness */}
@@ -1003,101 +898,20 @@ export function HomeContent() {
           </div>
 
           {/* Thesis Section - Updated button layout */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2">
-              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Investment Thesis
-              </h2>
-              <div className="flex flex-row gap-2 w-full sm:w-auto">
-                <button
-                  className="btn btn-sm sm:btn-md bg-gradient-to-r from-purple-500 to-pink-500 border-none text-white hover:from-purple-600 hover:to-pink-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
-                  onClick={handleGenerateNewThesis}
-                >
-                  Generate New
-                </button>
-                <button
-                  className="btn btn-sm sm:btn-md bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
-                  onClick={() => handleTweetThis(thesis)}
-                >
-                  Tweet
-                </button>
-                {createdPortId ? (
-                  <a
-                    href={`https://port.fun/${createdPortId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-purple-500 to-blue-500 border-none text-white hover:from-purple-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
-                  >
-                    View Port
-                  </a>
-                ) : (
-                  <button
-                    className="btn btn-sm sm:btn-md bg-gradient-to-r from-green-500 to-blue-500 border-none text-white hover:from-green-600 hover:to-blue-600 shadow-lg flex-1 sm:flex-none text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-500 disabled:hover:to-blue-500"
-                    onClick={handleCreatePortfolio}
-                    disabled={!hasEligibleTokens || isCreatingPortfolio}
-                    title={!hasEligibleTokens ? "No eligible tokens found. Only tokens ending with 'pump' can be added." : ""}
-                  >
-                    {isCreatingPortfolio ? "Creating..." : "Create Portfolio"}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="prose prose-sm sm:prose max-w-none break-words overflow-x-hidden whitespace-pre-line text-gray-900 text-sm sm:text-base">
-              <ReactMarkdown>{thesis}</ReactMarkdown>
-            </div>
-          </div>
+          <ThesisSection
+            thesis={thesis}
+            onGenerateNew={handleGenerateNewThesis}
+            hasEligibleTokens={hasEligibleTokens}
+            handleCreatePortfolio={handleCreatePortfolio}
+            isCreatingPortfolio={isCreatingPortfolio}
+            createdPortId={createdPortId}
+          />
 
           {/* Similar Coins */}
           {similarCoins.length > 0 && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Similar Newly Listed Coins</h2>
-              <div className="space-y-4">
-                {similarCoins.map((coin, index) => (
-                  <div key={index} className="border-b border-gray-200 pb-4 last:border-0">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          {coin.newCoin.name} ({coin.newCoin.symbol})
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {coin.reason}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {coin.newCoin.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {coin.link && (
-                            <a
-                              href={coin.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
-                            >
-                              View on Dexscreener
-                            </a>
-                          )}
-                          {coin.website && (
-                            <a
-                              href={coin.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-sm bg-green-500 text-white hover:bg-green-600"
-                            >
-                              Visit Website
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-purple-100 px-3 py-1 rounded-full mt-2 sm:mt-0">
-                        <span className="text-sm font-medium text-purple-800">
-                          {(coin.similarityScore * 100).toFixed(0)}% Match
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SimilarCoinsSection
+              similarCoins={similarCoins}
+            />
           )}
 
           {/* Sentiment Analysis */}
@@ -1137,9 +951,6 @@ export function HomeContent() {
             </div>
           </div>}
 
-          {/* Add PnL Card here */}
-          {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
-
           {summary && thesis && publicKey && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
               {canGeneratePowerpoint ? (
@@ -1150,47 +961,11 @@ export function HomeContent() {
                   onGenerate={async () => {
                     try {
                       // Create transaction for 10 tokens
-                      const transaction = new Transaction();
+                      const confirmation = await processTrendPayment(publicKey, connection, 10, sendTransaction);
 
-                      const tokenAccountsFromWallet = await fetchTokenAccounts(publicKey);
-                      const tokenAccountFromWallet = tokenAccountsFromWallet.value.find(account =>
-                        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
-                      );
-
-                      const tokenAccountsToWallet = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
-                      const tokenAccountToWallet = tokenAccountsToWallet.value.find(account =>
-                        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
-                      );
-
-                      if (!tokenAccountFromWallet || !tokenAccountToWallet) {
-                        throw new Error(`No ${DEFAULT_TOKEN_3_NAME} account found for payment`);
-                      }
-
-                      const amountInLamports = 10 * Math.pow(10, 6); // Assuming 6 decimals
-
-                      transaction.add(
-                        createTransferInstruction(
-                          tokenAccountFromWallet.pubkey,
-                          tokenAccountToWallet.pubkey,
-                          publicKey,
-                          amountInLamports
-                        )
-                      );
-
-                      const { blockhash } = await connection.getLatestBlockhash();
-                      transaction.recentBlockhash = blockhash;
-
-                      const signature = await sendTransaction(transaction, connection);
-
-                      const confirmation = await connection.confirmTransaction({
-                        signature,
-                        ...(await connection.getLatestBlockhash())
-                      });
-
-                      if (confirmation.value.err) {
+                      if(confirmation.value.err) {
                         throw new Error("Transaction failed");
                       }
-
                       // Update the specific token balance after successful transaction
                       setSpecificTokenBalance(prev => prev - 10);
 
@@ -1251,6 +1026,37 @@ export function HomeContent() {
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {publicKey && hasPremiumAccess && premiumAnalytics && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Portfolio Analytics</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="stat-card">
+                  <h3>Portfolio Risk Score</h3>
+                  <p className="text-2xl font-bold">{premiumAnalytics.riskRating}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Volatility Index</h3>
+                  <p className="text-2xl font-bold">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
+                </div>
+                {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
+              </div>
+            </div>
+          )}
+
+          {!hasPremiumAccess && publicKey && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Upgrade to Premium</h2>
+              <p className="mb-4">Get access to advanced analytics and features for 100,000 {DEFAULT_TOKEN_3_NAME}</p>
+              <button 
+                onClick={handlePremiumPurchase}
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Purchase Premium'}
+              </button>
             </div>
           )}
         </div>

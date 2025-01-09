@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { connectToDatabase } from './connectDB';
 
 const uri = process.env.MONGODB_URI;
 
@@ -15,8 +15,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const client = await MongoClient.connect(uri as string);
-    const db = client.db('walletAnalyzer');
+      const client = await connectToDatabase();
+      const db = client.db('walletAnalyzer');
     const walletsCollection = db.collection('wallets');
 
     // Find all duplicate addresses

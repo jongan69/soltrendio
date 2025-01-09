@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MongoClient } from 'mongodb';
+import { connectToDatabase } from '../db/connectDB';
 
 interface CreatePortfolioRequest {
   portfolioName: string;
@@ -48,7 +48,7 @@ export default async function handler(
     console.log('Portfolio creation response:', data);
     console.log('Portfolio ID:', data.id);
     // Connect to MongoDB
-    const client = await MongoClient.connect(process.env.MONGODB_URI as string);
+    const client = await connectToDatabase();
     const db = client.db('walletAnalyzer');
     const portfoliosCollection = db.collection('portfolios');
 
