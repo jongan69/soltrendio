@@ -8,6 +8,7 @@ import { fetch6900 } from './fetch6900';
 export async function formatTrendsTweet(trends: any) {
     const {
         totalUniqueWallets,
+        totalAmountStaked,
         portfolioMetrics,
         last24Hours,
         topTokensByValue
@@ -29,10 +30,11 @@ export async function formatTrendsTweet(trends: any) {
     return `📊 Soltrendio Analytics Update
 
 📈 $TREND Price: $${jupiterSwapPrice}
+🔒 Total Amount Staked in M3 Vault: ${formatNumber(totalAmountStaked)}
 💻 Solana Price: $${Number(solanaPrice).toFixed(2)}
 🪙 Bitcoin Price: $${bitcoinPrice}
 🏠 S&P 500 Market Cap: $${formatNumber(sp500MarketCap)}
-🎰 SPX6900 Market Cap: $${formatNumber(spx6900MarketCap)}
+🎰 $SPX6900 Market Cap: $${formatNumber(spx6900MarketCap)}
 
 Percent of Flippeneing: ${percentOfMissionCompleted}%
 

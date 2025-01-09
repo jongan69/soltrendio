@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '../db/connectDB';
 import { fetchJupiterSwap } from '@utils/fetchJupiterSwap';
-import { DEFAULT_TOKEN_3 } from '@utils/globals';
+import { DEFAULT_M3_VAULT, DEFAULT_TOKEN_3 } from '@utils/globals';
+import { getM3Vault } from '@utils/getM3Vault';
+import { formatNumber } from '@utils/formatNumber';
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,6 +19,9 @@ export default async function handler(
     const wallets = db.collection('wallets');
     const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
     const trendPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
+    const m3VaultData = await getM3Vault(DEFAULT_M3_VAULT);
+    const totalAmountStaked = m3VaultData.total_staked_amount;
+    
     // Update the 24-hour stats calculation
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
@@ -339,6 +344,7 @@ export default async function handler(
 
     return res.status(200).json({
       trendPrice,
+      totalAmountStaked: formatNumber(totalAmountStaked) + " TREND",
       totalUniqueWallets: uniqueWalletsCount,
       portfolioMetrics: {
         averagePortfolioValue: aggregationResult[0]?.averageTotalValue || 0,

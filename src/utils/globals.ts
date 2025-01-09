@@ -13,6 +13,7 @@ export const DEFAULT_TOKEN_2_NAME = "RETARDIO";
 
 export const DEFAULT_TOKEN_3 = "BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"; // TREND
 export const DEFAULT_TOKEN_3_NAME = "TREND";
+export const DEFAULT_M3_VAULT = "AvkHzVATyd1hnG5Y7iT7M3aa77UaMWaDJx2UQbEXMp7b";
 
 
 export const REFERAL_WALLET = "2J8jsZmyTRwCYfX4aAKqdh763Y2UHMudnRh7b9Z9hBXE"; // Jupiter Swap Referral Key
