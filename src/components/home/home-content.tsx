@@ -139,7 +139,7 @@ export function HomeContent() {
   // Effect for handling Twitter auth messages
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      console.log("Received message:", event.data);
+      // console.log("Received message:", event.data);
       if (event.data.type === 'TWITTER_AUTH_SUCCESS') {
         setTwitterAuth({
           isLinked: true,
@@ -413,7 +413,7 @@ export function HomeContent() {
           if (thesis) await fetchSentimentAnalysis(thesis);
           if (tokens) await fetchGoogleTrends(tokens);
 
-          console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, enrichedTopHoldings);
+          // console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, enrichedTopHoldings);
           // Use calculatedTotalValue instead of totalValue state
           await updateWalletToDb(
             walletAddress.toString(),
