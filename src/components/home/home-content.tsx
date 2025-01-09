@@ -70,6 +70,12 @@ interface CreatePortfolioResponse {
   id: string;
 }
 
+// Add this interface near other interfaces
+interface TwitterAuthState {
+  isLinked: boolean;
+  username?: string;
+}
+
 const generatePortfolioName = (tokens: TokenData[]): string => {
   // Get unique tickers, remove any numbers, and split into parts
   const tickers = [...new Set(tokens.map(t => t.symbol || ''))]
@@ -126,6 +132,9 @@ export function HomeContent() {
   const [createdPortId, setCreatedPortId] = useState<string | null>(null);
   const [hasEligibleTokens, setHasEligibleTokens] = useState<boolean>(false);
   const [isCreatingPortfolio, setIsCreatingPortfolio] = useState<boolean>(false);
+  const [twitterAuth, setTwitterAuth] = useState<TwitterAuthState>({
+    isLinked: false
+  });
 
   useEffect(() => {
     if (publicKey && publicKey.toBase58() !== prevPublicKey.current) {
@@ -735,6 +744,72 @@ export function HomeContent() {
     }
   }, [tokens]);
 
+  const handleTwitterAuth = async () => {
+    try {
+      if (!publicKey) {
+        toast.error('Please connect your wallet first');
+        return;
+      }
+
+      // Get OAuth URL from our API
+      const response = await fetch('/api/auth/twitter/authorize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          wallet: publicKey.toString()
+        })
+      });
+
+      const { url } = await response.json();
+      
+      // Open Twitter auth in a popup
+      const width = 600;
+      const height = 600;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+      
+      window.open(
+        url,
+        'Twitter Auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+    } catch (error) {
+      console.error('Twitter auth error:', error);
+      toast.error('Failed to initiate Twitter authentication');
+    }
+  };
+
+  // Add this effect to check Twitter link status
+  useEffect(() => {
+    const checkTwitterStatus = async () => {
+      if (!publicKey) return;
+
+      try {
+        const response = await fetch('/api/auth/twitter/status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            wallet: publicKey.toString()
+          })
+        });
+
+        const data = await response.json();
+        setTwitterAuth({
+          isLinked: data.isLinked,
+          username: data.username
+        });
+      } catch (error) {
+        console.error('Error checking Twitter status:', error);
+      }
+    };
+
+    checkTwitterStatus();
+  }, [publicKey]);
+
   // Loading State
   if (loading || !tokens || signState === "loading") {
     return (
@@ -1079,6 +1154,41 @@ export function HomeContent() {
                   <p className="text-sm mt-2">Current balance: {specificTokenBalance} {DEFAULT_TOKEN_3_NAME}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {publicKey && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Twitter Integration</h2>
+                {twitterAuth.isLinked ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">
+                      Linked to @{twitterAuth.username}
+                    </span>
+                    <button
+                      onClick={() => {/* Add unlink handler if needed */}}
+                      className="btn btn-sm btn-outline btn-error"
+                    >
+                      Unlink
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleTwitterAuth}
+                    className="btn btn-sm sm:btn-md bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white border-none"
+                  >
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                    </svg>
+                    Link Twitter Account
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
