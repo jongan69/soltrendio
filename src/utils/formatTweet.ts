@@ -30,7 +30,7 @@ export async function formatTrendsTweet(trends: any) {
     return `📊 Soltrendio Analytics Update
 
 📈 $TREND Price: $${jupiterSwapPrice}
-🔒 Staked in M3 Vault: ${totalAmountStaked}
+🔒 Staked in Vault: ${totalAmountStaked}
 💻 Solana Price: $${Number(solanaPrice).toFixed(2)}
 🪙 Bitcoin Price: $${bitcoinPrice}
 🏠 S&P 500 Market Cap: $${formatNumber(sp500MarketCap)}
