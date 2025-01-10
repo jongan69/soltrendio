@@ -12,7 +12,7 @@ export const getLargeHolders = async (tokenAddress: string): Promise<number> => 
                 body: JSON.stringify({
                     jsonrpc: "2.0",
                     method: "getTokenAccounts",
-                    id: "helius-test",
+                    id: "soltrendio.com",
                     params: {
                         page,
                         limit: 1000,

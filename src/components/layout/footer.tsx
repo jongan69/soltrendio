@@ -1,65 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 
-function getTimeUntilNextFriday() {
-  const now = new Date();
-  const friday = new Date();
-
-  // Set to next Friday
-  friday.setDate(friday.getDate() + ((7 - friday.getDay() + 5) % 7));
-  // Set to 12:00 PM
-  friday.setHours(12, 0, 0, 0);
-
-  // If it's already past Friday 12 PM, move to next Friday
-  if (now > friday) {
-    friday.setDate(friday.getDate() + 7);
-  }
-
-  const diff = friday.getTime() - now.getTime();
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-  return { days, hours, minutes, seconds, total: diff };
-}
-
 export function Footer() {
-  const [timeLeft, setTimeLeft] = useState(getTimeUntilNextFriday());
-  const [showCollection, setShowCollection] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const newTime = getTimeUntilNextFriday();
-      setTimeLeft(newTime);
-
-      // Switch to NFT Collection text when timer hits 0
-      if (newTime.total <= 0) {
-        setShowCollection(true);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <footer className="footer footer-center p-4 text-base-content">
       <div className="flex flex-col items-center gap-2">
-        <p className="flex items-center gap-2">
-          <a
-            href="https://launchmynft.io/collections/4XkHKL3ErUuPBeDs9tnUZZ7as5EeeD9o3iLpbFGGiTP8/62N1lSAE9w5XVj9cuHWM"
-            className="opacity-40 hover:opacity-100 transition-opacity text-xs text-black-400"
-            target="_blank"
-            rel="noreferrer"
-          >
-            {showCollection ? (
-              '· NFT Collection ·'
-            ) : (
-              `· ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s ·`
-            )}
-          </a>
-        </p>
         <div className="flex gap-4">
           <a
             href="https://doc.soltrendio.com/"
@@ -76,6 +21,23 @@ export function Footer() {
               className="fill-current"
             >
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z" />
+            </svg>
+          </a>
+          <a
+            href="https://launchmynft.io/collections/4XkHKL3ErUuPBeDs9tnUZZ7as5EeeD9o3iLpbFGGiTP8/62N1lSAE9w5XVj9cuHWM"
+            target="_blank"
+            rel="noreferrer"
+            className="link link-primary"
+            aria-label="NFT Collection"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              className="fill-current"
+            >
+              <path d="M22 9v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9h20zm0-2H2V5c0-1.1.9-2 2-2h16a2 2 0 0 1 2 2v2zm-7 6H9v2h6v-2z"/>
             </svg>
           </a>
           <a

@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { DEFAULT_TOKEN_3 } from '@utils/globals';
+import { DEFAULT_TOKEN_3, TREND_SETTERS_NFT_COLLECTION } from '@utils/globals';
 import { PublicKey } from '@solana/web3.js';
 import { fetchTokenAccounts } from '@utils/tokenUtils';
 import { connectToDatabase } from '../db/connectDB';
+import { checkNftOwnership } from '@utils/checkNftOwnership';
 
 const PREMIUM_COST = 100000; // 100k tokens
 
@@ -20,8 +21,11 @@ export default async function handler(
 
       // Check if already premium
       const existingUser = await premiumUsersCollection.findOne({ address });
-      if (existingUser?.isPremium) {
-        return res.status(200).json({ isPremium: true });
+      const isPaid: boolean = existingUser?.isPremium;
+      const isNftOwner: boolean = await checkNftOwnership(address, TREND_SETTERS_NFT_COLLECTION);
+      const isPremium: boolean = isPaid && isNftOwner;
+      if (isPremium) {
+        return res.status(200).json({ isPremium, message: 'Premium access granted' });
       }
 
       // If purchasing premium
@@ -46,10 +50,10 @@ export default async function handler(
         });
       }
 
-      console.log("Premium status request:", req.body);
+      console.log("Premium status request:", req.body, isPremium, isPaid, isNftOwner);
       // Just checking status
       return res.status(200).json({ 
-        isPremium: existingUser?.isPremium,
+        isPremium: isPremium,
         cost: PREMIUM_COST
       });
     } catch (error) {

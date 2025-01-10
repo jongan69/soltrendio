@@ -5,16 +5,18 @@ export const DEFAULT_THEME = "night";
 export const SOLANA_ADDRESS = "So11111111111111111111111111111111111111112";
 
 export const DEFAULT_WALLET = "LockmjYWctcbeQCJt5u5z536xbmeU6n5XeQJhuPWxp2"; // Dustfolio
-export const DEFAULT_TOKEN = "8Ki8DpuWNxu9VsS3kQbarsCWMcFGWkzzA8pUPto9zBd5"; // Lockin
+export const DEFAULT_M3_VAULT = "AvkHzVATyd1hnG5Y7iT7M3aa77UaMWaDJx2UQbEXMp7b"; // M3 Vault
+
+export const DEFAULT_TOKEN = "8Ki8DpuWNxu9VsS3kQbarsCWMcFGWkzzA8pUPto9zBd5"; // Lockin Mint
 export const DEFAULT_TOKEN_NAME = "Lockin";
 
-export const DEFAULT_TOKEN_2 = "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx"; // RETARDIO
+export const DEFAULT_TOKEN_2 = "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx"; // RETARDIO Mint
 export const DEFAULT_TOKEN_2_NAME = "RETARDIO";
 
-export const DEFAULT_TOKEN_3 = "BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"; // TREND
+export const DEFAULT_TOKEN_3 = "BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"; // TREND Mint
 export const DEFAULT_TOKEN_3_NAME = "TREND";
-export const DEFAULT_M3_VAULT = "AvkHzVATyd1hnG5Y7iT7M3aa77UaMWaDJx2UQbEXMp7b";
 
+export const TREND_SETTERS_NFT_COLLECTION = "9dWQeLNt6Q8Pjj77bC3XzLKpFMTUgQ3aUmGohR33TkKQ"; // TREND SETTERS NFT COLLECTION
 
 export const REFERAL_WALLET = "2J8jsZmyTRwCYfX4aAKqdh763Y2UHMudnRh7b9Z9hBXE"; // Jupiter Swap Referral Key
 
