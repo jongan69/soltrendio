@@ -1,7 +1,11 @@
+import { getTokenInfo } from "./getTokenInfo";
+
 interface Token {
     symbol: string;
     name?: string;
     description?: string;
+    price?: number;
+    marketCap?: number;
 }
 
 interface TokenComparison {
@@ -34,90 +38,95 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
         });
 
         // Function to extract essential token data and remove duplicates
-        const processTokens = (tokens: any[]): TokenData[] => {
+        const processTokens = async (tokens: any[]): Promise<TokenData[]> => {
             if (!Array.isArray(tokens)) {
                 console.warn("Received non-array tokens:", tokens);
                 return [];
             }
 
             const seen = new Set();
-            return tokens
-                .filter(token => {
-                    if (!token || typeof token !== 'object') return false;
-                    
-                    // Extract symbol from tokenAddress or url
-                    const symbol = token.tokenAddress?.split('.').pop() || 
-                                 token.url?.split('/').pop() || '';
-                    
-                    if (!symbol || seen.has(symbol.toUpperCase())) return false;
-                    seen.add(symbol.toUpperCase());
-                    return true;
-                })
-                .map(token => {
-                    // Handle both array and object formats for links
-                    let website = '';
-                    let docsLink = '';
-                    let dexscreenerLink = '';
-                    let twitterLink = '';
-                    let telegramLink = '';
-                    let discordLink = '';
-                    let githubLink = '';
+            // First get token info for all tokens
+            const tokenInfos = await Promise.all(
+                tokens.map(token => getTokenInfo(token.tokenAddress))
+            );
+            
+            const filteredTokens = tokens.filter((token, index) => {
+                if (!token || typeof token !== 'object') return false;
+                const symbol = tokenInfos[index]?.symbol;
+                if (!symbol || seen.has(symbol.toUpperCase())) return false;
+                seen.add(symbol.toUpperCase());
+                return true;
+            });
 
-                    if (Array.isArray(token.links)) {
-                        // Handle array format
-                        website = token.links.find(
-                            (link: any) => link.label === 'Website' || link.type === 'website'
-                        )?.url || '';
-                        dexscreenerLink = token.url || '';
-                        docsLink = token.links.find(
-                            (link: any) => link.type === 'docs' || link.type === 'documentation' || link.type === 'whitepaper' || link.type === 'Docs'
-                        )?.url || '';
-                        twitterLink = token.links.find(
-                            (link: any) => link.type === 'twitter' || link.type === 'Twitter'
-                        )?.url || '';
-                        telegramLink = token.links.find(
-                            (link: any) => link.type === 'telegram' || link.type === 'Telegram'
-                        )?.url || '';
-                        discordLink = token.links.find(
-                            (link: any) => link.type === 'discord' || link.type === 'Discord'
-                        )?.url || '';
-                        githubLink = token.links.find(
-                            (link: any) => link.type === 'github' || link.type === 'Github'
-                        )?.url || '';
-                    } else if (token.links && typeof token.links === 'object') {
-                        // Handle object format (existing code)
-                        website = token.links.website || '';
-                        dexscreenerLink = token.links.dexscreener || '';
-                        twitterLink = token.links.twitter || '';
-                        telegramLink = token.links.telegram || '';
-                        discordLink = token.links.discord || '';
-                        githubLink = token.links.github || '';
-                    }
+            // Wait for all token processing to complete
+            return Promise.all(filteredTokens.map(async (token, index) => {
+                const tokenInfo = tokenInfos[index];
+                const tokenName = tokenInfo?.name;
+                // Handle both array and object formats for links
+                let website = '';
+                let docsLink = '';
+                let dexscreenerLink = '';
+                let twitterLink = '';
+                let telegramLink = '';
+                let discordLink = '';
+                let githubLink = '';
 
-                    return {
-                        symbol: (token.tokenAddress?.split('.').pop() || 
-                                token.url?.split('/').pop() || '').toUpperCase(),
-                        name: token.description?.split('\n')[0] || token.symbol || '',
-                        description: token.description || '',
-                        chainId: token.chainId,
-                        address: token.tokenAddress,
-                        website,
-                        link: dexscreenerLink || '',
-                        docs: docsLink || '',
-                        twitter: twitterLink || '',
-                        telegram: telegramLink || '',
-                        discord: discordLink || '',
-                        github: githubLink || ''
-                    };
-                });
+                if (Array.isArray(token.links)) {
+                    // Handle array format
+                    website = token.links.find(
+                        (link: any) => link.label === 'Website' || link.type === 'website'
+                    )?.url || tokenInfo?.website;
+                    dexscreenerLink = token.url || '';
+                    docsLink = token.links.find(
+                        (link: any) => link.type === 'docs' || link.type === 'documentation' || link.type === 'whitepaper' || link.type === 'Docs'
+                    )?.url || '';
+                    twitterLink = token.links.find(
+                        (link: any) => link.type === 'twitter' || link.type === 'Twitter'
+                    )?.url || '';
+                    telegramLink = token.links.find(
+                        (link: any) => link.type === 'telegram' || link.type === 'Telegram'
+                    )?.url || '';
+                    discordLink = token.links.find(
+                        (link: any) => link.type === 'discord' || link.type === 'Discord'
+                    )?.url || '';
+                    githubLink = token.links.find(
+                        (link: any) => link.type === 'github' || link.type === 'Github'
+                    )?.url || '';
+                } else if (token.links && typeof token.links === 'object') {
+                    // Handle object format (existing code)
+                    website = token.links.website || '';
+                    dexscreenerLink = token.links.dexscreener || '';
+                    twitterLink = token.links.twitter || '';
+                    telegramLink = token.links.telegram || '';
+                    discordLink = token.links.discord || '';
+                    githubLink = token.links.github || '';
+                }
+              
+                return {
+                    symbol: tokenInfo?.symbol,
+                    name: tokenName || token.description?.split('\n')[0] || token.symbol || '',
+                    description: token.description || '',
+                    marketCap: tokenInfo?.marketCap,
+                    price: tokenInfo?.price,
+                    chainId: token.chainId,
+                    address: token.tokenAddress,
+                    website,
+                    link: dexscreenerLink,
+                    docs: docsLink,
+                    twitter: twitterLink,
+                    telegram: telegramLink,
+                    discord: discordLink,
+                    github: githubLink
+                };
+            }));
         };
 
         // Process and combine tokens from all sources
-        const combinedTokens = [
-            ...processTokens(latestTokenProfiles || []),
-            ...processTokens(latestTokenBoosts || []),
-            ...processTokens(topTokenBoosts || [])
-        ].slice(0, 20);
+        const combinedTokens = (await Promise.all([
+            processTokens(latestTokenProfiles || []),
+            processTokens(latestTokenBoosts || []),
+            processTokens(topTokenBoosts || [])
+        ])).flat().slice(0, 20);
 
         console.log("Combined tokens count:", combinedTokens.length);
         console.log("First few combined tokens:", combinedTokens.slice(0, 3));
@@ -129,10 +138,10 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
 
         // Prepare a more concise prompt
         const prompt = `
-            Analyze and compare these user tokens: ${JSON.stringify(userTokens.map(t => ({ symbol: t.symbol, name: t.name })))}
+            Analyze and compare these user tokens: ${JSON.stringify(userTokens.map(t => ({ symbol: t.symbol, name: t.name, price: t.price, marketCap: t.marketCap })))}
             with these new tokens: ${JSON.stringify(combinedTokens)}
             
-            Find the 5 most similar tokens based on use case, market focus, and token utility.
+            Find the 5 most similar tokens based on use case, market focus, token utility, and price.
             
             Respond with this JSON format using the token data provided:
             {
@@ -142,6 +151,8 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         "similarityScore": 0.95,
                         "reason": "Brief explanation of similarity",
                         "description": "Brief token description",
+                        "marketCap": 10M,
+                        "price": $0.01,
                         "link": "https://dexscreener.com/solana/TOKEN",
                         "docs": "https://docs.example.com",
                         "website": "https://www.example.com",
@@ -171,10 +182,10 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
 
         const similarTokens = await aiResponse.json();
         console.log("AI Response:", similarTokens);
-        
+
         const result = Array.isArray(similarTokens) ? similarTokens : similarTokens.similarCoins || [];
         console.log("Final result:", result);
-        
+
         return result;
     } catch (error) {
         console.error('Error in getSimilarCoins:', error);
