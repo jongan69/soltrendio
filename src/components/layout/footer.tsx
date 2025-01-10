@@ -70,6 +70,40 @@ export function Footer() {
         </p>
         <div className="flex gap-4">
           <a
+            href="https://doc.soltrendio.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="link link-primary"
+            aria-label="Documentation"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              className="fill-current"
+            >
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z"/>
+            </svg>
+          </a>
+          <a
+            href="https://m3m3.meteora.ag/farms/7VrKfJZ1D7B9ydmd8HXS76vX47A3rzKPDCok82SvFvRV"
+            target="_blank"
+            rel="noreferrer"
+            className="link link-primary"
+            aria-label="Staking"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              className="fill-current"
+            >
+              <path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </a>
+          <a
             href="https://x.com/Soltrendio"
             target="_blank"
             rel="noreferrer"
