@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 async function generateThesisSummary(thesis: string): Promise<string> {
     const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4-turbo-preview",
         messages: [{
             role: "user",
             content: `Summarize this investment thesis in one clear, concise but very stupid sentence: "${thesis}"`

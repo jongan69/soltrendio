@@ -28,7 +28,6 @@ import { PremiumAnalytics } from "../../types/PremiumAnalytics";
 
 // UI Components
 import { toast } from "react-hot-toast";
-import { Circles } from "react-loader-spinner";
 import SentimentCharts from "./SentimentCharts";
 import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import PowerpointViewer from "./PowerpointViewer";
@@ -55,6 +54,8 @@ import { processTokenTransfer } from "@utils/processTokenTransfer";
 import { createPortfolio } from "@utils/createPortfolio";
 import { SimilarCoinsSection } from "./similar-coins";
 import { checkTwitterStatus } from "@utils/checkTwitterStatus";
+import { LoadingState } from "@components/LoadingStates";
+import { fetchPremiumAnalytics } from "@utils/fetchPremiumAnalytics";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -64,7 +65,6 @@ export function HomeContent() {
   const connection = new Connection(NETWORK);
   const { publicKey, sendTransaction } = useWallet();
   const prevPublicKey = useRef<string>(publicKey?.toBase58() || "");
-
 
   const [signState, setSignState] = useState<string>("initial");
   const [tokens, setTokens] = useState<TokenData[]>([]);
@@ -96,9 +96,26 @@ export function HomeContent() {
   });
   const [premiumAnalytics, setPremiumAnalytics] = useState<PremiumAnalytics | null>(null);
   const [hasPremiumAccess, setHasPremiumAccess] = useState<boolean>(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("Loading...");
 
   const updateTotalValue = useCallback((usdValue: number) => {
     setTotalValue((prevValue) => prevValue + usdValue);
+  }, []);
+
+  const fetchFeeWalletBalance = useCallback(async () => {
+    try {
+      const tokenAccounts = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
+      const tokenAccount = tokenAccounts.value.find(account =>
+        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
+      );
+
+      if (tokenAccount) {
+        const balance = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount;
+        setFeeTokenBalance(balance);
+      }
+    } catch (error) {
+      console.error("Error fetching fee wallet balance:", error);
+    }
   }, []);
 
   // Effect for handling Twitter auth messages
@@ -110,7 +127,7 @@ export function HomeContent() {
           isLinked: true,
           username: event.data.screenName
         });
-        
+
         toast.success(`Successfully linked Twitter account @${event.data.screenName}`);
       }
     };
@@ -127,11 +144,10 @@ export function HomeContent() {
         setTwitterAuth(twitterStatus);
         const hasPremiumAccess = await checkPremiumStatus(publicKey.toString());
         setHasPremiumAccess(hasPremiumAccess);
-
         console.log("hasPremiumAccess for publicKey", publicKey.toString(), hasPremiumAccess);
       }
     };
-    
+
     checkStatus();
   }, [publicKey]);
 
@@ -144,6 +160,32 @@ export function HomeContent() {
         .catch(error => console.error('Error saving wallet:', error));
     }
   }, [publicKey]);
+
+  // Effect for fetching premium analytics
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (publicKey && hasPremiumAccess && tokens.length > 0) {
+        const data = await fetchPremiumAnalytics(publicKey.toString(), tokens);
+        setPremiumAnalytics(data);
+      }
+    };
+
+    fetchAnalytics();
+  }, [publicKey, tokens, hasPremiumAccess]);
+
+  // Effect for fetching fee wallet balance
+  useEffect(() => {
+    fetchFeeWalletBalance();
+    // Refresh balance every 60 seconds
+    const interval = setInterval(fetchFeeWalletBalance, 60000);
+    return () => clearInterval(interval);
+  }, [fetchFeeWalletBalance]);
+
+  // Effect for setting can generate powerpoint
+  useEffect(() => {
+    setCanGeneratePowerpoint(specificTokenBalance >= 10);
+  }, [specificTokenBalance]);
+
 
   const fetchSentimentAnalysis = async (text: string) => {
     try {
@@ -175,8 +217,6 @@ export function HomeContent() {
         hateSpeech: normalizeScore(parsedResponse.hateSpeech || 0)
       };
 
-      // console.log("Setting scores:", scores);
-
       setRacismScore(scores.racism);
       setCrudityScore(scores.crudity);
       setProfanityScore(scores.profanity);
@@ -193,11 +233,11 @@ export function HomeContent() {
       setProfanityScore(0);
       setDrugUseScore(0);
       setHateSpeechScore(0);
-
       return defaultScores;
     }
   };
 
+  // Fetch Google Trends
   const fetchGoogleTrends = async (tokens: any) => {
     if (!tokens || tokens.length === 0) return;
     try {
@@ -218,7 +258,6 @@ export function HomeContent() {
       }));
 
       setTopSymbols(processedSymbols);
-      // console.log("Looking for keywords:", processedSymbols);
 
       const response = await fetch('/api/analyze/trends', {
         method: 'POST',
@@ -235,35 +274,13 @@ export function HomeContent() {
     }
   };
 
-  const fetchFeeWalletBalance = useCallback(async () => {
-    try {
-      const tokenAccounts = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
-      const tokenAccount = tokenAccounts.value.find(account =>
-        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
-      );
-
-      if (tokenAccount) {
-        const balance = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount;
-        setFeeTokenBalance(balance);
-      }
-    } catch (error) {
-      console.error("Error fetching fee wallet balance:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFeeWalletBalance();
-    // Refresh balance every 60 seconds
-    const interval = setInterval(fetchFeeWalletBalance, 60000);
-    return () => clearInterval(interval);
-  }, [fetchFeeWalletBalance]);
-
-
+  // Initial signed in wallet useEffect
   useEffect(() => {
     const sign = async (walletAddress: PublicKeyInitData) => {
       if (walletAddress && signState === "initial") {
         setLoading(true);
         setSignState("loading");
+        setLoadingMessage("Initializing wallet connection...");
         const signToastId = toast.loading("Getting Token Data...");
 
         try {
@@ -271,10 +288,12 @@ export function HomeContent() {
           let pubKey: PublicKey;
           try {
             pubKey = new PublicKey(walletAddress);
+            setLoadingMessage("Validating wallet address...");
           } catch (e) {
             throw new Error("Invalid wallet address");
           }
 
+          setLoadingMessage("Fetching token accounts...");
           const tokenAccounts = await fetchTokenAccounts(pubKey);
 
           // Add immediate check for empty wallet
@@ -297,28 +316,31 @@ export function HomeContent() {
           }
 
           setTotalAccounts(tokenAccounts.value.length);
+          setLoadingMessage(`Processing ${tokenAccounts.value.length} token accounts...`);
 
           // Calculate total value separately
           let calculatedTotalValue = 0;
-          const tokenDataPromises = tokenAccounts.value.map((tokenAccount) =>
-            handleTokenData(pubKey, tokenAccount, apiLimiter).then((tokenData) => {
-              calculatedTotalValue += tokenData.usdValue;
-              updateTotalValue(tokenData.usdValue);
-              return tokenData;
-            })
-          );
+          let processedTokens = 0;
+
+          const tokenDataPromises = tokenAccounts.value.map(async (tokenAccount) => {
+            const tokenData = await handleTokenData(pubKey, tokenAccount, apiLimiter);
+            processedTokens++;
+            setLoadingMessage(`Processing tokens (${processedTokens}/${tokenAccounts.value.length})...`);
+            calculatedTotalValue += tokenData.usdValue;
+            updateTotalValue(tokenData.usdValue);
+            return tokenData;
+          });
 
           const tokens = await Promise.all(tokenDataPromises);
-          // console.log("Tokens:", tokens);
           setTokens(tokens);
 
-          // Get top 10 holdings sorted by USD value
+          setLoadingMessage("Analyzing top holdings...");
           const topHoldings = tokens
             .filter(token => token.symbol && !isSolanaAddress(token.symbol))
             .sort((a, b) => b.usdValue - a.usdValue)
             .slice(0, 10);
 
-          // Fetch additional token info for each holding
+          setLoadingMessage("Enriching token data...");
           const enrichedTopHoldings = await Promise.all(
             topHoldings.map(async (token): Promise<TopHolding> => {
               let tokenInfo = null;
@@ -347,16 +369,16 @@ export function HomeContent() {
             : 0;
           setSpecificTokenBalance(specificTokenAmount);
 
-          // Generate initial thesis
+          setLoadingMessage("Generating investment thesis...");
           const thesis = await generateThesis(tokens);
           setThesis(thesis);
 
-          // Fetch sentiment analysis and Google Trends data
+          setLoadingMessage("Analyzing sentiment...");
           if (thesis) await fetchSentimentAnalysis(thesis);
+
+          setLoadingMessage("Fetching market trends...");
           if (tokens) await fetchGoogleTrends(tokens);
 
-          // console.log("Updating wallet:", walletAddress.toString(), calculatedTotalValue, enrichedTopHoldings);
-          // Use calculatedTotalValue instead of totalValue state
           await updateWalletToDb(
             walletAddress.toString(),
             calculatedTotalValue,
@@ -364,7 +386,6 @@ export function HomeContent() {
             originalDomain
           ).catch(error => {
             console.error('Error updating wallet data:', error);
-            // Don't throw here - we still want to show the data even if update fails
           });
 
           setSignState("success");
@@ -403,6 +424,7 @@ export function HomeContent() {
     }
   }, [signState, publicKey, submittedAddress, updateTotalValue]);
 
+  // Extract sentiment scores from thesis
   const extractSentimentScores = (thesis: string) => {
     try {
       // Updated regex to be more flexible with spacing and line endings
@@ -417,15 +439,11 @@ export function HomeContent() {
           drugUse: Number(matches[4]) / 100,
           hateSpeech: Number(matches[5]) / 100
         };
-
-        // console.log("Extracted scores:", scores);
-
         setRacismScore(scores.racism);
         setCrudityScore(scores.crudity);
         setProfanityScore(scores.profanity);
         setDrugUseScore(scores.drugUse);
         setHateSpeechScore(scores.hateSpeech);
-
         return {
           cleanedThesis: thesis.replace(/Racism:.*?Hate [Ss]peech:\s*\d+\/100/s, '').trim(),
           scores
@@ -439,6 +457,7 @@ export function HomeContent() {
     }
   };
 
+  // Generate thesis
   const generateThesis = async (tokens: any[], retryCount = 0): Promise<string> => {
     try {
       const summarizedData = await summarizeTokenData(tokens);
@@ -454,8 +473,6 @@ export function HomeContent() {
         if (response.status === 500 && retryCount < MAX_RETRIES) {
           // Calculate delay with exponential backoff
           const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-
-          // console.log(`Attempt ${retryCount + 1} failed, retrying in ${delay}ms...`);
 
           // Show retry toast
           toast.loading(
@@ -474,8 +491,6 @@ export function HomeContent() {
       }
 
       const data = await response.json();
-      // console.log("Thesis data:", data.thesis);
-
       // Try to extract scores from thesis first
       const extracted = extractSentimentScores(data.thesis);
       if (extracted) {
@@ -507,7 +522,7 @@ export function HomeContent() {
     }
   };
 
-
+  // Handle generate new thesis
   const handleGenerateNewThesis = async () => {
     if (!publicKey) {
       toast.error("Please connect your wallet to regenerate thesis. Address-only viewing does not support regeneration.");
@@ -554,7 +569,7 @@ export function HomeContent() {
       });
 
       selectedPayment = paymentChoice;
-      
+
       if (paymentChoice === 'cancel') {
         return;
       }
@@ -570,11 +585,11 @@ export function HomeContent() {
         }[paymentChoice];
 
         confirmation = await processTokenTransfer(
-          publicKey, 
-          connection, 
-          tokenConfig.mint, 
-          1, 
-          tokenConfig.decimals, 
+          publicKey,
+          connection,
+          tokenConfig.mint,
+          1,
+          tokenConfig.decimals,
           sendTransaction
         );
       }
@@ -612,7 +627,6 @@ export function HomeContent() {
     try {
       let addressToUse = manualAddress.trim();
       let solDomain = '';
-
       // Check if input is a .sol domain
       if (addressToUse.toLowerCase().endsWith('.sol')) {
         setLoading(true);
@@ -644,10 +658,7 @@ export function HomeContent() {
     }
   };
 
-  useEffect(() => {
-    setCanGeneratePowerpoint(specificTokenBalance >= 10);
-  }, [specificTokenBalance]);
-
+  // Fetch similar coins
   useEffect(() => {
     const fetchSimilarCoins = async () => {
       if (tokens.length > 0) {
@@ -658,9 +669,7 @@ export function HomeContent() {
               symbol: token.symbol!,
               name: token.name!
             }));
-          // console.log("Sending token data:", tokenData); // Debug log
           const similarCoinsData = await getSimilarCoins(tokenData);
-          console.log("Received similar coins:", similarCoinsData); // Debug log
           setSimilarCoins(similarCoinsData);
         } catch (error) {
           console.error("Error fetching similar coins:", error);
@@ -671,9 +680,10 @@ export function HomeContent() {
     fetchSimilarCoins();
   }, [tokens]);
 
+  // Fetch eligible tokens
   useEffect(() => {
     if (tokens && tokens.length > 0) {
-      const pumpTokens = tokens.filter(token => 
+      const pumpTokens = tokens.filter(token =>
         token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
       );
       setHasEligibleTokens(pumpTokens.length > 0);
@@ -682,6 +692,7 @@ export function HomeContent() {
     }
   }, [tokens]);
 
+  // Handle Twitter Auth
   const handleTwitterAuth = async () => {
     try {
       if (!publicKey) {
@@ -709,13 +720,13 @@ export function HomeContent() {
       }
 
       const { url } = await response.json();
-      
+
       // Open Twitter auth in a popup
       const width = 600;
       const height = 600;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
-      
+
       const popup = window.open(
         url,
         'Twitter Auth',
@@ -749,9 +760,10 @@ export function HomeContent() {
     }
   };
 
+  // Handle premium purchase
   const handlePremiumPurchase = async () => {
     if (!publicKey) return;
-    
+
     try {
       setLoading(true);
       const loadingToast = toast.loading('Processing premium purchase...');
@@ -766,7 +778,7 @@ export function HomeContent() {
       const response = await fetch('/api/premium/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           address: publicKey.toString(),
           action: 'purchase',
           confirmation: confirmation
@@ -789,29 +801,6 @@ export function HomeContent() {
     }
   };
 
-  // Loading State
-  if (loading || !tokens || signState === "loading") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <p className="text-lg mb-4">
-          {waitingForConfirmation
-            ? "Waiting for transaction confirmation..."
-            : `Found ${totalAccounts} Accounts, Generating Thesis...`}
-        </p>
-        <Circles color="#00BFFF" height={80} width={80} />
-      </div>
-    );
-  }
-
-  // Initial Loading State
-  if ((publicKey || submittedAddress) && signState === "success" && tokens.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Loading wallet information...</p>
-      </div>
-    );
-  }
-
   const hasFetchedData = (publicKey || submittedAddress) && signState === "success" && tokens.length > 0 && totalAccounts > 0;
 
   const handleCreatePortfolio = async () => {
@@ -826,10 +815,10 @@ export function HomeContent() {
     }
 
     setIsCreatingPortfolio(true); // Set loading state
-    
+
     try {
       // Filter tokens that end with "pump"
-      const pumpTokens = tokens.filter(token => 
+      const pumpTokens = tokens.filter(token =>
         token.mintAddress && token.mintAddress.toLowerCase().endsWith('pump')
       );
 
@@ -853,6 +842,11 @@ export function HomeContent() {
       setIsCreatingPortfolio(false); // Reset loading state
     }
   };
+
+  // Loading State
+  if (loading || !tokens || signState === "loading") {
+    return <LoadingState message={loadingMessage} isWaitingConfirmation={waitingForConfirmation} />;
+  }
 
   return (
     <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-8 max-w-4xl overflow-x-hidden">
@@ -907,13 +901,6 @@ export function HomeContent() {
             createdPortId={createdPortId}
           />
 
-          {/* Similar Coins */}
-          {similarCoins.length > 0 && (
-            <SimilarCoinsSection
-              similarCoins={similarCoins}
-            />
-          )}
-
           {/* Sentiment Analysis */}
           {(() => {
             const hasScores = hasValidScores({
@@ -963,7 +950,7 @@ export function HomeContent() {
                       // Create transaction for 10 tokens
                       const confirmation = await processTrendPayment(publicKey, connection, 10, sendTransaction);
 
-                      if(confirmation.value.err) {
+                      if (confirmation.value.err) {
                         throw new Error("Transaction failed");
                       }
                       // Update the specific token balance after successful transaction
@@ -987,8 +974,29 @@ export function HomeContent() {
             </div>
           )}
 
-          {publicKey && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+          {publicKey && hasPremiumAccess && premiumAnalytics && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Portfolio Analytics</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="stat-card">
+                  <h3>Portfolio Risk Score</h3>
+                  <p className="text-2xl font-bold">{premiumAnalytics.riskRating}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Volatility Index</h3>
+                  <p className="text-2xl font-bold">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                {similarCoins.length > 0 && (
+                  <>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Similar Coins</h2>
+                    <SimilarCoinsSection
+                      similarCoins={similarCoins}
+                    />
+                  </>
+                )}
+              </div>
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">Twitter Integration</h2>
                 {twitterAuth.isLinked ? (
@@ -996,17 +1004,17 @@ export function HomeContent() {
                     <span className="text-sm text-gray-600">
                       Linked to @{twitterAuth.username}
                     </span>
-                    <svg 
-                      className="w-5 h-5 text-green-500" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M5 13l4 4L19 7" 
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
                       />
                     </svg>
                   </div>
@@ -1026,23 +1034,7 @@ export function HomeContent() {
                   </button>
                 )}
               </div>
-            </div>
-          )}
-
-          {publicKey && hasPremiumAccess && premiumAnalytics && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Portfolio Analytics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="stat-card">
-                  <h3>Portfolio Risk Score</h3>
-                  <p className="text-2xl font-bold">{premiumAnalytics.riskRating}</p>
-                </div>
-                <div className="stat-card">
-                  <h3>Volatility Index</h3>
-                  <p className="text-2xl font-bold">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
-                </div>
-                {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
-              </div>
+              {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
             </div>
           )}
 
@@ -1050,7 +1042,7 @@ export function HomeContent() {
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Upgrade to Premium</h2>
               <p className="mb-4">Get access to advanced analytics and features for 100,000 {DEFAULT_TOKEN_3_NAME}</p>
-              <button 
+              <button
                 onClick={handlePremiumPurchase}
                 className="btn btn-primary"
                 disabled={loading}

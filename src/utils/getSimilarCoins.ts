@@ -28,9 +28,9 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
         ]);
 
         console.log("API Responses:", {
-            profiles: latestTokenProfiles?.tokens?.length,
-            boosts: latestTokenBoosts?.tokens?.length,
-            top: topTokenBoosts?.tokens?.length
+            profiles: latestTokenProfiles,
+            boosts: latestTokenBoosts,
+            top: topTokenBoosts
         });
 
         // Function to extract essential token data and remove duplicates
@@ -39,27 +39,35 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                 console.warn("Received non-array tokens:", tokens);
                 return [];
             }
+
             const seen = new Set();
             return tokens
                 .filter(token => {
-                    if (!token?.symbol || seen.has(token.symbol)) return false;
-                    seen.add(token.symbol);
+                    if (!token || typeof token !== 'object') return false;
+                    
+                    // Extract symbol from tokenAddress or url
+                    const symbol = token.tokenAddress?.split('.').pop() || 
+                                 token.url?.split('/').pop() || '';
+                    
+                    if (!symbol || seen.has(symbol.toUpperCase())) return false;
+                    seen.add(symbol.toUpperCase());
                     return true;
                 })
                 .map(token => ({
-                    symbol: token.symbol,
-                    name: token.name || token.symbol,
-                    description: token.description || `A token on ${token.chainId || 'blockchain'}`,
+                    symbol: (token.tokenAddress?.split('.').pop() || 
+                            token.url?.split('/').pop() || '').toUpperCase(),
+                    name: token.description?.split('\n')[0] || token.symbol || '',
+                    description: token.description || '',
                     chainId: token.chainId,
-                    address: token.address
+                    address: token.tokenAddress
                 }));
         };
 
         // Process and combine tokens from all sources
         const combinedTokens = [
-            ...processTokens(latestTokenProfiles?.tokens || []),
-            ...processTokens(latestTokenBoosts?.tokens || []),
-            ...processTokens(topTokenBoosts?.tokens || [])
+            ...processTokens(latestTokenProfiles || []),
+            ...processTokens(latestTokenBoosts || []),
+            ...processTokens(topTokenBoosts || [])
         ].slice(0, 20);
 
         console.log("Combined tokens count:", combinedTokens.length);
