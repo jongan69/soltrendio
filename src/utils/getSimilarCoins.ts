@@ -53,14 +53,36 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                     seen.add(symbol.toUpperCase());
                     return true;
                 })
-                .map(token => ({
-                    symbol: (token.tokenAddress?.split('.').pop() || 
-                            token.url?.split('/').pop() || '').toUpperCase(),
-                    name: token.description?.split('\n')[0] || token.symbol || '',
-                    description: token.description || '',
-                    chainId: token.chainId,
-                    address: token.tokenAddress
-                }));
+                .map(token => {
+                    // Handle both array and object formats for links
+                    let website = '';
+                    let dexscreenerLink = '';
+
+                    if (Array.isArray(token.links)) {
+                        // Handle array format
+                        website = token.links.find(
+                            (link: any) => link.label === 'Website' || link.type === 'website'
+                        )?.url || '';
+                        dexscreenerLink = token.links.find(
+                            (link: any) => link.type === 'dexscreener'
+                        )?.url || '';
+                    } else if (token.links && typeof token.links === 'object') {
+                        // Handle object format (existing code)
+                        website = token.links.website || '';
+                        dexscreenerLink = token.links.dexscreener || '';
+                    }
+
+                    return {
+                        symbol: (token.tokenAddress?.split('.').pop() || 
+                                token.url?.split('/').pop() || '').toUpperCase(),
+                        name: token.description?.split('\n')[0] || token.symbol || '',
+                        description: token.description || '',
+                        chainId: token.chainId,
+                        address: token.tokenAddress,
+                        website,
+                        link: dexscreenerLink
+                    };
+                });
         };
 
         // Process and combine tokens from all sources
@@ -85,7 +107,7 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
             
             Find the 5 most similar tokens based on use case, market focus, and token utility.
             
-            Respond with ONLY this JSON format:
+            Respond with this JSON format using the token data provided:
             {
                 "similarCoins": [
                     {
