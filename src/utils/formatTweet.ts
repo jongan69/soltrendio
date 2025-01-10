@@ -11,7 +11,8 @@ export async function formatTrendsTweet(trends: any) {
         totalAmountStaked,
         portfolioMetrics,
         last24Hours,
-        topTokensByValue
+        topTokensByValue,
+        largeHoldersCount
     } = trends;
     const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
     const jupiterSwapResponse2 = await fetchJupiterSwap(SOLANA_ADDRESS);
@@ -30,6 +31,7 @@ export async function formatTrendsTweet(trends: any) {
     return `📊 Soltrendio Analytics Update
 
 📈 $TREND Price: $${jupiterSwapPrice}
+🐋 Large Holders (1M+ tokens): ${largeHoldersCount}
 🔒 Staked in Vault: ${totalAmountStaked}
 💻 Solana Price: $${Number(solanaPrice).toFixed(2)}
 🪙 Bitcoin Price: $${bitcoinPrice}
