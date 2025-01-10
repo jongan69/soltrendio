@@ -57,6 +57,10 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                     // Handle both array and object formats for links
                     let website = '';
                     let dexscreenerLink = '';
+                    let twitterLink = '';
+                    let telegramLink = '';
+                    let discordLink = '';
+                    let githubLink = '';
 
                     if (Array.isArray(token.links)) {
                         // Handle array format
@@ -66,10 +70,23 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         dexscreenerLink = token.links.find(
                             (link: any) => link.type === 'dexscreener'
                         )?.url || '';
+                        twitterLink = token.links.find(
+                            (link: any) => link.type === 'twitter'
+                        )?.url || '';
+                        telegramLink = token.links.find(
+                            (link: any) => link.type === 'telegram'
+                        )?.url || '';
+                        discordLink = token.links.find(
+                            (link: any) => link.type === 'discord'
+                        )?.url || '';
+                        githubLink = token.links.find(
+                            (link: any) => link.type === 'github'
+                        )?.url || '';
                     } else if (token.links && typeof token.links === 'object') {
                         // Handle object format (existing code)
                         website = token.links.website || '';
                         dexscreenerLink = token.links.dexscreener || '';
+                        twitterLink = token.links.twitter || '';
                     }
 
                     return {
@@ -80,7 +97,11 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         chainId: token.chainId,
                         address: token.tokenAddress,
                         website,
-                        link: dexscreenerLink
+                        link: dexscreenerLink || '',
+                        twitter: twitterLink || '',
+                        telegram: telegramLink || '',
+                        discord: discordLink || '',
+                        github: githubLink || ''
                     };
                 });
         };
@@ -116,7 +137,11 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         "reason": "Brief explanation of similarity",
                         "link": "https://dexscreener.com/solana/TOKEN",
                         "website": "https://www.example.com",
-                        "description": "Brief token description"
+                        "description": "Brief token description",
+                        "twitter": "https://twitter.com/TOKEN",
+                        "telegram": "https://t.me/TOKEN",
+                        "discord": "https://discord.gg/TOKEN",
+                        "github": "https://github.com/TOKEN"
                     }
                 ]
             }`;
