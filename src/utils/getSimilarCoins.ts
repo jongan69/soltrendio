@@ -56,6 +56,7 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                 .map(token => {
                     // Handle both array and object formats for links
                     let website = '';
+                    let docsLink = '';
                     let dexscreenerLink = '';
                     let twitterLink = '';
                     let telegramLink = '';
@@ -67,26 +68,30 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         website = token.links.find(
                             (link: any) => link.label === 'Website' || link.type === 'website'
                         )?.url || '';
-                        dexscreenerLink = token.links.find(
-                            (link: any) => link.type === 'dexscreener'
+                        dexscreenerLink = token.url || '';
+                        docsLink = token.links.find(
+                            (link: any) => link.type === 'docs' || link.type === 'documentation' || link.type === 'whitepaper' || link.type === 'Docs'
                         )?.url || '';
                         twitterLink = token.links.find(
-                            (link: any) => link.type === 'twitter'
+                            (link: any) => link.type === 'twitter' || link.type === 'Twitter'
                         )?.url || '';
                         telegramLink = token.links.find(
-                            (link: any) => link.type === 'telegram'
+                            (link: any) => link.type === 'telegram' || link.type === 'Telegram'
                         )?.url || '';
                         discordLink = token.links.find(
-                            (link: any) => link.type === 'discord'
+                            (link: any) => link.type === 'discord' || link.type === 'Discord'
                         )?.url || '';
                         githubLink = token.links.find(
-                            (link: any) => link.type === 'github'
+                            (link: any) => link.type === 'github' || link.type === 'Github'
                         )?.url || '';
                     } else if (token.links && typeof token.links === 'object') {
                         // Handle object format (existing code)
                         website = token.links.website || '';
                         dexscreenerLink = token.links.dexscreener || '';
                         twitterLink = token.links.twitter || '';
+                        telegramLink = token.links.telegram || '';
+                        discordLink = token.links.discord || '';
+                        githubLink = token.links.github || '';
                     }
 
                     return {
@@ -98,6 +103,7 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         address: token.tokenAddress,
                         website,
                         link: dexscreenerLink || '',
+                        docs: docsLink || '',
                         twitter: twitterLink || '',
                         telegram: telegramLink || '',
                         discord: discordLink || '',
@@ -135,9 +141,10 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                         "newCoin": {"symbol": "TOKEN", "name": "Token Name"},
                         "similarityScore": 0.95,
                         "reason": "Brief explanation of similarity",
-                        "link": "https://dexscreener.com/solana/TOKEN",
-                        "website": "https://www.example.com",
                         "description": "Brief token description",
+                        "link": "https://dexscreener.com/solana/TOKEN",
+                        "docs": "https://docs.example.com",
+                        "website": "https://www.example.com",
                         "twitter": "https://twitter.com/TOKEN",
                         "telegram": "https://t.me/TOKEN",
                         "discord": "https://discord.gg/TOKEN",
