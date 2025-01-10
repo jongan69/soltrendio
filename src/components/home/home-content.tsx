@@ -975,66 +975,85 @@ export function HomeContent() {
           )}
 
           {publicKey && hasPremiumAccess && premiumAnalytics && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Portfolio Analytics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="stat-card">
-                  <h3>Portfolio Risk Score</h3>
-                  <p className="text-2xl font-bold">{premiumAnalytics.riskRating}</p>
-                </div>
-                <div className="stat-card">
-                  <h3>Volatility Index</h3>
-                  <p className="text-2xl font-bold">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50">
+              {/* Premium Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Premium Analytics</h2>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    Premium Active
+                  </span>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                {similarCoins.length > 0 && (
-                  <>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Similar Coins</h2>
-                    <SimilarCoinsSection
-                      similarCoins={similarCoins}
-                    />
-                  </>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Twitter Integration</h2>
-                {twitterAuth.isLinked ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">
-                      Linked to @{twitterAuth.username}
-                    </span>
-                    <svg
-                      className="w-5 h-5 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
+
+              {/* Main Analytics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Risk Score Card */}
+                <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl border border-purple-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
+                    <h3 className="text-gray-700 font-medium">Portfolio Risk Score</h3>
                   </div>
-                ) : (
-                  <button
-                    onClick={handleTwitterAuth}
-                    className="btn btn-sm sm:btn-md bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white border-none flex items-center gap-2"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                  <p className="text-3xl font-bold text-gray-900">{premiumAnalytics.riskRating}</p>
+                </div>
+
+                {/* Volatility Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <h3 className="text-gray-700 font-medium">Volatility Index</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {/* Similar Coins Section */}
+              {similarCoins.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Similar Coins</h3>
+                    <span className="text-sm text-gray-500">Based on your portfolio</span>
+                  </div>
+                  <SimilarCoinsSection similarCoins={similarCoins} />
+                </div>
+              )}
+
+              {/* Twitter Integration */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6 text-[#1DA1F2]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
                     </svg>
-                    Link Twitter Account
-                  </button>
-                )}
+                    <h3 className="text-lg font-semibold text-gray-900">Twitter Integration</h3>
+                  </div>
+                  
+                  {twitterAuth.isLinked ? (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
+                      <span className="text-sm font-medium text-green-700">
+                        @{twitterAuth.username}
+                      </span>
+                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleTwitterAuth}
+                      className="btn btn-sm sm:btn-md bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white border-none flex items-center gap-2"
+                    >
+                      Link Twitter Account
+                    </button>
+                  )}
+                </div>
               </div>
-              {publicKey && <PnLCard walletAddress={publicKey?.toBase58()} />}
+
+              {/* PnL Card */}
+              {publicKey && <PnLCard walletAddress={publicKey.toBase58()} />}
             </div>
           )}
 
