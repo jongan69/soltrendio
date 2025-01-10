@@ -36,6 +36,46 @@ export const SimilarCoinsSection = ({ similarCoins }: { similarCoins: any[] }) =
                       Visit Website
                     </a>
                   )}
+                  {coin.twitter && (
+                    <a
+                      href={coin.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                    >
+                      View on Twitter
+                    </a>
+                  )}
+                  {coin.telegram && (
+                    <a
+                      href={coin.telegram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                    >
+                      View on Telegram
+                    </a>
+                  )}
+                  {coin.discord && (
+                    <a
+                      href={coin.discord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                    >
+                      View on Discord
+                    </a>
+                  )}
+                  {coin.github && (
+                    <a
+                      href={coin.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                    >
+                      View on Github
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="bg-purple-100 px-3 py-1 rounded-full mt-2 sm:mt-0">
