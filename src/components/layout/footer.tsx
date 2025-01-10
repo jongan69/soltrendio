@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 function getTimeUntilNextFriday() {
   const now = new Date();
   const friday = new Date();
-  
+
   // Set to next Friday
   friday.setDate(friday.getDate() + ((7 - friday.getDay() + 5) % 7));
   // Set to 12:00 PM
@@ -15,7 +16,7 @@ function getTimeUntilNextFriday() {
   }
 
   const diff = friday.getTime() - now.getTime();
-  
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -32,7 +33,7 @@ export function Footer() {
     const timer = setInterval(() => {
       const newTime = getTimeUntilNextFriday();
       setTimeLeft(newTime);
-      
+
       // Switch to NFT Collection text when timer hits 0
       if (newTime.total <= 0) {
         setShowCollection(true);
@@ -46,16 +47,7 @@ export function Footer() {
     <footer className="footer footer-center p-4 text-base-content">
       <div className="flex flex-col items-center gap-2">
         <p className="flex items-center gap-2">
-          Soltrendio was fairly launched on
           <a
-            href="https://pump.fun/coin/BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"
-            target="_blank"
-            rel="noreferrer"
-            className="link link-primary"
-          >
-            Pump.fun 
-          </a>
-          <a 
             href="https://launchmynft.io/collections/4XkHKL3ErUuPBeDs9tnUZZ7as5EeeD9o3iLpbFGGiTP8/62N1lSAE9w5XVj9cuHWM"
             className="opacity-40 hover:opacity-100 transition-opacity text-xs text-black-400"
             target="_blank"
@@ -83,8 +75,22 @@ export function Footer() {
               viewBox="0 0 24 24"
               className="fill-current"
             >
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z"/>
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z" />
             </svg>
+          </a>
+          <a
+            href="https://pump.fun/coin/BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:opacity-70 transition-opacity"
+            aria-label="Pump.fun"
+          >
+            <Image
+              src="/pump.svg"
+              width={20}
+              height={20}
+              alt="Pump.fun"
+            />
           </a>
           <a
             href="https://m3m3.meteora.ag/farms/7VrKfJZ1D7B9ydmd8HXS76vX47A3rzKPDCok82SvFvRV"
@@ -100,7 +106,7 @@ export function Footer() {
               viewBox="0 0 24 24"
               className="fill-current"
             >
-              <path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/>
+              <path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z" />
             </svg>
           </a>
           <a
