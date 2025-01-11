@@ -1,10 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '../db/connectDB';
 import { fetchJupiterSwap } from '@utils/fetchJupiterSwap';
-import { DEFAULT_M3_VAULT, DEFAULT_TOKEN_3 } from '@utils/globals';
+import { DEFAULT_M3_VAULT, DEFAULT_TOKEN_3, SOLANA_ADDRESS } from '@utils/globals';
 import { getM3Vault } from '@utils/getM3Vault';
 import { formatNumber } from '@utils/formatNumber';
 import { getLargeHolders } from '@utils/getLargeHolders';
+import { fetch6900 } from '@utils/fetch6900';
+import { fetchSP500MarketCap } from '@utils/fetchSP500';
+import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,6 +26,12 @@ export default async function handler(
     const m3VaultData = await getM3Vault(DEFAULT_M3_VAULT);
     const totalAmountStaked = m3VaultData.total_staked_amount;
     const largeHolders = await getLargeHolders(DEFAULT_TOKEN_3);
+    const jupiterSwapResponse2 = await fetchJupiterSwap(SOLANA_ADDRESS);
+    const solanaPrice = jupiterSwapResponse2.data[SOLANA_ADDRESS].price;
+    const bitcoinPrice = await fetchBitcoinPrice();
+    const sp500MarketCap = await fetchSP500MarketCap();
+    const spx6900MarketCap = await fetch6900();
+    const percentOfSpx6900flippingSp500 = ((spx6900MarketCap / sp500MarketCap) * 100).toFixed(5);
     // Update the 24-hour stats calculation
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
@@ -348,6 +357,11 @@ export default async function handler(
       largeHoldersCount: largeHolders,
       totalAmountStaked: formatNumber(totalAmountStaked) + " TREND",
       totalUniqueWallets: uniqueWalletsCount,
+      solanaPrice,
+      bitcoinPrice,
+      sp500MarketCap,
+      spx6900MarketCap,
+      percentOfSpx6900flippingSp500,
       portfolioMetrics: {
         averagePortfolioValue: aggregationResult[0]?.averageTotalValue || 0,
         averageTokenHoldingValue: aggregationResult[0]?.averageHoldingValue || 0,
