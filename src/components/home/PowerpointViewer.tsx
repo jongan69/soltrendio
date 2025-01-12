@@ -55,7 +55,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 const id = new URL(pptxUrl).searchParams.get('id');
                 if (!id) throw new Error('No presentation ID found');
 
-                const response = await axios.get(`/api/pptx/serve-powerpoint?id=${id}&download=true`, {
+                const response = await axios.get(`/api/pptx/serve-powerpoint?id=${id}`, {
                     responseType: 'blob',
                     timeout: 300000,
                     maxContentLength: Infinity,
