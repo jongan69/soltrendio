@@ -20,6 +20,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         setLoading(true);
         setError(null);
         const paymentSuccessful = await onGenerate();
+        
         if (paymentSuccessful) {
             try {
                 const response = await axios.post('/api/pptx/generate-powerpoint', {
@@ -27,6 +28,14 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     totalTokens: summary.totalTokens,
                     totalValue: summary.totalValue,
                     thesis: thesis,
+                }, {
+                    timeout: 300000,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Transfer-Encoding': 'chunked'
+                    },
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
                 });
 
                 const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${response.data.id}`;
@@ -44,16 +53,16 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
     const handleDownload = async () => {
         if (pptxUrl) {
             try {
-                // Get the ID from the URL
                 const id = new URL(pptxUrl).searchParams.get('id');
                 if (!id) throw new Error('No presentation ID found');
 
-                // Fetch the PowerPoint with download flag
                 const response = await axios.get(`/api/pptx/serve-powerpoint?id=${id}&download=true`, {
-                    responseType: 'blob'
+                    responseType: 'blob',
+                    timeout: 300000,
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
                 });
 
-                // Create download link
                 const blob = new Blob([response.data], {
                     type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
                 });

@@ -4,7 +4,10 @@ import { PowerPoint } from '../../../models/PowerPoint';
 
 export const config = {
   api: {
-    responseLimit: '15mb',
+    responseLimit: false,
+    bodyParser: {
+      sizeLimit: '50mb'
+    }
   },
 }
 

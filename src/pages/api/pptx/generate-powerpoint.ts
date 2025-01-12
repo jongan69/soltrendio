@@ -9,9 +9,12 @@ const openai = new OpenAI({
 
 export const config = {
     api: {
-      responseLimit: '15mb',
-    },
-  }
+        responseLimit: false,
+        bodyParser: {
+            sizeLimit: '50mb'
+        }
+    }
+}
 
 async function generateThesisSummary(thesis: string): Promise<string> {
     const response = await openai.chat.completions.create({
