@@ -119,7 +119,6 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pptxUrl)}`}
                             width="100%"
                             height="100%"
-                            frameBorder="0"
                             allowFullScreen
                             className="w-full h-full"
                         />
