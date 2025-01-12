@@ -10,7 +10,7 @@ export default async function handler(
     }
 
     const startTime = Date.now();
-    const TIMEOUT_MS = 59000; // 59 seconds in milliseconds
+    const TIMEOUT_MS = 55000; // 55 seconds in milliseconds
 
     // Helper function to check if we're approaching timeout
     const isTimeoutApproaching = () => {
