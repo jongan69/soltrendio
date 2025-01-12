@@ -11,11 +11,10 @@ interface PowerpointViewerProps {
 }
 
 export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: PowerpointViewerProps) {
-    const [pptxData, setPptxData] = useState<string | null>(null);
     const [pptxUrl, setPptxUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [viewerKey, setViewerKey] = useState(0); // Add this to force iframe refresh
+    const [viewerKey, setViewerKey] = useState(0);
 
     const handleGenerate = async () => {
         setLoading(true);
@@ -23,7 +22,6 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         const paymentSuccessful = await onGenerate();
         if (paymentSuccessful) {
             try {
-                // Generate PowerPoint
                 const response = await axios.post('/api/pptx/generate-powerpoint', {
                     tokens: summary.summary,
                     totalTokens: summary.totalTokens,
@@ -31,33 +29,9 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     thesis: thesis,
                 });
 
-                if (!response.data.pptxBase64) {
-                    throw new Error('No base64 data received from API');
-                }
-
-                // Store PowerPoint data and get temporary URL
-                const storeResponse = await axios.post('/api/pptx/serve-powerpoint', {
-                    base64Data: response.data.pptxBase64
-                });
-
-                const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${storeResponse.data.id}`;
+                const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${response.data.id}`;
                 setPptxUrl(publicUrl);
-                setViewerKey(prev => prev + 1); // Force iframe refresh when new URL is set
-
-                // Create blob URL for download
-                const byteCharacters = atob(response.data.pptxBase64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {
-                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-                });
-                const url = URL.createObjectURL(blob);
-                setPptxData(url);
-                // console.log(url);
-
+                setViewerKey(prev => prev + 1);
             } catch (error) {
                 console.error('Error in PowerPoint generation:', error);
                 setError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -67,22 +41,34 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         }
     };
 
-    useEffect(() => {
-        return () => {
-            if (pptxData) {
-                URL.revokeObjectURL(pptxData);
-            }
-        };
-    }, [pptxData]);
+    const handleDownload = async () => {
+        if (pptxUrl) {
+            try {
+                // Get the ID from the URL
+                const id = new URL(pptxUrl).searchParams.get('id');
+                if (!id) throw new Error('No presentation ID found');
 
-    const handleDownload = () => {
-        if (pptxData) {
-            const link = document.createElement('a');
-            link.href = pptxData;
-            link.download = 'investment-thesis.pptx';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                // Fetch the PowerPoint with download flag
+                const response = await axios.get(`/api/pptx/serve-powerpoint?id=${id}&download=true`, {
+                    responseType: 'blob'
+                });
+
+                // Create download link
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+                });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'investment-thesis.pptx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error downloading PowerPoint:', error);
+                setError('Failed to download PowerPoint');
+            }
         }
     };
 
@@ -97,7 +83,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     Generate New PowerPoint ({cost} {DEFAULT_TOKEN_3_NAME})
                 </button>
 
-                {pptxData && (
+                {pptxUrl && (
                     <button
                         disabled={loading}
                         onClick={handleDownload}

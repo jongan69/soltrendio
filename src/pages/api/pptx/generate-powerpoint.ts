@@ -7,6 +7,12 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+export const config = {
+    api: {
+      responseLimit: '15mb',
+    },
+  }
+
 async function generateThesisSummary(thesis: string): Promise<string> {
     const response = await openai.chat.completions.create({
         model: "gpt-4-turbo-preview",
@@ -526,7 +532,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Prepare table data for regular tokens
         const tokenTableData = regularTokens
-            .filter(token => token.usdValue > 0)
+            .filter(token => token.usdValue > 1)
             .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
             .map(token => {
                 const percentage = ((token.usdValue / totalTokenValue) * 100).toFixed(2);
@@ -676,7 +682,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Generate PowerPoint as a base64 string
         const pptxBase64 = await pptx.write({ outputType: 'base64' });
 
-        res.status(200).json({ pptxBase64 });
+        if (!pptxBase64) {
+            throw new Error('No base64 data received from API');
+        }
+
+        // Store PowerPoint data and get temporary URL
+        const storeResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pptx/serve-powerpoint`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ base64Data: pptxBase64 }),
+        });
+
+        const data = await storeResponse.json();
+
+        // Return the ID directly instead of the full response
+        res.status(200).json({ id: data.id });
     } catch (error) {
         console.error('Error generating PowerPoint:', error);
         res.status(500).json({ error: 'Failed to generate PowerPoint presentation' });
