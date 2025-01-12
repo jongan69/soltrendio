@@ -31,8 +31,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 }, {
                     timeout: 300000,
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Transfer-Encoding': 'chunked'
+                        'Content-Type': 'application/json'
                     },
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity
@@ -117,7 +116,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     <div className="aspect-[4/3] w-full">
                         <iframe
                             key={viewerKey}
-                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pptxUrl)}&embedded=true`}
+                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pptxUrl)}`}
                             width="100%"
                             height="100%"
                             frameBorder="0"
