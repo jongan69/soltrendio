@@ -9,6 +9,30 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed, use POST.' });
     }
 
+    const startTime = Date.now();
+    const TIMEOUT_MS = 59000; // 59 seconds in milliseconds
+
+    // Helper function to check if we're approaching timeout
+    const isTimeoutApproaching = () => {
+        return Date.now() - startTime >= TIMEOUT_MS;
+    };
+
+    // Helper function to create response summary
+    const createSummary = (signatures: any[], bundledTransactions: any[], timedOut = false) => ({
+        status: 'success',
+        contractAddress: req.body.contractAddress,
+        transactionsScanned: signatures.length,
+        totalBundles: bundledTransactions.length,
+        bundledTransactions,
+        processingStats: {
+            totalProcessed: signatures.length,
+            successfulBundles: bundledTransactions.length,
+            failedOrNonBundles: signatures.length - bundledTransactions.length,
+            timedOut,
+            processedTime: `${((Date.now() - startTime) / 1000).toFixed(2)}s`
+        }
+    });
+
     const apiKey = req.headers['x-api-key'];
     if (!apiKey) {
         return res.status(401).json({ error: 'API key is required' });
@@ -43,20 +67,19 @@ export default async function handler(
         const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT);
         const address = new PublicKey(contractAddress);
 
-        // Fetch transaction signatures for the contract address
-        const signatures = await connection.getSignaturesForAddress(address, {
-            limit: 1000
-        });
+        const signatures = await connection.getSignaturesForAddress(address);
 
-        // Batch process signatures
         const batchSize = 10;
         const bundledTransactions = [];
 
         // Process signatures in batches
         for (let i = 0; i < signatures.length; i += batchSize) {
-            const batch = signatures.slice(i, i + batchSize);
+            // Check for timeout before processing each batch
+            if (isTimeoutApproaching()) {
+                return res.status(200).json(createSummary(signatures, bundledTransactions, true));
+            }
 
-            // Create promises for parallel processing
+            const batch = signatures.slice(i, i + batchSize);
             const batchPromises = batch.map(async (signatureInfo) => {
                 // First check if it's a bundle
                 const bundleResponse = await fetch(
@@ -85,10 +108,8 @@ export default async function handler(
                 return null;
             });
 
-            // Use Promise.allSettled instead of Promise.all
             const batchResults = await Promise.allSettled(batchPromises);
 
-            // Process the settled promises and filter out failures and null results
             const validResults = batchResults
                 .filter((result): result is PromiseFulfilledResult<any> => 
                     result.status === 'fulfilled' && result.value !== null
@@ -98,26 +119,13 @@ export default async function handler(
             bundledTransactions.push(...validResults);
 
             // Add a small delay between batches to avoid rate limiting
-            if (i + batchSize < signatures.length) {
+            if (i + batchSize < signatures.length && !isTimeoutApproaching()) {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
         }
 
-        // Add statistics about failed requests
-        const processingSummary = {
-            status: 'success',
-            contractAddress,
-            transactionsScanned: signatures.length,
-            totalBundles: bundledTransactions.length,
-            bundledTransactions,
-            processingStats: {
-                totalProcessed: signatures.length,
-                successfulBundles: bundledTransactions.length,
-                failedOrNonBundles: signatures.length - bundledTransactions.length
-            }
-        };
+        return res.status(200).json(createSummary(signatures, bundledTransactions, false));
 
-        return res.status(200).json(processingSummary);
     } catch (error) {
         console.error('Error processing request:', error);
         return res.status(500).json({ error: 'Internal server error' });
