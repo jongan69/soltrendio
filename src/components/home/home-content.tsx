@@ -56,6 +56,7 @@ import { SimilarCoinsSection } from "./similar-coins";
 import { checkTwitterStatus } from "@utils/checkTwitterStatus";
 import { LoadingState } from "@components/LoadingStates";
 import { fetchPremiumAnalytics } from "@utils/fetchPremiumAnalytics";
+import { ApiKeyManager } from './ApiKeyManager';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -1007,7 +1008,7 @@ export function HomeContent() {
                     </svg>
                     <h3 className="text-gray-700 font-medium">Volatility Index</h3>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900">{premiumAnalytics.volatilityScore.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-gray-900">{premiumAnalytics?.volatilityScore?.toFixed(2) || 0}</p>
                 </div>
               </div>
 
@@ -1051,7 +1052,10 @@ export function HomeContent() {
                   )}
                 </div>
               </div>
-
+              {publicKey && hasPremiumAccess && (
+                <ApiKeyManager walletAddress={publicKey.toBase58()} />
+              )}
+              <div className="p-4 "/>
               {/* PnL Card */}
               {publicKey && <PnLCard walletAddress={publicKey.toBase58()} />}
             </div>
