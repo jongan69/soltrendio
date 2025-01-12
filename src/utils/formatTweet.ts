@@ -50,3 +50,7 @@ ${topTokens}
 
 Track individual wallets at soltrendio.com`;
 }
+
+function formatReplyTweet(username: string, content: string) {
+    return content.replace('@Soltrendio', `@${username}`);
+}

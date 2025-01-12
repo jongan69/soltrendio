@@ -23,7 +23,7 @@ export default async function handler(
       const existingUser = await premiumUsersCollection.findOne({ address });
       const isPaid: boolean = existingUser?.isPremium;
       const isNftOwner: boolean = await checkNftOwnership(address, TREND_SETTERS_NFT_COLLECTION);
-      const isPremium: boolean = isPaid && isNftOwner;
+      const isPremium: boolean = isPaid || isNftOwner;
       if (isPremium) {
         return res.status(200).json({ isPremium, message: 'Premium access granted' });
       }

@@ -1060,7 +1060,7 @@ export function HomeContent() {
           {!hasPremiumAccess && publicKey && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Upgrade to Premium</h2>
-              <p className="mb-4">Get access to advanced analytics and features for 100,000 {DEFAULT_TOKEN_3_NAME}</p>
+              <p className="mb-4">Get access to advanced analytics and features for 100,000 {DEFAULT_TOKEN_3_NAME} OR Own a Trend Setter NFT</p>
               <button
                 onClick={handlePremiumPurchase}
                 className="btn btn-primary"
