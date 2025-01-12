@@ -2,6 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from 'mongoose';
 import { PowerPoint } from '../../../models/PowerPoint';
 
+export const config = {
+  api: {
+    responseLimit: '15mb',
+  },
+}
+
 // MongoDB connection
 const connectDB = async () => {
   if (mongoose.connections[0].readyState) return;
@@ -104,11 +110,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('Method not allowed:', req.method);
   return res.status(405).end();
 }
-
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-} 
