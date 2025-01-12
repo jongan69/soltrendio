@@ -1,15 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MongoClient } from 'mongodb';
-
-// Add MongoDB connection helper
-async function connectToDatabase() {
-    if (!process.env.MONGODB_URI) {
-        throw new Error('MONGODB_URI is not defined');
-    }
-    const client = await MongoClient.connect(process.env.MONGODB_URI);
-    return client;
-}
+import { connectToDatabase } from '../db/connectDB';
 
 export default async function handler(
     req: NextApiRequest,
@@ -53,7 +44,9 @@ export default async function handler(
         const address = new PublicKey(contractAddress);
 
         // Fetch transaction signatures for the contract address
-        const signatures = await connection.getSignaturesForAddress(address);
+        const signatures = await connection.getSignaturesForAddress(address, {
+            limit: 1000
+        });
 
         // Batch process signatures
         const batchSize = 10;
@@ -65,43 +58,44 @@ export default async function handler(
 
             // Create promises for parallel processing
             const batchPromises = batch.map(async (signatureInfo) => {
-                try {
-                    // First check if it's a bundle
-                    const bundleResponse = await fetch(
-                        `https://bundles.jito.wtf/api/v1/bundles/transaction/${signatureInfo.signature}`
-                    );
-                    if (bundleResponse.status == 404 || bundleResponse.status == 400) {
-                        return null;
-                    }
-
-                    const bundleTxDetails = await bundleResponse.json();
-
-                    // If it's a bundle, then get transaction details
-                    if (bundleTxDetails[0]?.bundle_id) {
-                        const txDetails = await connection.getTransaction(signatureInfo.signature, {
-                            maxSupportedTransactionVersion: 0
-                        });
-
-                        if (!txDetails) return null;
-
-                        return {
-                            signature: signatureInfo.signature,
-                            bundleId: bundleTxDetails[0].bundle_id,
-                            blockTime: txDetails.blockTime,
-                        };
-                    }
-                    return null;
-                } catch (error) {
-                    console.error(`Error processing signature ${signatureInfo.signature}`);
+                // First check if it's a bundle
+                const bundleResponse = await fetch(
+                    `https://bundles.jito.wtf/api/v1/bundles/transaction/${signatureInfo.signature}`
+                );
+                if (bundleResponse.status == 404 || bundleResponse.status == 400) {
                     return null;
                 }
+
+                const bundleTxDetails = await bundleResponse.json();
+
+                // If it's a bundle, then get transaction details
+                if (bundleTxDetails[0]?.bundle_id) {
+                    const txDetails = await connection.getTransaction(signatureInfo.signature, {
+                        maxSupportedTransactionVersion: 0
+                    });
+
+                    if (!txDetails) return null;
+
+                    return {
+                        signature: signatureInfo.signature,
+                        bundleId: bundleTxDetails[0].bundle_id,
+                        blockTime: txDetails.blockTime,
+                    };
+                }
+                return null;
             });
 
-            // Wait for all promises in the batch to resolve
-            const batchResults = await Promise.all(batchPromises);
+            // Use Promise.allSettled instead of Promise.all
+            const batchResults = await Promise.allSettled(batchPromises);
 
-            // Filter out null results and add valid transactions
-            bundledTransactions.push(...batchResults.filter(result => result !== null));
+            // Process the settled promises and filter out failures and null results
+            const validResults = batchResults
+                .filter((result): result is PromiseFulfilledResult<any> => 
+                    result.status === 'fulfilled' && result.value !== null
+                )
+                .map(result => result.value);
+
+            bundledTransactions.push(...validResults);
 
             // Add a small delay between batches to avoid rate limiting
             if (i + batchSize < signatures.length) {
@@ -109,13 +103,21 @@ export default async function handler(
             }
         }
 
-        return res.status(200).json({
+        // Add statistics about failed requests
+        const processingSummary = {
             status: 'success',
             contractAddress,
             transactionsScanned: signatures.length,
             totalBundles: bundledTransactions.length,
-            bundledTransactions
-        });
+            bundledTransactions,
+            processingStats: {
+                totalProcessed: signatures.length,
+                successfulBundles: bundledTransactions.length,
+                failedOrNonBundles: signatures.length - bundledTransactions.length
+            }
+        };
+
+        return res.status(200).json(processingSummary);
     } catch (error) {
         console.error('Error processing request:', error);
         return res.status(500).json({ error: 'Internal server error' });
