@@ -36,9 +36,40 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     }))
                     .slice(0, 50);
 
+                // Remove markdown formatting and clean thesis
+                const cleanMarkdown = (text: string): string => {
+                    return text
+                        // Remove bold/italic markers
+                        .replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, '$1')
+                        // Remove headers
+                        .replace(/#{1,6}\s+/g, '')
+                        // Remove bullet points
+                        .replace(/^[-*+]\s+/gm, '')
+                        // Remove numbered lists
+                        .replace(/^\d+\.\s+/gm, '')
+                        // Remove code blocks
+                        .replace(/```[\s\S]*?```/g, '')
+                        .replace(/`([^`]+)`/g, '$1')
+                        // Remove blockquotes
+                        .replace(/^\s*>\s+/gm, '')
+                        // Remove horizontal rules
+                        .replace(/^[-*_]{3,}\s*$/gm, '')
+                        // Remove links
+                        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                        // Remove images
+                        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+                        // Remove HTML tags
+                        .replace(/<[^>]*>/g, '')
+                        // Fix multiple spaces
+                        .replace(/\s+/g, ' ')
+                        // Fix multiple newlines
+                        .replace(/\n+/g, '\n')
+                        .trim();
+                };
+
                 // Clean and truncate thesis to complete sentences
                 const cleanThesis = thesis ? (
-                    thesis
+                    cleanMarkdown(thesis)
                         .split(/[.!?]+\s+/) // Split into sentences
                         .reduce((acc: string[], sentence: string) => {
                             // Check if adding this sentence would exceed the limit
