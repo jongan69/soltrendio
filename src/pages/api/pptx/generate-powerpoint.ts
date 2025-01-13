@@ -722,7 +722,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // Log before database save
             console.log('Attempting to save PowerPoint to database...');
             const powerPoint = await PowerPoint.create({
-                pptxBase64,
+                base64Data: pptxBase64,
                 _id: new mongoose.Types.ObjectId()
             });
             console.log('PowerPoint saved successfully with ID:', powerPoint._id.toString());

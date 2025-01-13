@@ -108,6 +108,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 }
 
                 const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${response.data.id}`;
+                console.log('Generated PowerPoint URL:', publicUrl);
                 setPptxUrl(publicUrl);
                 setViewerKey(prev => prev + 1);
             } catch (error: any) {
@@ -127,7 +128,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
             try {
                 const id = new URL(pptxUrl).searchParams.get('id');
                 if (!id) throw new Error('No presentation ID found');
-
+                console.log('Downloading PowerPoint with ID:', id);
                 const response = await axios.get(`/api/pptx/serve-powerpoint?id=${id}`, {
                     responseType: 'blob',
                     timeout: 300000,
