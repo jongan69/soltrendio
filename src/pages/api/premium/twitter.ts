@@ -23,6 +23,7 @@ export default async function handler(
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid API key' });
         }
+        console.log(process.env.LOCAL_NODE_API)
        const response = await fetch(process.env.LOCAL_NODE_API as string)
        const data = await response.json()
        console.log(data)
