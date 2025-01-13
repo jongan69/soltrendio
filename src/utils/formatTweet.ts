@@ -24,9 +24,9 @@ export async function formatTrendsTweet(trends: any) {
         .join('\n');
 
     console.log(topTweetedTickers);
-    // Format top tweeted tickers
+    // Format top tweeted tickers with conditional plural
     const topTickers = topTweetedTickers
-        .map((item: any) => `$${item.ticker}: ${item.count} tweets`)
+        .map((item: any) => `${item.ticker}: ${item.count} ${item.count === 1 ? 'tweet' : 'tweets'}`)
         .join('\n');
 
     const jupiterSwapPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
