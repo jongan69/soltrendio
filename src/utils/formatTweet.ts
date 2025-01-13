@@ -12,7 +12,8 @@ export async function formatTrendsTweet(trends: any) {
         portfolioMetrics,
         last24Hours,
         topTokensByValue,
-        largeHoldersCount
+        largeHoldersCount,
+        topTweetedTickers
     } = trends;
     const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
     const jupiterSwapResponse2 = await fetchJupiterSwap(SOLANA_ADDRESS);
@@ -20,6 +21,11 @@ export async function formatTrendsTweet(trends: any) {
     const topTokens = topTokensByValue
         .slice(0, 3)
         .map((token: any) => `$${token.tokenSymbol}: $${formatNumber(token.totalUsdValue)}`)
+        .join('\n');
+
+    // Format top tweeted tickers
+    const topTickers = topTweetedTickers
+        .map((ticker: any) => `$${ticker.symbol}: ${ticker.count} tweets`)
         .join('\n');
 
     const jupiterSwapPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
@@ -48,9 +54,8 @@ Percent of Flippeneing: ${percentOfMissionCompleted}%
 📈 Top Tokens:
 ${topTokens}
 
-Track individual wallets at soltrendio.com`;
-}
+🐦 Top Tweeted Tickers:
+${topTickers}
 
-function formatReplyTweet(username: string, content: string) {
-    return content.replace('@Soltrendio', `@${username}`);
+Track individual wallets at soltrendio.com`;
 }

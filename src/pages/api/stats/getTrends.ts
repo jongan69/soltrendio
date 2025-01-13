@@ -8,6 +8,7 @@ import { getLargeHolders } from '@utils/getLargeHolders';
 import { fetch6900 } from '@utils/fetch6900';
 import { fetchSP500MarketCap } from '@utils/fetchSP500';
 import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
+import { getTopTickers } from '@utils/topTickers';
 
 export default async function handler(
   req: NextApiRequest,
@@ -34,7 +35,8 @@ export default async function handler(
     const percentOfSpx6900flippingSp500 = ((spx6900MarketCap / sp500MarketCap) * 100).toFixed(5);
     // Update the 24-hour stats calculation
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
+    const topTickers = await getTopTickers();
     // Add this debugging section
     // const anyWallet = await wallets.findOne({});
     // console.log('Sample wallet fields:', {
@@ -426,6 +428,7 @@ export default async function handler(
               last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) * 100
           : 0
       },
+      topTweetedTickers: topTickers
     });
 
   } catch (error) {
