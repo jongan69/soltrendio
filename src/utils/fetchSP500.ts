@@ -22,7 +22,7 @@ export const fetchSP500MarketCap = async (): Promise<number> => {
     // Calculate total market cap
     let totalMarketCap = 0;
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       tickers.map(async (ticker) => {
         try {
           // Fetch market cap from Yahoo Finance
@@ -36,10 +36,12 @@ export const fetchSP500MarketCap = async (): Promise<number> => {
             await collection.updateOne(
               { Symbol: ticker },
               { $set: { marketCap: quote.marketCap, lastUpdated: new Date() } },
-              { upsert: true } // Insert if it doesn't exist
+              { upsert: true }
             );
+            return { status: 'success', ticker, marketCap: quote.marketCap };
           } else {
             console.warn(`Market cap missing for ${ticker}, skipping...`);
+            return { status: 'missing', ticker };
           }
         } catch (error: any) {
           console.error(`Error fetching data for ${ticker}:`, error.message);
@@ -50,12 +52,19 @@ export const fetchSP500MarketCap = async (): Promise<number> => {
           if (fallbackCompany?.marketCap) {
             console.warn(`Using last saved market cap for ${ticker}: ${fallbackCompany.marketCap}`);
             totalMarketCap += fallbackCompany.marketCap;
+            return { status: 'fallback', ticker, marketCap: fallbackCompany.marketCap };
           } else {
             console.warn(`No saved market cap found for ${ticker}, skipping...`);
+            return { status: 'error', ticker, error: error.message };
           }
         }
       })
     );
+
+    // Log summary of results
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    console.log(`Processed ${succeeded} successful and ${failed} failed requests`);
 
     return totalMarketCap;
   } catch (error: any) {

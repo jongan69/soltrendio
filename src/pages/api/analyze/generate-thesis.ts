@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // console.log("Tokens:", tokens);
 
   // Process tokens and fetch missing information
-  const processedTopTokens = (await Promise.all(
+  const processedTopTokensSettled = await Promise.allSettled(
     (tokens.summary?.slice(0, 10) || []).map(async (token: any) => {
       let name = token.name;
       let symbol = token.symbol;
@@ -43,7 +43,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       return null;
     })
-  )).filter((token): token is NonNullable<typeof token> => token !== null);
+  )
+
+  const processedTopTokens = processedTopTokensSettled
+    .filter((result): result is PromiseFulfilledResult<typeof tokens> =>
+      result.status === 'fulfilled' && result.value !== null
+    )
+    .map(result => result.value);
+
 
   const summarizedTokens = {
     totalTokens: tokens.totalTokens,

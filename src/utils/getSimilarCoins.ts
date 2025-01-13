@@ -24,12 +24,17 @@ interface TokenData {
 
 export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenComparison[]> => {
     try {
-        // Fetch data from all three endpoints
-        const [latestTokenProfiles, latestTokenBoosts, topTokenBoosts] = await Promise.all([
+        // First change - initial API calls
+        const responses = await Promise.allSettled([
             fetch('https://api.dexscreener.com/token-profiles/latest/v1').then(r => r.json()),
             fetch('https://api.dexscreener.com/token-boosts/latest/v1').then(r => r.json()),
             fetch('https://api.dexscreener.com/token-boosts/top/v1').then(r => r.json())
         ]);
+
+        // Extract values from fulfilled promises, use empty arrays for rejected ones
+        const [latestTokenProfiles, latestTokenBoosts, topTokenBoosts] = responses.map(result => 
+            result.status === 'fulfilled' ? result.value : []
+        );
 
         console.log("API Responses:", {
             profiles: latestTokenProfiles,
@@ -46,10 +51,14 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
 
             const seen = new Set();
             // First get token info for all tokens
-            const tokenInfos = await Promise.all(
+            const tokenInfoResults = await Promise.allSettled(
                 tokens.map(token => getTokenInfo(token.tokenAddress))
             );
             
+            const tokenInfos = tokenInfoResults.map(result => 
+                result.status === 'fulfilled' ? result.value : null
+            );
+
             const filteredTokens = tokens.filter((token, index) => {
                 if (!token || typeof token !== 'object') return false;
                 const symbol = tokenInfos[index]?.symbol;
@@ -121,12 +130,18 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
             }));
         };
 
-        // Process and combine tokens from all sources
-        const combinedTokens = (await Promise.all([
+        // For the final combination of tokens
+        const combinedTokensResults = await Promise.allSettled([
             processTokens(latestTokenProfiles || []),
             processTokens(latestTokenBoosts || []),
             processTokens(topTokenBoosts || [])
-        ])).flat().slice(0, 20);
+        ]);
+
+        const combinedTokens = combinedTokensResults
+            .filter(result => result.status === 'fulfilled')
+            .map(result => (result as PromiseFulfilledResult<TokenData[]>).value)
+            .flat()
+            .slice(0, 20);
 
         console.log("Combined tokens count:", combinedTokens.length);
         console.log("First few combined tokens:", combinedTokens.slice(0, 3));

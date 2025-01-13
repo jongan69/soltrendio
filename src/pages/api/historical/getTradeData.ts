@@ -54,77 +54,81 @@ export default async function handler(
     const transactions = await response.json();
     console.log(`Found ${transactions.length} total transactions`);
 
-    const tradeHistory = [];
+    // Create array of promises for processing each transaction
+    const tradePromises = transactions.map(async (txn: any) => {
+      // Skip non-SWAP transactions early
+      if (txn.type !== 'SWAP' || !txn.tokenTransfers?.length) return null;
 
-    // Process transactions to extract trade data
-    for (const txn of transactions) {
-      try {
-        // Focus on SWAP transactions
-        if (txn.type !== 'SWAP' || !txn.tokenTransfers?.length) continue;
+      // Get the input and output transfers
+      const transfers = txn.tokenTransfers.filter((transfer: TokenTransfer) => 
+        transfer.fromUserAccount === address || transfer.toUserAccount === address
+      );
 
-        // Get the input and output transfers
-        const transfers = txn.tokenTransfers.filter((transfer: TokenTransfer) => 
-          transfer.fromUserAccount === address || transfer.toUserAccount === address
-        );
+      if (transfers.length < 2) return null;
 
-        if (transfers.length < 2) continue;
+      // Find the "out" and "in" transfers
+      const tokenOut = transfers.find((t: TokenTransfer) => t.fromUserAccount === address);
+      const tokenIn = transfers.find((t: TokenTransfer) => t.toUserAccount === address);
 
-        // Find the "out" and "in" transfers
-        const tokenOut = transfers.find((t: TokenTransfer) => t.fromUserAccount === address);
-        const tokenIn = transfers.find((t: TokenTransfer) => t.toUserAccount === address);
+      if (!tokenIn || !tokenOut) return null;
 
-        if (!tokenIn || !tokenOut) continue;
+      // Get token information
+      const [tokenInInfo, tokenOutInfo] = await Promise.allSettled([
+        getTokenInfo(tokenIn.mint),
+        getTokenInfo(tokenOut.mint)
+      ]);
 
-        // Get token information
-        const [tokenInInfo, tokenOutInfo] = await Promise.all([
-          getTokenInfo(tokenIn.mint),
-          getTokenInfo(tokenOut.mint)
-        ]);
+      // Skip if either promise was rejected or returned null
+      if (tokenInInfo.status !== 'fulfilled' || tokenOutInfo.status !== 'fulfilled' || 
+          !tokenInInfo.value || !tokenOutInfo.value) return null;
 
-        // Skip if we couldn't get token info
-        if (!tokenInInfo || !tokenOutInfo) continue;
+      return {
+        timestamp: txn.timestamp,
+        signature: txn.signature,
+        tokenIn: {
+          mint: tokenIn.mint,
+          amount: tokenIn.tokenAmount,
+          decimals: tokenInInfo.value.decimals || 9,
+          symbol: tokenInInfo.value.symbol || 'Unknown',
+          image: tokenInInfo.value.image || null,
+          website: tokenInInfo.value.website || null,
+          price: tokenInInfo.value.price,
+          priceNative: tokenInInfo.value.priceNative || 0
+        },
+        tokenOut: {
+          mint: tokenOut.mint,
+          amount: tokenOut.tokenAmount,
+          decimals: tokenOutInfo.value.decimals || 9,
+          symbol: tokenOutInfo.value.symbol || 'Unknown',
+          image: tokenOutInfo.value.image || null,
+          website: tokenOutInfo.value.website || null,
+          price: tokenOutInfo.value.price,
+          priceNative: tokenOutInfo.value.priceNative || 0
+        },
+        fee: txn.fee || 0,
+        success: true,
+        source: txn.source || 'Unknown DEX'
+      };
+    });
 
-        const trade = {
-          timestamp: txn.timestamp,
-          signature: txn.signature,
-          tokenIn: {
-            mint: tokenIn.mint,
-            amount: tokenIn.tokenAmount,
-            decimals: tokenInInfo.decimals || 9,
-            symbol: tokenInInfo.symbol || 'Unknown',
-            image: tokenInInfo.image || null,
-            website: tokenInInfo.website || null,
-            price: tokenInInfo.price,
-            priceNative: tokenInInfo.priceNative || 0
-          },
-          tokenOut: {
-            mint: tokenOut.mint,
-            amount: tokenOut.tokenAmount,
-            decimals: tokenOutInfo.decimals || 9,
-            symbol: tokenOutInfo.symbol || 'Unknown',
-            image: tokenOutInfo.image || null,
-            website: tokenOutInfo.website || null,
-            price: tokenOutInfo.price,
-            priceNative: tokenOutInfo.priceNative || 0
-          },
-          fee: txn.fee || 0,
-          success: true,
-          source: txn.source || 'Unknown DEX'
-        };
-
-        tradeHistory.push(trade);
+    // Process all promises in parallel
+    const results = await Promise.allSettled(tradePromises);
+    
+    // Filter successful results and remove nulls
+    const tradeHistory = results
+      .filter((result): result is PromiseFulfilledResult<any> => 
+        result.status === 'fulfilled' && result.value !== null
+      )
+      .map(result => {
+        const trade = result.value;
         console.log('Processed trade:', {
           tokenIn: trade.tokenIn.symbol,
           tokenOut: trade.tokenOut.symbol,
           amountIn: trade.tokenIn.amount,
           amountOut: trade.tokenOut.amount
         });
-
-      } catch (err) {
-        console.error('Error processing transaction:', err);
-        continue;
-      }
-    }
+        return trade;
+      });
 
     console.log(`Successfully processed ${tradeHistory.length} trades`);
 

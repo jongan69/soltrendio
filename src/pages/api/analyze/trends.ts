@@ -28,23 +28,26 @@ export default async function handler(
   }
 
   try {
-    // Process keywords and resolve addresses
-    const processedKeywords = await Promise.all(
-      keywords.map(async (kw: string) => {
-        if (isSolanaAddress(kw)) {
-          const tokenInfo = await getTokenInfo(kw);
-          return tokenInfo?.symbol || kw;
-        }
-        return kw;
-      })
-    );
+    // Process keywords and resolve addresses using Promise.allSettled
+    const keywordPromises = keywords.map(async (kw: string) => {
+      if (isSolanaAddress(kw)) {
+        const tokenInfo = await getTokenInfo(kw);
+        return tokenInfo?.symbol || kw;
+      }
+      return kw;
+    });
+
+    const settledResults = await Promise.allSettled(keywordPromises);
+    const processedKeywords = settledResults
+      .filter((result): result is PromiseFulfilledResult<string> => 
+        result.status === 'fulfilled')
+      .map(result => result.value);
 
     // Clean and filter keywords
     const cleanedKeywords = processedKeywords
-      .filter((kw: string) => kw.length < 30) // Filter out long addresses
-      .map((kw: string) => kw.replace(/[^a-zA-Z0-9]/g, '')) // Remove special characters
+      .filter((kw: string) => kw.length < 30)
+      .map((kw: string) => kw.replace(/[^a-zA-Z0-9]/g, ''))
       .filter((kw: string) => {
-        // Keep only uppercase alphanumeric strings (tickers)
         const isUpperCase = kw === kw.toUpperCase();
         const hasLetters = /[A-Z]/.test(kw);
         return isUpperCase && hasLetters && kw.length >= 2;

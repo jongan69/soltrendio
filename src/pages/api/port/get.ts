@@ -51,7 +51,7 @@ export default async function handler(
         console.log('Raw portfolios from DB:', portfolios);
 
         // Fetch performance data for each portfolio
-        const portfoliosWithPerformance = await Promise.all(
+        const performanceResults = await Promise.allSettled(
             portfolios.map(async (portfolio) => {
                 const performance = await getPortfolioPerformance(portfolio.portfolioId);
                 console.log(`Performance for portfolio ${portfolio.portfolioId}:`, performance);
@@ -71,6 +71,10 @@ export default async function handler(
                 };
             })
         );
+
+        const portfoliosWithPerformance = performanceResults
+            .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+            .map(result => result.value);
 
         // Get top performers for each time frame
         const getTopPerformers = (timeFrame: '30m' | '1h' | '6h' | '24h') => {

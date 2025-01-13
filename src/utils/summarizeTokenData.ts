@@ -3,7 +3,7 @@ import { getTokenInfo } from "./getTokenInfo";
 
 export const summarizeTokenData = async (tokens: any[]) => {
     // Process tokens and resolve any contract addresses
-    const summary = await Promise.all(tokens.map(async (token: { 
+    const results = await Promise.allSettled(tokens.map(async (token: { 
       symbol: string; 
       name: string; 
       amount: any; 
@@ -14,7 +14,7 @@ export const summarizeTokenData = async (tokens: any[]) => {
     }) => {
       console.log('Processing token:', token);
       const tokenInfo = await getTokenInfo(token.mintAddress);
-      // console.log('Token marketCap:', tokenInfo?.marketCap);
+      
       let processedToken = {
         symbol: token.symbol,
         name: token.name,
@@ -27,24 +27,27 @@ export const summarizeTokenData = async (tokens: any[]) => {
         isNft: token.isNft,
       };
 
-      // If symbol looks like a Solana address, try to fetch token info
-      if (isSolanaAddress(token.symbol)) {
-        if (tokenInfo) {
-          processedToken.name = tokenInfo.name;
-          processedToken.symbol = tokenInfo.symbol;
-          processedToken.marketCap = tokenInfo.marketCap || 0;
-          processedToken.price = tokenInfo.price || 0;
-          processedToken.image = tokenInfo.image || token.logo;
-          processedToken.website = tokenInfo.website || '';
-        }
+      if (isSolanaAddress(token.symbol) && tokenInfo) {
+        processedToken.name = tokenInfo.name;
+        processedToken.symbol = tokenInfo.symbol;
+        processedToken.marketCap = tokenInfo.marketCap || 0;
+        processedToken.price = tokenInfo.price || 0;
+        processedToken.image = tokenInfo.image || token.logo;
+        processedToken.website = tokenInfo.website || '';
       }
+      
       console.log('Processed token:', processedToken);
       return processedToken;
     }));
 
-    // Aggregate data for overall summary
+    // Filter out failed promises and get successful results
+    const summary = results
+      .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+      .map(result => result.value);
+
+    // Aggregate data for overall summary (using filtered successful results)
     const totalValue = tokens.reduce((acc: any, token: { usdValue: any; }) => acc + token.usdValue, 0);
-    const totalTokens = tokens.length;
+    const totalTokens = summary.length;
     const totalMarketCap = summary.reduce((acc, token) => acc + (token.marketCap || 0), 0);
 
     return {
@@ -53,4 +56,4 @@ export const summarizeTokenData = async (tokens: any[]) => {
       totalTokens,
       totalMarketCap,
     };
-  };
+};

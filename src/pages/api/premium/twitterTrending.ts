@@ -36,7 +36,7 @@ export default async function handler(
             await client.initialize();
         }
         // Fetch tweets from all tracked accounts
-        const allTweets = await Promise.all(
+        const results = await Promise.allSettled(
             TRACKED_ACCOUNTS.map(async (username) => {
                 try {
                     const userTweets = await client.getUserTweets(username);
@@ -57,6 +57,13 @@ export default async function handler(
                 }
             })
         );
+
+        // Filter out rejected promises and get fulfilled values
+        const allTweets = results
+            .filter((result): result is PromiseFulfilledResult<{username: string, tweets: Tweet[]}> => 
+                result.status === 'fulfilled'
+            )
+            .map(result => result.value);
 
         // Filter out empty results and sort by date
         const flattenedTweets = allTweets
