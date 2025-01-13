@@ -7,7 +7,7 @@
     "src": "package.json",
     "use": "@vercel/next",
     "config": {
-      "installCommand": "yarn && git clone https://github.com/node-webrtc/node-webrtc.git && cd node-webrtc && npm run build && cp build-linux-x64/Release/wrtc.node ../node_modules/"
+      "installCommand": "yarn && npm install node-webrtc --build-from-source"
     }
   }]
 }
