@@ -1,6 +1,13 @@
 {
-    "crons": [{
-      "path": "/api/cron/tweet",
-      "schedule": "0 0 * * *"
-    }]
-  }
+  "crons": [{
+    "path": "/api/cron/tweet",
+    "schedule": "0 0 * * *"
+  }],
+  "builds": [{
+    "src": "package.json",
+    "use": "@vercel/next",
+    "config": {
+      "installCommand": "yarn && cat dependencies.txt | xargs yarn add --ignore-platform"
+    }
+  }]
+}
