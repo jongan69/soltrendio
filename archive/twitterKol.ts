@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { TwitterClient } from './twitterAuth';
+import { TwitterClient } from '../../../../archive/twitterAuth';
 import { Tweet } from 'agent-twitter-client';
 import { TRACKED_ACCOUNTS } from '@utils/trackedAccounts';
 import { checkApiKey } from '@utils/checkApiKey';

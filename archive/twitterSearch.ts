@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { TwitterClient } from './twitterAuth';
+import { TwitterClient } from '../../../../archive/twitterAuth';
 import { checkApiKey } from '@utils/checkApiKey';
 
 export default async function handler(
