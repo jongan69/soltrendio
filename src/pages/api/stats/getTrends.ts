@@ -214,7 +214,8 @@ export default async function handler(
         $match: {
           domain: { 
             $exists: true, 
-            $ne: null,
+            $ne: '',
+            $regex: /\.sol$/i  // Only include .sol domains
           },
           totalValue: { $gt: 100 }
         }
@@ -226,10 +227,16 @@ export default async function handler(
           walletCount: { $sum: 1 },
           averageWalletValue: { $avg: '$totalValue' },
           largestWallet: { $max: '$totalValue' },
-          smallestWallet: { $min: '$totalValue' }
+          smallestWallet: { $min: '$totalValue' },
+          addresses: { $push: '$address' }
         }
       },
-      { $match: { walletCount: { $gt: 0 } } },
+      { 
+        $match: { 
+          walletCount: { $gt: 0 },
+          _id: { $ne: null }  // Additional check to exclude null domains
+        } 
+      },
       { $sort: { totalValue: -1 } },
       { $limit: 5 },
       {
@@ -240,7 +247,8 @@ export default async function handler(
           numberOfWallets: '$walletCount',
           averageWalletValue: '$averageWalletValue',
           largestWalletValue: '$largestWallet',
-          smallestWalletValue: '$smallestWallet'
+          smallestWalletValue: '$smallestWallet',
+          addresses: '$addresses'
         }
       }
     ]).toArray();
@@ -325,27 +333,42 @@ export default async function handler(
       },
       {
         $group: {
-          _id: '$_id',  // Group by wallet first
+          _id: '$address',  // Group by wallet address
           holdings: { 
-            $push: '$topHoldings.symbol' 
+            $addToSet: '$topHoldings.symbol'  // Use addToSet to avoid duplicates within a wallet
           }
         }
       },
-      { $unwind: '$holdings' },
-      { $unwind: '$holdings' },
+      { $match: { 'holdings.1': { $exists: true } } },  // Only wallets with 2+ tokens
+      {
+        $unwind: {
+          path: '$holdings',
+          includeArrayIndex: 'index'
+        }
+      },
+      {
+        $unwind: {
+          path: '$holdings',
+          includeArrayIndex: 'index2'
+        }
+      },
+      {
+        $match: {
+          $expr: { $lt: ['$index', '$index2'] }  // Only keep pairs where first index < second index
+        }
+      },
       {
         $group: {
           _id: {
-            token1: { $min: ['$holdings', '$$ROOT.holdings'] },
-            token2: { $max: ['$holdings', '$$ROOT.holdings'] }
+            token1: '$holdings',
+            token2: '$holdings'
           },
           count: { $sum: 1 }
         }
       },
       { 
         $match: { 
-          '_id.token1': { $ne: '_id.token2' },
-          'count': { $gt: 1 }
+          count: { $gt: 1 }  // Only pairs held by multiple wallets
         } 
       },
       { $sort: { count: -1 } },
@@ -379,7 +402,8 @@ export default async function handler(
           max: domain.largestWalletValue
         },
         percentageOfTotalValue: (domain.totalValue / 
-          (totalValueStats[0]?.totalPortfolioValue || 1)) * 100
+          (totalValueStats[0]?.totalPortfolioValue || 1)) * 100,
+        addresses: domain.addresses
       })),
       topTokensByValue: top5Result.map(holding => ({
         tokenSymbol: holding.symbol,
@@ -390,7 +414,7 @@ export default async function handler(
       })),
       commonTokenPairs: commonHoldings.map(pair => ({
         tokens: [pair._id.token1, pair._id.token2],
-        sharedHolders: pair.count
+        sharedHolders: Math.floor(pair.count / 2)  // Divide by 2 since we counted each pair twice
       })),
       last24Hours: {
         newWallets: last24HoursStats[0]?.newWallets[0]?.count || 0,

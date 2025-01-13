@@ -12,6 +12,7 @@ type StatsData = {
   topDomainsByValue: Array<{
     name: string;
     totalValue: number;
+    addresses: string[];
   }>;
   topTokensByValue: Array<{
     tokenSymbol: string;
@@ -63,8 +64,8 @@ export const StatsTicker: React.FC = () => {
     },
     {
       icon: "🏆",
-      label: "Top Domain",
-      value: stats.topDomainsByValue[0]?.name || "N/A",
+      label: "Top Wallet",
+      value: stats.topDomainsByValue[0]?.name || stats.topDomainsByValue[0]?.addresses[0] || "N/A",
       subtext: stats.topDomainsByValue[0] ? 
         `$${formatNumber(stats.topDomainsByValue[0].totalValue)}` : "",
     },
