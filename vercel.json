@@ -7,7 +7,7 @@
     "src": "package.json",
     "use": "@vercel/next",
     "config": {
-      "installCommand": "yarn && npm install node-webrtc --build-from-source"
+      "installCommand": "yarn && SKIP_DOWNLOAD=true npm install node-webrtc --build-from-source --legacy-peer-deps"
     }
   }]
 }
