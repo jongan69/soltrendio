@@ -24,7 +24,7 @@ export const getTopTickers = async (): Promise<TickerCount[] | null> => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/premium/twitter`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/premium/twitter-trending-tickers`, {
             method: 'GET',
             headers: { 
                 'Content-Type': 'application/json',
