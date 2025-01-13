@@ -9,6 +9,7 @@ import { fetch6900 } from '@utils/fetch6900';
 import { fetchSP500MarketCap } from '@utils/fetchSP500';
 import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 import { getTopTickers } from '@utils/topTickers';
+import { fetchEthereumPrice } from '@utils/ethereumPrice';
 
 export default async function handler(
   req: NextApiRequest,
@@ -37,6 +38,7 @@ export default async function handler(
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const topTickers = await getTopTickers();
+    const ethereumPrice = await fetchEthereumPrice();
     // Add this debugging section
     // const anyWallet = await wallets.findOne({});
     // console.log('Sample wallet fields:', {
@@ -382,8 +384,9 @@ export default async function handler(
       largeHoldersCount: largeHolders,
       totalAmountStaked: formatNumber(totalAmountStaked) + " TREND",
       totalUniqueWallets: uniqueWalletsCount,
-      solanaPrice,
       bitcoinPrice,
+      solanaPrice,
+      ethereumPrice,
       sp500MarketCap,
       spx6900MarketCap,
       percentOfSpx6900flippingSp500,
