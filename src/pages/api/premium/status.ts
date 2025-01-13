@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { DEFAULT_TOKEN_3, TREND_SETTERS_NFT_COLLECTION } from '@utils/globals';
-import { PublicKey } from '@solana/web3.js';
-import { fetchTokenAccounts } from '@utils/tokenUtils';
+import { TREND_SETTERS_NFT_COLLECTION } from '@utils/globals';
 import { connectToDatabase } from '../db/connectDB';
 import { checkNftOwnership } from '@utils/checkNftOwnership';
 

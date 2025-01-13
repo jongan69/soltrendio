@@ -1,6 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { connectToDatabase } from '../db/connectDB';
+import { checkApiKey } from '@utils/checkApiKey';
 
 export default async function handler(
     req: NextApiRequest,
@@ -38,19 +38,10 @@ export default async function handler(
         return res.status(401).json({ error: 'API key is required' });
     }
 
-    // Connect to MongoDB and verify API key
-    let mongoClient;
     try {
-        mongoClient = await connectToDatabase();
-        const db = mongoClient.db("walletAnalyzer");
-        
-        // Check if API key exists and is valid
-        const wallet = await db.collection('wallets').findOne({
-            apiKey: apiKey,
-            isPremium: true // Ensure the wallet has premium status
-        });
+        const isValid = await checkApiKey(apiKey as string);
 
-        if (!wallet) {
+        if (!isValid) {
             return res.status(401).json({ error: 'Invalid or expired API key' });
         }
 
@@ -129,10 +120,5 @@ export default async function handler(
     } catch (error) {
         console.error('Error processing request:', error);
         return res.status(500).json({ error: 'Internal server error' });
-    } finally {
-        // Close MongoDB connection
-        if (mongoClient) {
-            await mongoClient.close();
-        }
     }
 }

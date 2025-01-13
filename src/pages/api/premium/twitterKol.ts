@@ -4,23 +4,14 @@ import { Tweet } from 'agent-twitter-client';
 import { TRACKED_ACCOUNTS } from '@utils/trackedAccounts';
 import { checkApiKey } from '@utils/checkApiKey';
 
-interface TickerMention {
-    ticker: string;
-    count: number;
-    tweets: Array<{
-        text: string;
-        username: string;
-        createdAt: Date;
-        url?: string;
-    }>;
-}
-
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
+    // Initialize scraper outside request handler to reuse connection
     const client = TwitterClient.getInstance();
 
+    // Only allow GET requests
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -40,6 +31,7 @@ export default async function handler(
             return res.status(401).json({ error: 'Invalid API key' });
         }
 
+        // Fetch tweets from all tracked accounts
         const results = await Promise.allSettled(
             TRACKED_ACCOUNTS.map(async (username) => {
                 try {
@@ -62,58 +54,26 @@ export default async function handler(
             })
         );
 
+        // Filter out rejected promises and get fulfilled values
         const allTweets = results
             .filter((result): result is PromiseFulfilledResult<{username: string, tweets: Tweet[]}> => 
                 result.status === 'fulfilled'
             )
             .map(result => result.value);
 
-        // Track mentioned tickers
-        const tickerMentions: { [key: string]: TickerMention } = {};
-        const seenTweets = new Set<string>(); // Track unique tweets by text + username
+        // Filter out empty results and sort by date
+        const flattenedTweets = allTweets
+            .flatMap(({ username, tweets }) => 
+                tweets.map((tweet: Tweet) => ({
+                    ...tweet,
+                    username
+                }))
+            );
 
-        // Process tweets to find ticker mentions
-        allTweets.forEach(({ username, tweets }) => {
-            tweets.forEach((tweet: Tweet) => {
-                // Create unique key for tweet
-                const tweetKey = `${username}:${tweet.text}`;
-                if (seenTweets.has(tweetKey)) return; // Skip if we've seen this tweet
-                seenTweets.add(tweetKey);
-
-                const tickerMatches = tweet.text?.match(/\$([A-Za-z]{2,10})/g);
-                
-                if (tickerMatches) {
-                    // Use Set to get unique tickers from this tweet
-                    const uniqueTickers = new Set(tickerMatches);
-                    uniqueTickers.forEach(match => {
-                        const ticker = match.toUpperCase();
-                        if (!tickerMentions[ticker]) {
-                            tickerMentions[ticker] = {
-                                ticker,
-                                count: 0,
-                                tweets: []
-                            };
-                        }
-                        
-                        tickerMentions[ticker].count++;
-                        tickerMentions[ticker].tweets.push({
-                            text: tweet.text ?? '',
-                            username,
-                            createdAt: new Date(),
-                            url: tweet.urls?.[0] ?? undefined
-                        });
-                    });
-                }
-            });
-        });
-
-        // Convert to array and sort by mention count
-        const sortedTickers = Object.values(tickerMentions)
-            .sort((a, b) => b.count - a.count);
-
+        // Return the results
         return res.status(200).json({
             success: true,
-            data: sortedTickers
+            data: flattenedTweets
         });
 
     } catch (error) {
