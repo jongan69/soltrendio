@@ -55,8 +55,8 @@ Percent of Flippeneing: ${percentOfMissionCompleted}%
 📈 Top Tokens:
 ${topTokens}
 
-🐦 Top Tweeted Tickers:
-${topTickers}
+${topTweetedTickers !== null ? `🐦 Top Tweeted Tickers:
+${topTickers}` : ''}
 
 Track individual wallets at soltrendio.com`;
 }

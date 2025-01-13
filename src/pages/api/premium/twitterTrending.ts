@@ -4,6 +4,20 @@ import { Tweet } from 'agent-twitter-client';
 import { TRACKED_ACCOUNTS } from '@utils/trackedAccounts';
 import { checkApiKey } from '@utils/checkApiKey';
 
+// Add error handling wrapper for client initialization
+async function getTwitterClient() {
+    try {
+        const client = TwitterClient.getInstance();
+        if (!client.isReady()) {
+            await client.initialize();
+        }
+        return client;
+    } catch (error) {
+        console.error('Failed to initialize Twitter client:', error);
+        throw new Error('Twitter service temporarily unavailable');
+    }
+}
+
 interface TickerMention {
     ticker: string;
     count: number;
@@ -19,8 +33,6 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    const client = TwitterClient.getInstance();
-
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -31,13 +43,20 @@ export default async function handler(
     }
 
     try {
-        if (!client.isReady()) {
-            await client.initialize();
-        }
-
         const isValid = await checkApiKey(apiKey as string);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid API key' });
+        }
+
+        let client;
+        try {
+            client = await getTwitterClient();
+        } catch (error: any) {
+            return res.status(503).json({
+                success: false,
+                error: 'Twitter service temporarily unavailable',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
         }
 
         const results = await Promise.allSettled(
