@@ -250,13 +250,19 @@ export function HomeContent() {
       ).slice(0, 3);
 
       // Process symbols and resolve addresses
-      const processedSymbols = await Promise.all(filteredTokens.map(async (token: { symbol: any }) => {
+      const processedSymbolsSettled = await Promise.allSettled(filteredTokens.map(async (token: { symbol: any }) => {
         if (isSolanaAddress(token.symbol)) {
           const tokenInfo = await getTokenInfo(token.symbol);
           return tokenInfo?.symbol || token.symbol;
         }
         return token.symbol;
       }));
+
+      const processedSymbols = processedSymbolsSettled
+        .filter((result): result is PromiseFulfilledResult<string> =>
+          result.status === 'fulfilled' && result.value !== null
+        )
+        .map(result => result.value);
 
       setTopSymbols(processedSymbols);
 
@@ -324,15 +330,25 @@ export function HomeContent() {
           let processedTokens = 0;
 
           const tokenDataPromises = tokenAccounts.value.map(async (tokenAccount) => {
-            const tokenData = await handleTokenData(pubKey, tokenAccount, apiLimiter);
-            processedTokens++;
-            setLoadingMessage(`Processing tokens (${processedTokens}/${tokenAccounts.value.length})...`);
-            calculatedTotalValue += tokenData.usdValue;
-            updateTotalValue(tokenData.usdValue);
-            return tokenData;
+            try {
+              const tokenData = await handleTokenData(pubKey, tokenAccount, apiLimiter);
+              processedTokens++;
+              setLoadingMessage(`Processing tokens (${processedTokens}/${tokenAccounts.value.length})...`);
+              calculatedTotalValue += tokenData.usdValue;
+              updateTotalValue(tokenData.usdValue);
+              return tokenData;
+            } catch (error) {
+              console.error("Error processing token data:", error);
+              return null;
+            }
           });
 
-          const tokens = await Promise.all(tokenDataPromises);
+          const settledResults = await Promise.allSettled(tokenDataPromises);
+          const tokens = settledResults
+            .filter((result): result is PromiseFulfilledResult<TokenData> =>
+              result.status === 'fulfilled' && result.value !== null
+            )
+            .map(result => result.value);
           setTokens(tokens);
 
           setLoadingMessage("Analyzing top holdings...");
@@ -342,7 +358,7 @@ export function HomeContent() {
             .slice(0, 10);
 
           setLoadingMessage("Enriching token data...");
-          const enrichedTopHoldings = await Promise.all(
+          const enrichedTopHoldingsSettled = await Promise.allSettled(
             topHoldings.map(async (token): Promise<TopHolding> => {
               let tokenInfo = null;
               if (token.mintAddress) {
@@ -360,6 +376,12 @@ export function HomeContent() {
               };
             })
           );
+
+          const enrichedTopHoldings = enrichedTopHoldingsSettled
+            .filter((result): result is PromiseFulfilledResult<TopHolding> =>
+              result.status === 'fulfilled' && result.value !== null
+            )
+            .map(result => result.value);
 
           // Check the balance of the specific token
           const specificTokenAccount = tokenAccounts.value.find(account =>
@@ -1032,7 +1054,7 @@ export function HomeContent() {
                     </svg>
                     <h3 className="text-lg font-semibold text-gray-900">Twitter Integration</h3>
                   </div>
-                  
+
                   {twitterAuth.isLinked ? (
                     <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
                       <span className="text-sm font-medium text-green-700">
@@ -1055,7 +1077,7 @@ export function HomeContent() {
               {publicKey && hasPremiumAccess && (
                 <ApiKeyManager walletAddress={publicKey.toBase58()} />
               )}
-              <div className="p-4 "/>
+              <div className="p-4 " />
               {/* PnL Card */}
               {publicKey && <PnLCard walletAddress={publicKey.toBase58()} />}
             </div>
