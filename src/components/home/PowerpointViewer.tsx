@@ -24,36 +24,67 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         if (paymentSuccessful) {
             try {
                 // Filter and prepare the data to reduce size
-                const filteredSummary = summary.summary.map((token: any) => ({
-                    name: token.name,
-                    symbol: token.symbol,
-                    image: token.image,
-                    usdValue: token.usdValue,
-                    marketCap: token.marketCap,
-                    isNft: token.isNft
-                }));
+                const filteredSummary = summary.summary
+                    .filter((token: any) => token && typeof token === 'object')
+                    .map((token: any) => ({
+                        name: String(token.name || '').slice(0, 100),
+                        symbol: String(token.symbol || '').slice(0, 20),
+                        image: String(token.image || ''),
+                        usdValue: Number(token.usdValue) || 0,
+                        marketCap: Number(token.marketCap) || 0,
+                        isNft: Boolean(token.isNft)
+                    }))
+                    .slice(0, 50);
 
-                const response = await axios.post('/api/pptx/generate-powerpoint', {
+                // Clean and truncate thesis to complete sentences
+                const cleanThesis = thesis ? (
+                    thesis
+                        .split(/[.!?]+\s+/) // Split into sentences
+                        .reduce((acc: string[], sentence: string) => {
+                            // Check if adding this sentence would exceed the limit
+                            const potentialLength = acc.join('. ').length + sentence.length + 2;
+                            if (potentialLength <= 5000) {
+                                acc.push(sentence.trim());
+                            }
+                            return acc;
+                        }, [])
+                        .join('. ') // Rejoin with periods
+                        .trim()
+                        .replace(/[.!?]*$/, '.') // Ensure it ends with a period
+                ) : '';
+
+                const payload = {
                     tokens: filteredSummary,
-                    totalTokens: summary.totalTokens,
-                    totalValue: summary.totalValue,
-                    thesis: thesis,
-                }, {
+                    totalTokens: Math.min(summary.totalTokens || 0, 50),
+                    totalValue: Number(summary.totalValue) || 0,
+                    thesis: cleanThesis,
+                };
+
+                console.log('Sending request with payload:', JSON.stringify(payload, null, 2));
+
+                const response = await axios.post('/api/pptx/generate-powerpoint', payload, {
                     timeout: 300000,
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     maxContentLength: Infinity,
-                    maxBodyLength: Infinity
+                    maxBodyLength: Infinity,
+                    validateStatus: (status) => status < 500,
                 });
+
+                if (!response.data || !response.data.id) {
+                    throw new Error('Invalid response from server: ' + JSON.stringify(response.data));
+                }
 
                 const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${response.data.id}`;
                 setPptxUrl(publicUrl);
                 setViewerKey(prev => prev + 1);
             } catch (error: any) {
                 console.error('Error in PowerPoint generation:', error);
-                const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
-                setError(errorMessage);
+                const errorMessage = error.response?.data?.error 
+                    || error.message 
+                    || 'Unknown error occurred';
+                setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
             } finally {
                 setLoading(false);
             }
@@ -70,8 +101,13 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     responseType: 'blob',
                     timeout: 300000,
                     maxContentLength: Infinity,
-                    maxBodyLength: Infinity
+                    maxBodyLength: Infinity,
+                    validateStatus: (status) => status < 500,
                 });
+
+                if (response.status !== 200) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
 
                 const blob = new Blob([response.data], {
                     type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
@@ -84,9 +120,9 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error downloading PowerPoint:', error);
-                setError('Failed to download PowerPoint');
+                setError(typeof error === 'string' ? error : error.message || 'Failed to download PowerPoint');
             }
         }
     };
