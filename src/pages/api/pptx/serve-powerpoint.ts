@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from 'mongoose';
 import { PowerPoint } from '../../../models/PowerPoint';
+import { connectDB } from '../../../utils/mongooseDb';
 
 export const config = {
   api: {
@@ -12,19 +13,6 @@ export const config = {
   },
 }
 
-// MongoDB connection
-const connectDB = async () => {
-  if (mongoose.connections[0].readyState) return;
-
-  try {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
-};
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
@@ -33,32 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     return res.status(500).json({ error: 'Database connection failed' });
-  }
-
-  if (req.method === 'POST') {
-    try {
-      console.log('Processing POST request');
-      const { base64Data } = req.body;
-      
-      if (!base64Data) {
-        console.error('No base64Data provided in request body');
-        return res.status(400).json({ error: 'No base64Data provided' });
-      }
-
-      console.log('Creating new PowerPoint document, base64 length:', base64Data.length);
-      
-      // Create new PowerPoint document
-      const powerPoint = await PowerPoint.create({ 
-        base64Data,
-        _id: new mongoose.Types.ObjectId() // Explicitly create a MongoDB ObjectId
-      });
-      
-      console.log('PowerPoint document created with ID:', powerPoint._id.toString());
-      return res.status(200).json({ id: powerPoint._id.toString() });
-    } catch (error) {
-      console.error('Error storing PowerPoint:', error);
-      return res.status(500).json({ error: 'Failed to store PowerPoint' });
-    }
   }
   
   if (req.method === 'GET') {

@@ -2,6 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import PptxGenJS from 'pptxgenjs';
 import OpenAI from 'openai';
 import { isSolanaAddress } from '../../../utils/isSolanaAddress';
+import { PowerPoint } from 'src/models/PowerPoint';
+import mongoose from 'mongoose';
+import { connectDB } from '../../../utils/mongooseDb';
+
+
+
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -34,34 +40,71 @@ function calculateFontSize(text: string, maxLength: number = 500): number {
     // Base font size is 15
     const baseSize = 15;
     const minSize = 11;
-    
+
     if (text.length <= maxLength) {
         return baseSize;
     }
-    
+
     // Gradually reduce font size based on text length
     const reduction = Math.floor((text.length - maxLength) / 100);
     return Math.max(baseSize - reduction, minSize);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    console.log('Request received:', {
+        method: req.method,
+        headers: req.headers,
+        body: typeof req.body === 'string' ? 'String body detected' : 'Parsed body',
+        contentType: req.headers['content-type']
+    });
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
+        await connectDB();
+        // Log raw request body if it's a string
+        if (typeof req.body === 'string') {
+            console.log('Raw request body (string):', req.body);
+            try {
+                req.body = JSON.parse(req.body);
+                console.log('Successfully parsed body:', req.body);
+            } catch (parseError) {
+                console.error('JSON Parse Error:', parseError);
+                console.log('Failed to parse body. First 100 characters:', req.body.substring(0, 100));
+                return res.status(400).json({ error: 'Invalid JSON in request body' });
+            }
+        }
+
         // Validate request body
+        console.log('Request body type:', typeof req.body);
+        console.log('Request body:', req.body);
+
         if (!req.body || typeof req.body !== 'object') {
+            console.error('Invalid body structure:', req.body);
             throw new Error('Invalid request body');
         }
 
         const { tokens, thesis } = req.body;
 
+        console.log('Extracted tokens:', tokens ? `Array of ${tokens.length} items` : 'undefined');
+        console.log('Extracted thesis:', thesis ? 'Present' : 'undefined');
+
         if (!tokens || !Array.isArray(tokens)) {
+            console.error('Invalid tokens structure:', {
+                tokens,
+                type: typeof tokens,
+                isArray: Array.isArray(tokens)
+            });
             throw new Error('Invalid tokens data');
         }
 
         if (!thesis || typeof thesis !== 'string') {
+            console.error('Invalid thesis structure:', {
+                thesis,
+                type: typeof thesis
+            });
             throw new Error('Invalid thesis data');
         }
 
@@ -246,7 +289,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 });
 
                 // Ensure no empty slides
-                return result.map(slideTexts => 
+                return result.map(slideTexts =>
                     slideTexts.length ? slideTexts : [sentences[0] || '']);
             }
 
@@ -457,7 +500,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                     if (formattedText) {
                         const dynamicFontSize = calculateFontSize(formattedText);
-                        
+
                         slide.addText(`${sparkles} ${formatSlideText(formattedText)} ${sparkles}`, {
                             x: 0.2,
                             y: 2.3,
@@ -659,33 +702,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
             });
 
-            // Generate PowerPoint as a base64 string
+            // Add logging before PowerPoint generation
+            console.log('Starting PowerPoint generation with:', {
+                tokenCount: filteredTokens.length,
+                regularTokenCount: regularTokens.length,
+                nftTokenCount: nftTokens.length
+            });
+
+            // Add logging for PowerPoint base64 generation
+            console.log('Generating PowerPoint base64...');
             const pptxBase64 = await pptx.write({ outputType: 'base64' });
+            console.log('PowerPoint base64 generated:', pptxBase64 ? 'Success' : 'Failed');
 
             if (!pptxBase64) {
+                console.error('No base64 data received from PowerPoint generation');
                 throw new Error('No base64 data received from API');
             }
 
-            // Store PowerPoint data and get temporary URL
-            const storeResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pptx/serve-powerpoint`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ base64Data: pptxBase64 }),
+            // Log before database save
+            console.log('Attempting to save PowerPoint to database...');
+            const powerPoint = await PowerPoint.create({
+                pptxBase64,
+                _id: new mongoose.Types.ObjectId()
             });
+            console.log('PowerPoint saved successfully with ID:', powerPoint._id.toString());
 
-            const data = await storeResponse.json();
-
-            // Return the ID directly instead of the full response
-            res.status(200).json({ id: data.id });
+            res.status(200).json({ id: powerPoint._id.toString() });
         } catch (error) {
             console.error('Error generating PowerPoint:', error);
             res.status(500).json({ error: 'Failed to generate PowerPoint presentation' });
         }
     } catch (error: any) {
-        console.error('Error generating PowerPoint:', error);
-        return res.status(500).json({ 
+        console.error('Detailed error information:', {
+            error: error.message,
+            stack: error.stack,
+            name: error.name,
+            code: error.code
+        });
+
+        return res.status(500).json({
             error: error.message || 'Failed to generate PowerPoint presentation',
             details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
