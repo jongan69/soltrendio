@@ -23,9 +23,10 @@ export async function formatTrendsTweet(trends: any) {
         .map((token: any) => `$${token.tokenSymbol}: $${formatNumber(token.totalUsdValue)}`)
         .join('\n');
 
+    console.log(topTweetedTickers);
     // Format top tweeted tickers
     const topTickers = topTweetedTickers
-        .map((ticker: any) => `$${ticker.symbol}: ${ticker.count} tweets`)
+        .map((item: any) => `$${item.ticker}: ${item.count} tweets`)
         .join('\n');
 
     const jupiterSwapPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
