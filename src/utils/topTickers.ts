@@ -18,7 +18,7 @@ interface TickerCount {
 
 export const getTopTickers = async (): Promise<TickerCount[] | null> => {
     const TIMEOUT_MS = 40000; // 40 seconds timeout
-    const TOP_N = 5; // Number of top tickers to return
+    const TOP_N = 25; // Number of top tickers to return
     
     try {
         const controller = new AbortController();

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { checkApiKey } from '@utils/checkApiKey';
+import { getEndpoint } from '@utils/getEndpoint';
 
 export default async function handler(
     req: NextApiRequest,
@@ -7,10 +8,6 @@ export default async function handler(
 ) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    if (!process.env.LOCAL_NODE_API) {
-        return res.status(500).json({ error: 'LOCAL_NODE_API is not set' });
     }
 
     const apiKey = req.headers['x-api-key'];
@@ -23,8 +20,9 @@ export default async function handler(
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid API key' });
         }
-        console.log(process.env.LOCAL_NODE_API)
-       const response = await fetch(process.env.LOCAL_NODE_API as string)
+        const endpoint = await getEndpoint()
+        console.log(endpoint)
+       const response = await fetch(`${endpoint}/api/twitter/trendingTickers`)
        const data = await response.json()
        console.log(data)
        return res.status(200).json(data)
