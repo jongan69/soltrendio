@@ -30,23 +30,6 @@ async function generateThesisSummary(thesis: string): Promise<string> {
     return response.choices[0].message.content || thesis;
 }
 
-// async function generateSlideImages(tokens: any[], thesis: string): Promise<string[]> {
-//   try {
-//     const response = await openai.images.generate({
-//       model: "dall-e-3",
-//       prompt: `Create a professional, abstract business visualization representing cryptocurrency trading. Style: minimalist, corporate, using cool tones. Context: ${thesis.slice(0, 100)}`,
-//       size: "1024x1024",
-//       quality: "standard",
-//       n: Math.min(tokens.length, 10)  // Generate up to 10 images at once
-//     });
-
-//     return response.data.map(image => image.url || '');
-//   } catch (error) {
-//     console.error('Error generating images:', error);
-//     return [];
-//   }
-// }
-
 function calculateFontSize(text: string, maxLength: number = 500): number {
     // Base font size is 15
     const baseSize = 15;
@@ -456,27 +439,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     breakLine: true,
                     shrinkText: true
                 });
-
-                // // Update the details text styling for better contrast
-                // slide.addText([
-                //     { text: '💎 Symbol: ', options: { bold: true, color: '000000' } },
-                //     { text: token.symbol, options: { bold: false, color: '000000' } },
-                //     { text: '\n💰 USD Value: ', options: { bold: true, color: '000000' } },
-                //     { text: `$${token.usdValue.toFixed(2)}`, options: { bold: false, color: '000000' } }
-                // ], {
-                //     x: 1.5,
-                //     y: 0.9,
-                //     w: 7,
-                //     h: 0.8,
-                //     fontSize: 22,
-                //     lineSpacing: 25,
-                //     align: 'center',
-                //     breakLine: false,
-                //     shrinkText: false
-                // });
-
-                // Get thesis parts for this slide
-                //   const startIdx = index * partsPerSlide;
 
                 // Update sparkles with more variety
                 const sparkles = token.usdValue > 100 ? getRandomEmojis('high', 4) :

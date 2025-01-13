@@ -127,7 +127,7 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     <div className="aspect-[4/3] w-full">
                         <iframe
                             key={viewerKey}
-                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pptxUrl)}`}
+                            src={`https://docs.google.com/gview?url=${encodeURIComponent(pptxUrl)}&embedded=true`}
                             width="100%"
                             height="100%"
                             allowFullScreen
