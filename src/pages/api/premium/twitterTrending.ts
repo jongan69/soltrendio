@@ -7,6 +7,11 @@ import { checkApiKey } from '@utils/checkApiKey';
 // Add error handling wrapper for client initialization
 async function getTwitterClient() {
     try {
+        // Skip WebRTC initialization in development
+        if (process.env.NODE_ENV === 'development') {
+            console.warn('WebRTC initialization skipped in development environment');
+        }
+        
         const client = TwitterClient.getInstance();
         if (!client.isReady()) {
             await client.initialize();
@@ -48,7 +53,7 @@ export default async function handler(
             return res.status(401).json({ error: 'Invalid API key' });
         }
 
-        let client;
+        let client: any;
         try {
             client = await getTwitterClient();
         } catch (error: any) {
