@@ -23,8 +23,18 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
         
         if (paymentSuccessful) {
             try {
+                // Filter and prepare the data to reduce size
+                const filteredSummary = summary.summary.map((token: any) => ({
+                    name: token.name,
+                    symbol: token.symbol,
+                    image: token.image,
+                    usdValue: token.usdValue,
+                    marketCap: token.marketCap,
+                    isNft: token.isNft
+                }));
+
                 const response = await axios.post('/api/pptx/generate-powerpoint', {
-                    tokens: summary.summary,
+                    tokens: filteredSummary,
                     totalTokens: summary.totalTokens,
                     totalValue: summary.totalValue,
                     thesis: thesis,
@@ -40,9 +50,10 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 const publicUrl = `${window.location.origin}/api/pptx/serve-powerpoint?id=${response.data.id}`;
                 setPptxUrl(publicUrl);
                 setViewerKey(prev => prev + 1);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error in PowerPoint generation:', error);
-                setError(error instanceof Error ? error.message : 'Unknown error occurred');
+                const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
