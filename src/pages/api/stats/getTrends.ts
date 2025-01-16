@@ -10,6 +10,7 @@ import { fetchSP500MarketCap } from '@utils/fetchSP500';
 import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 import { getTopTickers } from '@utils/topTickers';
 import { fetchEthereumPrice } from '@utils/ethereumPrice';
+import { getLatestWhaleActivity } from '@utils/getAssetDashWhaleWatch';
 
 export default async function handler(
   req: NextApiRequest,
@@ -38,6 +39,7 @@ export default async function handler(
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const topTickers = await getTopTickers();
+    const whaleActivity = await getLatestWhaleActivity();
     const ethereumPrice = await fetchEthereumPrice();
     // Add this debugging section
     // const anyWallet = await wallets.findOne({});
@@ -431,7 +433,8 @@ export default async function handler(
               last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) * 100
           : 0
       },
-      topTweetedTickers: topTickers
+      topTweetedTickers: topTickers,
+      whaleActivity
     });
 
   } catch (error) {
