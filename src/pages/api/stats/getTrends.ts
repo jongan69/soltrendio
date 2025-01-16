@@ -21,26 +21,58 @@ export default async function handler(
   }
 
   try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const client = await connectToDatabase();
     const db = client.db('walletAnalyzer');
     const wallets = db.collection('wallets');
-    const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
-    const trendPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
-    const m3VaultData = await getM3Vault(DEFAULT_M3_VAULT);
-    const totalAmountStaked = m3VaultData.total_staked_amount;
-    const largeHolders = await getLargeHolders(DEFAULT_TOKEN_3);
-    const jupiterSwapResponse2 = await fetchJupiterSwap(SOLANA_ADDRESS);
-    const solanaPrice = jupiterSwapResponse2.data[SOLANA_ADDRESS].price;
-    const bitcoinPrice = await fetchBitcoinPrice();
-    const sp500MarketCap = await fetchSP500MarketCap();
-    const spx6900MarketCap = await fetch6900();
-    const percentOfSpx6900flippingSp500 = ((spx6900MarketCap / sp500MarketCap) * 100).toFixed(5);
-    // Update the 24-hour stats calculation
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    const topTickers = await getTopTickers();
-    const whaleActivity = await getLatestWhaleActivity();
-    const ethereumPrice = await fetchEthereumPrice();
+    const promises = await Promise.allSettled([
+      fetchJupiterSwap(DEFAULT_TOKEN_3),
+      getM3Vault(DEFAULT_M3_VAULT),
+      getLargeHolders(DEFAULT_TOKEN_3),
+      fetchJupiterSwap(SOLANA_ADDRESS),
+      fetchBitcoinPrice(),
+      fetchSP500MarketCap(),
+      fetch6900(),
+      getTopTickers(),
+      getLatestWhaleActivity(),
+      fetchEthereumPrice()
+    ]);
+
+    // Helper function to safely get value from settled promise
+    const getValue = <T>(result: PromiseSettledResult<T>, defaultValue: T): T => {
+      return result.status === 'fulfilled' ? result.value : defaultValue;
+    };
+
+    // Destructure results with safe fallbacks
+    const [
+      jupiterSwapResponse,
+      m3VaultData,
+      largeHolders,
+      jupiterSwapResponse2,
+      bitcoinPrice,
+      sp500MarketCap,
+      spx6900MarketCap,
+      topTickers,
+      whaleActivity,
+      ethereumPrice
+    ] = promises;
+
+    // Safely access values with fallbacks
+    const trendPrice = getValue(jupiterSwapResponse, { data: { [DEFAULT_TOKEN_3]: { price: 0 } } })
+      .data[DEFAULT_TOKEN_3].price;
+    const totalAmountStaked = getValue(m3VaultData, { total_staked_amount: 0 }).total_staked_amount;
+    const largeHoldersCount = getValue(largeHolders, 0);
+    const solanaPrice = getValue(jupiterSwapResponse2, { data: { [SOLANA_ADDRESS]: { price: 0 } } })
+      .data[SOLANA_ADDRESS].price;
+    const btcPrice = getValue(bitcoinPrice, 0);
+    const sp500Cap = getValue(sp500MarketCap, 0);
+    const spx6900Cap = getValue(spx6900MarketCap, 0);
+    const percentOfSpx6900flippingSp500 = ((spx6900Cap / sp500Cap) * 100).toFixed(5);
+    const topTickersData = getValue(topTickers, []);
+    const whaleActivityData = getValue(whaleActivity, { bullish: [], bearish: [] });
+    const ethPrice = getValue(ethereumPrice, 0);
+
     // Add this debugging section
     // const anyWallet = await wallets.findOne({});
     // console.log('Sample wallet fields:', {
@@ -68,7 +100,7 @@ export default async function handler(
     //     } 
     //   }
     // ]).toArray();
-    
+
     // console.log('Available fields in collection:', distinctFields.map(f => f._id));
 
     // const recentUpdates = await wallets.find({
@@ -83,21 +115,21 @@ export default async function handler(
     // })));
 
     // Add this debug query before the main aggregation
-    const recentWalletUpdates = await wallets.find({
-      lastValueChange: { $gte: twentyFourHoursAgo },
-      topHoldings: { $exists: true }
-    }).limit(3).toArray();
+    // const recentWalletUpdates = await wallets.find({
+    //   lastValueChange: { $gte: twentyFourHoursAgo },
+    //   topHoldings: { $exists: true }
+    // }).limit(3).toArray();
 
-    console.log('Recent wallet updates with holdings:', 
-      recentWalletUpdates.map(w => ({
-        address: w.address,
-        lastValueChange: w.lastValueChange,
-        totalValue: w.totalValue,
-        previousTotalValue: w.previousTotalValue,
-        firstTotalValue: w.firstTotalValue,
-        holdingsCount: w.topHoldings?.length
-      }))
-    );
+    // console.log('Recent wallet updates with holdings:', 
+    //   recentWalletUpdates.map(w => ({
+    //     address: w.address,
+    //     lastValueChange: w.lastValueChange,
+    //     totalValue: w.totalValue,
+    //     previousTotalValue: w.previousTotalValue,
+    //     firstTotalValue: w.firstTotalValue,
+    //     holdingsCount: w.topHoldings?.length
+    //   }))
+    // );
 
     // Add this debug query to check date fields
     // const dateCheck = await wallets.aggregate([
@@ -127,7 +159,7 @@ export default async function handler(
           "newWallets": [
             {
               $match: {
-                createdAt: { 
+                createdAt: {
                   $gte: twentyFourHoursAgo,
                   $exists: true
                 }
@@ -141,14 +173,14 @@ export default async function handler(
             {
               $match: {
                 $or: [
-                  { 
-                    lastValueChange: { 
+                  {
+                    lastValueChange: {
                       $gte: twentyFourHoursAgo.toISOString()
                     }
                   },
-                  { 
-                    lastSeen: { 
-                      $gte: twentyFourHoursAgo.toISOString() 
+                  {
+                    lastSeen: {
+                      $gte: twentyFourHoursAgo.toISOString()
                     }
                   }
                 ],
@@ -185,7 +217,7 @@ export default async function handler(
               $match: {
                 $or: [
                   { valueChange: { $ne: 0 } },
-                  { 
+                  {
                     $and: [
                       { totalValue: { $ne: 0 } },
                       { previousTotalValue: { $ne: 0 } }
@@ -218,8 +250,8 @@ export default async function handler(
     const topDomains = await wallets.aggregate([
       {
         $match: {
-          domain: { 
-            $exists: true, 
+          domain: {
+            $exists: true,
             $ne: '',
             $regex: /\.sol$/i  // Only include .sol domains
           },
@@ -237,11 +269,11 @@ export default async function handler(
           addresses: { $push: '$address' }
         }
       },
-      { 
-        $match: { 
+      {
+        $match: {
           walletCount: { $gt: 0 },
           _id: { $ne: null }  // Additional check to exclude null domains
-        } 
+        }
       },
       { $sort: { totalValue: -1 } },
       { $limit: 5 },
@@ -288,8 +320,8 @@ export default async function handler(
       { $unwind: '$topHoldings' },
       {
         $match: {
-          'topHoldings.symbol': { 
-            $ne: '', 
+          'topHoldings.symbol': {
+            $ne: '',
             $not: /^[A-Za-z0-9]{32,}$/ // Exclude long alphanumeric strings (addresses)
           },
           'topHoldings.usdValue': { $gt: 0 }
@@ -331,16 +363,16 @@ export default async function handler(
       { $unwind: '$topHoldings' },
       {
         $match: {
-          'topHoldings.symbol': { 
-            $ne: '', 
-            $not: /^[A-Za-z0-9]{32,}$/ 
+          'topHoldings.symbol': {
+            $ne: '',
+            $not: /^[A-Za-z0-9]{32,}$/
           }
         }
       },
       {
         $group: {
           _id: '$address',  // Group by wallet address
-          holdings: { 
+          holdings: {
             $addToSet: '$topHoldings.symbol'  // Use addToSet to avoid duplicates within a wallet
           }
         }
@@ -372,10 +404,10 @@ export default async function handler(
           count: { $sum: 1 }
         }
       },
-      { 
-        $match: { 
+      {
+        $match: {
           count: { $gt: 1 }  // Only pairs held by multiple wallets
-        } 
+        }
       },
       { $sort: { count: -1 } },
       { $limit: 5 }
@@ -383,14 +415,14 @@ export default async function handler(
 
     return res.status(200).json({
       trendPrice,
-      largeHoldersCount: largeHolders,
+      largeHoldersCount: largeHoldersCount,
       totalAmountStaked: formatNumber(totalAmountStaked) + " TREND",
       totalUniqueWallets: uniqueWalletsCount,
-      bitcoinPrice,
+      bitcoinPrice: btcPrice,
       solanaPrice,
-      ethereumPrice,
-      sp500MarketCap,
-      spx6900MarketCap,
+      ethereumPrice: ethPrice,
+      sp500MarketCap: sp500Cap,
+      spx6900MarketCap: spx6900Cap,
       percentOfSpx6900flippingSp500,
       portfolioMetrics: {
         averagePortfolioValue: aggregationResult[0]?.averageTotalValue || 0,
@@ -408,7 +440,7 @@ export default async function handler(
           min: domain.smallestWalletValue,
           max: domain.largestWalletValue
         },
-        percentageOfTotalValue: (domain.totalValue / 
+        percentageOfTotalValue: (domain.totalValue /
           (totalValueStats[0]?.totalPortfolioValue || 1)) * 100,
         addresses: domain.addresses
       })),
@@ -428,13 +460,13 @@ export default async function handler(
         walletsUpdated: last24HoursStats[0]?.valueChanges[0]?.walletsUpdated || 0,
         totalValueChange: last24HoursStats[0]?.valueChanges[0]?.totalValueChange || 0,
         percentageChange: last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue > 0
-          ? ((last24HoursStats[0]?.valueChanges[0]?.totalCurrentValue - 
-              last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) / 
-              last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) * 100
+          ? ((last24HoursStats[0]?.valueChanges[0]?.totalCurrentValue -
+            last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) /
+            last24HoursStats[0]?.valueChanges[0]?.totalPreviousValue) * 100
           : 0
       },
-      topTweetedTickers: topTickers,
-      whaleActivity
+      topTweetedTickers: topTickersData,
+      whaleActivity: whaleActivityData
     });
 
   } catch (error) {
