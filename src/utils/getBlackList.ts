@@ -59,20 +59,71 @@ const processTransaction = async (transaction: any, details: any, largeSellerMap
     }
 };
 
-const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
-    console.log(`Fetching transactions for ${pubKey.toString()}, limit: ${numTx || 'none'}`);
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+const MAX_RETRY_DELAY = 60000; // 1 minute
+const MAX_RETRIES = 5;
+
+const fetchWithRetry = async <T>(
+    operation: () => Promise<T>,
+    retries = MAX_RETRIES,
+    delay = INITIAL_RETRY_DELAY
+): Promise<T> => {
     try {
-        const result = numTx 
-            ? await solanaConnection.getSignaturesForAddress(pubKey, { limit: numTx })
-            : await solanaConnection.getSignaturesForAddress(pubKey);
-        console.log(`Fetched ${result.length} transactions`);
+        return await operation();
+    } catch (error: any) {
+        if (error.toString().includes('429') && retries > 0) {
+            console.log(`Rate limited. Retrying after ${delay/1000}s... (${retries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(
+                operation,
+                retries - 1,
+                Math.min(delay * 2, MAX_RETRY_DELAY)
+            );
+        }
+        throw error;
+    }
+};
+
+// Modify the fetchTransactions function
+const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
+    console.log(`Fetching transactions for ${pubKey.toString()}, limit: ${numTx || 'all'}`);
+    try {
+        let allTransactions = [];
+        let before = undefined;
         
-        if (result.length === 0) {
-            console.log('No transactions found');
-            return [];
+        while (true) {
+            const options: any = { limit: 1000 };
+            if (before) {
+                options.before = before;
+            }
+            
+            // Add retry logic here
+            const result = await fetchWithRetry(() => 
+                solanaConnection.getSignaturesForAddress(pubKey, options)
+            );
+            
+            console.log(`Fetched batch of ${result.length} transactions`);
+            
+            if (result.length === 0) {
+                break;
+            }
+            
+            allTransactions.push(...result);
+            
+            if (numTx && allTransactions.length >= numTx) {
+                allTransactions = allTransactions.slice(0, numTx);
+                break;
+            }
+            
+            before = result[result.length - 1].signature;
+            
+            // Increase delay between batches to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        return result;
+        console.log(`Total transactions fetched: ${allTransactions.length}`);
+        return allTransactions;
+        
     } catch (error) {
         console.error('Error fetching transactions:', error);
         throw error;
@@ -94,15 +145,23 @@ export const getBlackList = async (address: string, numTx?: number): Promise<Lar
         // Process in smaller chunks to avoid RPC limits
         const CHUNK_SIZE = 100;
         console.log(`Processing ${transactions.length} transactions in chunks of ${CHUNK_SIZE}`);
+        let processedCount = 0;
         
         for (let i = 0; i < transactions.length; i += CHUNK_SIZE) {
             const chunk = transactions.slice(i, i + CHUNK_SIZE);
+            processedCount += chunk.length;
+            console.log(`Progress: ${processedCount}/${transactions.length} transactions (${Math.round(processedCount/transactions.length*100)}%)`);
+            
             const signatures = chunk.map(tx => tx.signature);
             
             console.log(`Fetching details for chunk ${i / CHUNK_SIZE + 1}/${Math.ceil(transactions.length / CHUNK_SIZE)}`);
-            const details = await solanaConnection.getParsedTransactions(signatures, { 
-                maxSupportedTransactionVersion: 0 
-            });
+            
+            // Add retry logic here
+            const details = await fetchWithRetry(() => 
+                solanaConnection.getParsedTransactions(signatures, { 
+                    maxSupportedTransactionVersion: 0 
+                })
+            );
 
             if (!details || details.length === 0) {
                 console.error('Failed to fetch transaction details for chunk');
@@ -111,15 +170,25 @@ export const getBlackList = async (address: string, numTx?: number): Promise<Lar
 
             console.log(`Processing ${details.length} transactions in current chunk`);
             
-            await Promise.all(
-                chunk.map((transaction, index) => {
-                    if (!details[index]) {
-                        console.log(`No details for transaction ${transaction.signature}`);
-                        return Promise.resolve();
-                    }
-                    return processTransaction(transaction, details[index], largeSellerMap);
-                })
-            );
+            const processPromises = chunk.map((transaction, index) => {
+                if (!details[index]) {
+                    console.log(`No details for transaction ${transaction.signature}`);
+                    return Promise.resolve();
+                }
+                return processTransaction(transaction, details[index], largeSellerMap);
+            });
+
+            const results = await Promise.allSettled(processPromises);
+            
+            // Log any errors that occurred during processing
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    console.error(`Failed to process transaction ${chunk[index].signature}:`, result.reason);
+                }
+            });
+
+            // Add delay between chunks to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         console.log(`Total unique sellers found: ${largeSellerMap.size}`);
