@@ -2,6 +2,7 @@ interface TrendScore {
   name: string;
   bullishScore: number;
   bearishScore: number;
+  token_address: string;
 }
 
 // Initialize with type
@@ -30,18 +31,23 @@ export async function getLatestWhaleActivity() {
       }
   
       // Calculate trend scores based on transactions
-      data.transactions.forEach((transaction: { transaction_type: any; swap_token?: { symbol: any; name: any; } | undefined; trade_size: any; }) => {
+      data.transactions.forEach((transaction: { transaction_type: any; swap_token?: { symbol: any; name: any; token_address: any; } | undefined; trade_size: any; }) => {
         const {
           transaction_type,
-          swap_token: { symbol, name } = {},
+          swap_token: { symbol, name, token_address } = {},
           trade_size,
         } = transaction;
   
-        if (!symbol || !name) return;
+        if (!symbol || !name || !token_address) return;
   
         // Initialize the token in trendScores if not already present
         if (!(symbol in trendScores)) {
-          trendScores[symbol] = { name, bullishScore: 0, bearishScore: 0 };
+          trendScores[symbol] = { 
+            name, 
+            token_address,
+            bullishScore: 0, 
+            bearishScore: 0 
+          };
         }
 
         // Assign weight to trade sizes (e.g., high = 3, medium = 2, low = 1)
@@ -58,11 +64,21 @@ export async function getLatestWhaleActivity() {
       // Sort tokens by bullish and bearish scores
       const sortedBullish = Object.entries(trendScores)
         .sort((a, b) => b[1].bullishScore - a[1].bullishScore)
-        .map(([symbol, { name, bullishScore }]) => ({ symbol, name, bullishScore }));
+        .map(([symbol, { name, bullishScore, token_address }]) => ({ 
+          symbol, 
+          name, 
+          token_address,
+          bullishScore 
+        }));
   
       const sortedBearish = Object.entries(trendScores)
         .sort((a, b) => b[1].bearishScore - a[1].bearishScore)
-        .map(([symbol, { name, bearishScore }]) => ({ symbol, name, bearishScore }));
+        .map(([symbol, { name, bearishScore, token_address }]) => ({ 
+          symbol, 
+          name, 
+          token_address,
+          bearishScore 
+        }));
   
       // Return top 5 bullish and bearish coins
       return {

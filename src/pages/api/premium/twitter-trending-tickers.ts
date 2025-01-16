@@ -21,12 +21,12 @@ export default async function handler(
             return res.status(401).json({ error: 'Invalid API key' });
         }
         const endpoint = await getEndpoint()
-        console.log(endpoint)
-       const response = await fetch(`${endpoint}/api/twitter/trendingTickers`)
-       const data = await response.json()
-       console.log(data)
-       return res.status(200).json(data)
-       
+        // console.log(endpoint)
+        const response = await fetch(`${endpoint}/api/twitter/trendingTickers`)
+        const data = await response.json()
+        //    console.log(data)
+        return res.status(200).json(data)
+
     } catch (error) {
         console.error('Twitter fetch error:', error);
         return res.status(500).json({

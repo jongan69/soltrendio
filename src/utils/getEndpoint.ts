@@ -9,7 +9,7 @@ export const getEndpoint = async () => {
                 }
             }
         )
-        console.log(response)
+        // console.log(response)
         const data = await response.json()
         const url = data.tunnels[0].public_url
         return url
