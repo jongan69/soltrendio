@@ -46,7 +46,6 @@
     "react": "18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
-    "react-file-viewer": "^1.2.1",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^6.1.6",
     "react-markdown": "^9.0.1",
@@ -67,5 +66,16 @@
     "tailwindcss": "^3.2.4",
     "typescript": "5.1.6"
   },
-  "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
+  "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728",
+  "resolutions": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "@solana/web3.js": "1.98.0",
+    "typescript": "5.1.6",
+    "@types/react": "18.0.26",
+    "@types/react-dom": "18.0.10",
+    "ws": "8.18.0",
+    "bufferutil": "4.0.8",
+    "utf-8-validate": "5.0.10"
+  }
 }
