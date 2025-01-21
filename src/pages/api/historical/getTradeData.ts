@@ -27,6 +27,11 @@ export default async function handler(
     return res.status(400).json({ error: "Missing required parameter: address" });
   }
   
+  const hexAddressPattern = /^[0-9a-fA-F]+$/;
+  if (!hexAddressPattern.test(address)) {
+    return res.status(400).json({ error: "Invalid address format" });
+  }
+  
   const apiKey = process.env.HELIUS_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Server is misconfigured: API key not set." });
