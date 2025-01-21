@@ -24,7 +24,7 @@ export function Footer() {
             </svg>
           </a>
           <a
-            href="https://launchmynft.io/collections/4XkHKL3ErUuPBeDs9tnUZZ7as5EeeD9o3iLpbFGGiTP8/62N1lSAE9w5XVj9cuHWM"
+            href="https://magiceden.io/marketplace/trend_setters"
             target="_blank"
             rel="noreferrer"
             className="link link-primary"
@@ -41,6 +41,20 @@ export function Footer() {
             </svg>
           </a>
           <a
+            href="https://dexscreener.com/solana/3butt85ousfqgsntfqpjmqltzxikepoakwapne8x14xu"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:opacity-70 transition-opacity"
+            aria-label="Dexscreener"
+          >
+            <Image
+              src="/dex.svg"
+              width={20}
+              height={20}
+              alt="Pump.fun"
+            />
+          </a>
+          {/* <a
             href="https://pump.fun/coin/BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"
             target="_blank"
             rel="noreferrer"
@@ -53,7 +67,7 @@ export function Footer() {
               height={20}
               alt="Pump.fun"
             />
-          </a>
+          </a> */}
           <a
             href="https://m3m3.meteora.ag/farms/7VrKfJZ1D7B9ydmd8HXS76vX47A3rzKPDCok82SvFvRV"
             target="_blank"
