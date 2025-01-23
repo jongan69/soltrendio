@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^3.0.7",
-    "@cyntler/react-doc-viewer": "^1.17.0",
     "@jup-ag/api": "^6.0.24",
     "@metaplex-foundation/js": "^0.20.1",
     "@project-serum/anchor": "^0.26.0",
@@ -33,9 +32,11 @@
     "chart.js": "^4.4.3",
     "classnames": "^2.3.2",
     "daisyui": "^2.46.1",
+    "dompurify": "^3.2.3",
     "framer-motion": "^11.15.0",
     "fs": "^0.0.1-security",
     "google-trends-api": "^4.9.2",
+    "he": "^1.2.0",
     "jito-ts": "^4.1.1",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.5",
@@ -46,7 +47,6 @@
     "react": "18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
-    "react-file-viewer": "^1.2.1",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^6.1.6",
     "react-markdown": "^9.0.1",
@@ -59,6 +59,7 @@
     "yahoo-finance2": "^2.13.3"
   },
   "devDependencies": {
+    "@types/he": "^1",
     "@types/react": "^18.0.26",
     "autoprefixer": "^10.4.13",
     "eslint": "^8.31.0",

@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { DEFAULT_TOKEN_3_NAME } from '@utils/globals';
+import DOMPurify from 'dompurify';
+import { decode } from 'he';
 
 interface PowerpointViewerProps {
     summary: any;
@@ -36,50 +38,19 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                     }))
                     .slice(0, 50);
 
-                // Remove markdown formatting and clean thesis
-                const cleanMarkdown = (text: string): string => {
-                    // First unescape any existing HTML entities to get clean text
-                    const unescapedText = text
-                        .replace(/&amp;/g, '&')
-                        .replace(/&lt;/g, '<')
-                        .replace(/&gt;/g, '>')
-                        .replace(/&quot;/g, '"')
-                        .replace(/&#039;/g, "'")
-                        .replace(/&#x27;/g, "'")
-                        .replace(/&#x2F;/g, '/');
-
-                    // Then clean the text
-                    const cleanedText = unescapedText
-                        // Remove script tags first with a more thorough pattern
-                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                        // Remove other potentially dangerous tags
-                        .replace(/<\/?(?:iframe|object|embed|form|input|button|textarea|style|link|meta|base|svg|math|video|audio)\b[^>]*>/gi, '')
-                        // Remove remaining HTML tags
-                        .replace(/<[^>]*>/g, '')
-                        // Remove markdown formatting
-                        .replace(/([*_]{1,3})(?:(?!\1).)*?\1/g, '$2')
-                        .replace(/^#{1,6}.*$/gm, '')
-                        .replace(/^[ \t]*[-*+][ \t]+/gm, '')
-                        .replace(/^[ \t]*\d+\.[ \t]+/gm, '')
-                        .replace(/```[\s\S]*?```/g, '')
-                        .replace(/`[^`]*`/g, '')
-                        .replace(/^[ \t]*>[ \t]*.*/gm, '')
-                        .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '')
-                        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-                        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-                        .replace(/[\\`*_{}[\]()#+\-.!]/g, ' ');
-
-                    // Finally, escape HTML characters once
-                    return cleanedText
-                        .replace(/&/g, '&amp;')  // Must be first!
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;')
-                        .replace(/\s+/g, ' ')
-                        .replace(/\n+/g, '\n')
-                        .trim();
-                };
+                    const cleanMarkdown = (text: string) => {
+                        // Decode HTML entities
+                        const decodedText = decode(text);
+                    
+                        // Sanitize the decoded text
+                        const purifiedText = DOMPurify.sanitize(decodedText, {
+                          ALLOWED_TAGS: [], // Remove all HTML tags
+                          ALLOWED_ATTR: [], // Remove all attributes
+                        });
+                    
+                        // Trim and return the sanitized text
+                        return purifiedText.trim();
+                      };
 
                 // Clean and truncate thesis to complete sentences
                 const cleanThesis = thesis ? (
