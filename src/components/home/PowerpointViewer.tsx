@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { DEFAULT_TOKEN_3_NAME } from '@utils/globals';
 
@@ -38,49 +38,45 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
 
                 // Remove markdown formatting and clean thesis
                 const cleanMarkdown = (text: string): string => {
-                    return text
-                        // Remove script tags first with a more thorough pattern
-                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                        // Remove other potentially dangerous tags
-                        .replace(/<\/?(?:iframe|object|embed|form|input|button|textarea|style|link|meta|base|svg|math|video|audio)\b[^>]*>/gi, '')
-                        // Remove HTML tags (enhanced pattern)
-                        .replace(/<[^>]*>/g, '')
-                        // Decode HTML entities to prevent double-encoding
+                    // First unescape any existing HTML entities to get clean text
+                    const unescapedText = text
                         .replace(/&amp;/g, '&')
                         .replace(/&lt;/g, '<')
                         .replace(/&gt;/g, '>')
                         .replace(/&quot;/g, '"')
                         .replace(/&#039;/g, "'")
-                        // Remove bold/italic markers with better pattern matching
+                        .replace(/&#x27;/g, "'")
+                        .replace(/&#x2F;/g, '/');
+
+                    // Then clean the text
+                    const cleanedText = unescapedText
+                        // Remove script tags first with a more thorough pattern
+                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                        // Remove other potentially dangerous tags
+                        .replace(/<\/?(?:iframe|object|embed|form|input|button|textarea|style|link|meta|base|svg|math|video|audio)\b[^>]*>/gi, '')
+                        // Remove remaining HTML tags
+                        .replace(/<[^>]*>/g, '')
+                        // Remove markdown formatting
                         .replace(/([*_]{1,3})(?:(?!\1).)*?\1/g, '$2')
-                        // Remove headers more thoroughly
                         .replace(/^#{1,6}.*$/gm, '')
-                        // Remove bullet points with better pattern
                         .replace(/^[ \t]*[-*+][ \t]+/gm, '')
-                        // Remove numbered lists more thoroughly
                         .replace(/^[ \t]*\d+\.[ \t]+/gm, '')
-                        // Remove code blocks more thoroughly
                         .replace(/```[\s\S]*?```/g, '')
                         .replace(/`[^`]*`/g, '')
-                        // Remove blockquotes more thoroughly
                         .replace(/^[ \t]*>[ \t]*.*/gm, '')
-                        // Remove horizontal rules more thoroughly
                         .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '')
-                        // Remove links more thoroughly
                         .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-                        // Remove images more thoroughly
                         .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-                        // Remove any remaining markdown special characters
-                        .replace(/[\\`*_{}[\]()#+\-.!]/g, ' ')
-                        // Re-encode HTML special characters for safety
-                        .replace(/&/g, '&amp;')
+                        .replace(/[\\`*_{}[\]()#+\-.!]/g, ' ');
+
+                    // Finally, escape HTML characters once
+                    return cleanedText
+                        .replace(/&/g, '&amp;')  // Must be first!
                         .replace(/</g, '&lt;')
                         .replace(/>/g, '&gt;')
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#039;')
-                        // Fix multiple spaces
                         .replace(/\s+/g, ' ')
-                        // Fix multiple newlines
                         .replace(/\n+/g, '\n')
                         .trim();
                 };
