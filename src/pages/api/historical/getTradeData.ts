@@ -19,9 +19,9 @@ export default async function handler(
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
 
-  const address = Array.isArray(req.query.address) ? req.query.address[0] : req.query.address;
-  const limit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-  const beforeSignature = Array.isArray(req.query.beforeSignature) ? req.query.beforeSignature[0] : req.query.beforeSignature;
+  const address = req.body.address;
+  const limit = req.body.limit;
+  const beforeTimestamp = req.body.beforeTimestamp;
   
   if (!address) {
     return res.status(400).json({ error: "Missing required parameter: address" });
@@ -36,8 +36,8 @@ export default async function handler(
     const url = new URL(`https://api.helius.xyz/v0/addresses/${address}/transactions`);
     url.searchParams.append('api-key', apiKey);
     url.searchParams.append('limit', '100');
-    if (beforeSignature) {
-      url.searchParams.append('before', beforeSignature);
+    if (beforeTimestamp) {
+      url.searchParams.append('before', beforeTimestamp);
     }
     url.searchParams.append('type', 'SWAP');
 

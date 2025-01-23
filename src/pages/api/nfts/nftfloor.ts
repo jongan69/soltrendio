@@ -23,15 +23,17 @@ export default async function handler(
 
   const { ca } = req.body;
 
-  if (!ca) {
+  // Validate contract address
+  const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  if (!ca || !solanaAddressRegex.test(ca)) {
     res.status(400).json({ 
-      floorPrice: "Missing contract address", 
+      floorPrice: "Invalid contract address", 
       usdValue: 0.00, 
       uiFormmatted: "0.0000 Sol" 
     });
     return;
   }
-
+  
   const url = `https://api.simplehash.com/api/v0/nfts/solana/${ca}/0`;
   const options = {
     method: 'GET',

@@ -39,27 +39,29 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 // Remove markdown formatting and clean thesis
                 const cleanMarkdown = (text: string): string => {
                     return text
-                        // Remove bold/italic markers
-                        .replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, '$1')
-                        // Remove headers
-                        .replace(/#{1,6}\s+/g, '')
-                        // Remove bullet points
-                        .replace(/^[-*+]\s+/gm, '')
-                        // Remove numbered lists
-                        .replace(/^\d+\.\s+/gm, '')
-                        // Remove code blocks
+                        // Remove bold/italic markers with better pattern matching
+                        .replace(/([*_]{1,3})(?:(?!\1).)*?\1/g, '$2')
+                        // Remove headers more thoroughly
+                        .replace(/^#{1,6}.*$/gm, '')
+                        // Remove bullet points with better pattern
+                        .replace(/^[ \t]*[-*+][ \t]+/gm, '')
+                        // Remove numbered lists more thoroughly
+                        .replace(/^[ \t]*\d+\.[ \t]+/gm, '')
+                        // Remove code blocks more thoroughly
                         .replace(/```[\s\S]*?```/g, '')
-                        .replace(/`([^`]+)`/g, '$1')
-                        // Remove blockquotes
-                        .replace(/^\s*>\s+/gm, '')
-                        // Remove horizontal rules
-                        .replace(/^[-*_]{3,}\s*$/gm, '')
-                        // Remove links
-                        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-                        // Remove images
-                        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
-                        // Remove HTML tags
-                        .replace(/<[^>]*>/g, '')
+                        .replace(/`[^`]*`/g, '')
+                        // Remove blockquotes more thoroughly
+                        .replace(/^[ \t]*>[ \t]*.*/gm, '')
+                        // Remove horizontal rules more thoroughly
+                        .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '')
+                        // Remove links more thoroughly
+                        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+                        // Remove images more thoroughly
+                        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+                        // Remove HTML tags more thoroughly
+                        .replace(/<[^>]+>/g, '')
+                        // Remove any remaining markdown special characters
+                        .replace(/[\\`*_{}[\]()#+\-.!]/g, ' ')
                         // Fix multiple spaces
                         .replace(/\s+/g, ' ')
                         // Fix multiple newlines

@@ -33,8 +33,8 @@ import GoogleTrendsProjection from "./GoogleTrendsProjection";
 import PowerpointViewer from "./PowerpointViewer";
 import { StatsTicker } from './StatsTicker';
 import { PnLCard } from './PnLCard';
-import { WalletInputForm } from './walllet-input';
-import { ThesisSection } from './thesis';
+import { WalletInputForm } from './WalletInput';
+import { ThesisSection } from './ThesisComponent';
 
 // Utils
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";

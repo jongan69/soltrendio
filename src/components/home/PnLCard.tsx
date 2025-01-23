@@ -159,8 +159,16 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
       
       try {
         const tradeResponse = await fetch(
-          `/api/historical/getTradeData?address=${walletAddress}&limit=100&_t=${Date.now()}`,
-          { headers: { 'Cache-Control': 'no-cache' } }
+          `/api/historical/getTradeData`,
+          {
+            headers: { 'Cache-Control': 'no-cache' },
+            method: 'POST',
+            body: JSON.stringify({
+              address: walletAddress,
+              limit: 100,
+              beforeTimestamp: Date.now()
+            })
+          }
         );
 
         if (!tradeResponse.ok) {
