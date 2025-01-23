@@ -23,21 +23,42 @@ export default async function handler(
   const limit = req.body.limit;
   const beforeTimestamp = req.body.beforeTimestamp;
   
+  // Validate address format
   if (!address) {
     return res.status(400).json({ error: "Missing required parameter: address" });
+  }
+
+  // Validate Solana address format (base58 string, 32-44 characters)
+  const addressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  if (!addressRegex.test(address)) {
+    return res.status(400).json({ error: "Invalid Solana address format" });
+  }
+
+  // Validate limit parameter
+  if (limit && (!Number.isInteger(Number(limit)) || Number(limit) < 1 || Number(limit) > 100)) {
+    return res.status(400).json({ error: "Invalid limit parameter. Must be an integer between 1 and 100" });
+  }
+
+  // Validate beforeTimestamp parameter
+  if (beforeTimestamp && (!Number.isInteger(Number(beforeTimestamp)) || Number(beforeTimestamp) < 0)) {
+    return res.status(400).json({ error: "Invalid beforeTimestamp parameter. Must be a positive integer" });
   }
   
   const apiKey = process.env.HELIUS_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Server is misconfigured: API key not set." });
   }
+
+  // Use URL constructor with a fixed base URL
+  const baseUrl = 'https://api.helius.xyz/v0/addresses';
   
   try {
-    const url = new URL(`https://api.helius.xyz/v0/addresses/${address}/transactions`);
+    // Construct URL with sanitized parameters
+    const url = new URL(`${baseUrl}/${encodeURIComponent(address)}/transactions`);
     url.searchParams.append('api-key', apiKey);
     url.searchParams.append('limit', '100');
     if (beforeTimestamp) {
-      url.searchParams.append('before', beforeTimestamp);
+      url.searchParams.append('before', beforeTimestamp.toString());
     }
     url.searchParams.append('type', 'SWAP');
 
