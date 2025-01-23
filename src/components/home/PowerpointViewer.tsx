@@ -39,7 +39,11 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 // Remove markdown formatting and clean thesis
                 const cleanMarkdown = (text: string): string => {
                     return text
-                        // Remove HTML tags first (enhanced pattern)
+                        // Remove script tags first with a more thorough pattern
+                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                        // Remove other potentially dangerous tags
+                        .replace(/<\/?(?:iframe|object|embed|form|input|button|textarea|style|link|meta|base|svg|math|video|audio)\b[^>]*>/gi, '')
+                        // Remove HTML tags (enhanced pattern)
                         .replace(/<[^>]*>/g, '')
                         // Decode HTML entities to prevent double-encoding
                         .replace(/&amp;/g, '&')
