@@ -39,6 +39,14 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 // Remove markdown formatting and clean thesis
                 const cleanMarkdown = (text: string): string => {
                     return text
+                        // Remove HTML tags first (enhanced pattern)
+                        .replace(/<[^>]*>/g, '')
+                        // Decode HTML entities to prevent double-encoding
+                        .replace(/&amp;/g, '&')
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&quot;/g, '"')
+                        .replace(/&#039;/g, "'")
                         // Remove bold/italic markers with better pattern matching
                         .replace(/([*_]{1,3})(?:(?!\1).)*?\1/g, '$2')
                         // Remove headers more thoroughly
@@ -58,10 +66,14 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                         .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
                         // Remove images more thoroughly
                         .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-                        // Remove HTML tags more thoroughly
-                        .replace(/<[^>]+>/g, '')
                         // Remove any remaining markdown special characters
                         .replace(/[\\`*_{}[\]()#+\-.!]/g, ' ')
+                        // Re-encode HTML special characters for safety
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;')
                         // Fix multiple spaces
                         .replace(/\s+/g, ' ')
                         // Fix multiple newlines
@@ -118,7 +130,14 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 const errorMessage = error.response?.data?.error 
                     || error.message 
                     || 'Unknown error occurred';
-                setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+                // Sanitize error message by escaping HTML characters
+                const sanitizedError = String(errorMessage)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+                setError(sanitizedError);
             } finally {
                 setLoading(false);
             }
@@ -156,7 +175,15 @@ export default function PowerPointViewer({ summary, thesis, cost, onGenerate }: 
                 URL.revokeObjectURL(url);
             } catch (error: any) {
                 console.error('Error downloading PowerPoint:', error);
-                setError(typeof error === 'string' ? error : error.message || 'Failed to download PowerPoint');
+                // Sanitize error message here as well
+                const errorMessage = typeof error === 'string' ? error : error.message || 'Failed to download PowerPoint';
+                const sanitizedError = String(errorMessage)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+                setError(sanitizedError);
             }
         }
     };
