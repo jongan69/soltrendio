@@ -257,7 +257,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.10.5, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.17.2, @babel/runtime@npm:^7.21.0, @babel/runtime@npm:^7.25.0":
+"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.17.2, @babel/runtime@npm:^7.21.0, @babel/runtime@npm:^7.25.0":
   version: 7.26.0
   resolution: "@babel/runtime@npm:7.26.0"
   dependencies:
@@ -2558,15 +2558,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/spl-name-service@npm:^0.1.4":
-  version: 0.1.4
-  resolution: "@solana/spl-name-service@npm:0.1.4"
+"@solana/spl-name-service@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@solana/spl-name-service@npm:0.2.1"
   dependencies:
-    "@solana/spl-token": "npm:0.1.4"
-    "@solana/web3.js": "npm:^1.11.0"
+    "@solana/web3.js": "npm:^1.91.6"
     bn.js: "npm:^5.1.3"
-    borsh: "npm:^0.4.0"
-  checksum: 10c0/1f3c36a8223ecf01e9a4b4d73b9dfd42d88eee27bc768e2f467ee44d2a1f85042d4594cb2966ac64dd08336d49696f01a9ce29bb63c067ee0ed025fbbd963365
+    borsh: "npm:^2.0.0"
+  checksum: 10c0/0c7f0b0b93c0ad332683a3feb4010d5208c422cd5ea1869d178f02e2f5efd34ba5eaf1cb5fc110259bd632a3d4a26ccf2d4279126f49a1572b4a52dd12bc2d17
   languageName: node
   linkType: hard
 
@@ -2599,20 +2598,6 @@ __metadata:
   dependencies:
     cross-fetch: "npm:3.0.6"
   checksum: 10c0/2170f5fe208d182b32cbbf11a3066530ce9eb0c30663bbcf6f97e1f1f962775e02a6937f3f4e84d6de4263c9c4b00d1a30fd9ee05d84b4692c9e79df8a7121a6
-  languageName: node
-  linkType: hard
-
-"@solana/spl-token@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@solana/spl-token@npm:0.1.4"
-  dependencies:
-    "@babel/runtime": "npm:^7.10.5"
-    "@solana/web3.js": "npm:^1.9.1"
-    bn.js: "npm:^5.1.0"
-    buffer: "npm:6.0.3"
-    buffer-layout: "npm:^1.2.0"
-    dotenv: "npm:8.2.0"
-  checksum: 10c0/c6dc792279d9fa52f912efdf2d89ea3e709bdabf0ef66fce2e48674997b68430501501114ffd9f098dcfb1bd0c77b015f62dd9f4eb3dc460ae8c30cc4715fc70
   languageName: node
   linkType: hard
 
@@ -3353,7 +3338,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/web3.js@npm:^1.11.0, @solana/web3.js@npm:^1.32.0, @solana/web3.js@npm:^1.36.0, @solana/web3.js@npm:^1.63.1, @solana/web3.js@npm:^1.68.0, @solana/web3.js@npm:^1.73.0, @solana/web3.js@npm:^1.9.1":
+"@solana/web3.js@npm:^1.32.0, @solana/web3.js@npm:^1.36.0, @solana/web3.js@npm:^1.63.1, @solana/web3.js@npm:^1.68.0, @solana/web3.js@npm:^1.73.0, @solana/web3.js@npm:^1.91.6":
   version: 1.98.0
   resolution: "@solana/web3.js@npm:1.98.0"
   dependencies:
@@ -4072,15 +4057,6 @@ __metadata:
     mkdirp: "npm:^1.0.4"
     path-browserify: "npm:^1.0.1"
   checksum: 10c0/2a0b25128eca547cfdf4795d39e7d6e15c81008b74867ccdda9d0d9c1b0eaca534d6d729220572e726a811786efa3c38f3b6a482d3fc970d3bf0acea39a7248f
-  languageName: node
-  linkType: hard
-
-"@types/bn.js@npm:^4.11.5":
-  version: 4.11.6
-  resolution: "@types/bn.js@npm:4.11.6"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10c0/a5a19dafc106b1b2ab35c2024ca37b9d0938dced11cb1cca7d119de5a0dd5f54db525c82cb1392843fc921677452efcbbdce3aa96ecc1457d3de6e266915ebd0
   languageName: node
   linkType: hard
 
@@ -5455,7 +5431,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bn.js@npm:^5.0.0, bn.js@npm:^5.1.0, bn.js@npm:^5.1.1, bn.js@npm:^5.1.2, bn.js@npm:^5.1.3, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
+"bn.js@npm:^5.0.0, bn.js@npm:^5.1.1, bn.js@npm:^5.1.2, bn.js@npm:^5.1.3, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
   version: 5.2.1
   resolution: "bn.js@npm:5.2.1"
   checksum: 10c0/bed3d8bd34ec89dbcf9f20f88bd7d4a49c160fda3b561c7bb227501f974d3e435a48fb9b61bc3de304acab9215a3bda0803f7017ffb4d0016a0c3a740a283caa
@@ -5487,22 +5463,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"borsh@npm:2.0.0":
+"borsh@npm:2.0.0, borsh@npm:^2.0.0":
   version: 2.0.0
   resolution: "borsh@npm:2.0.0"
   checksum: 10c0/59a96dd9c707450862198510fc518dff92ac7f0ed0d228c9b38affd968bb4debec805c6e2afed8ec13efd9fad63fd47f8e6ed420253542a8d10fb59f28fc7d01
-  languageName: node
-  linkType: hard
-
-"borsh@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "borsh@npm:0.4.0"
-  dependencies:
-    "@types/bn.js": "npm:^4.11.5"
-    bn.js: "npm:^5.0.0"
-    bs58: "npm:^4.0.0"
-    text-encoding-utf-8: "npm:^1.0.2"
-  checksum: 10c0/8e56e31ebae868028cb241fce1cd593f53d67926ce464d6422c44a80b49fa090d2bafcdc071de0147143de8688952381214bf41cc61f455da6858871e8af6913
   languageName: node
   linkType: hard
 
@@ -6849,13 +6813,6 @@ __metadata:
     no-case: "npm:^3.0.4"
     tslib: "npm:^2.0.3"
   checksum: 10c0/5b859ea65097a7ea870e2c91b5768b72ddf7fa947223fd29e167bcdff58fe731d941c48e47a38ec8aa8e43044c8fbd15cd8fa21689a526bc34b6548197cd5b05
-  languageName: node
-  linkType: hard
-
-"dotenv@npm:8.2.0":
-  version: 8.2.0
-  resolution: "dotenv@npm:8.2.0"
-  checksum: 10c0/b6a07a2c400b13ad4e59c34e4682256e6bb846469781a3963b36861ee608ed312e6125c4a7635a9edcf957bb294a6966e218f0e26b82ff0bda9184211d4bc141
   languageName: node
   linkType: hard
 
@@ -12783,7 +12740,7 @@ __metadata:
     "@metaplex-foundation/umi": "npm:^0.8.9"
     "@metaplex-foundation/umi-bundle-defaults": "npm:^0.8.9"
     "@project-serum/anchor": "npm:^0.26.0"
-    "@solana/spl-name-service": "npm:^0.1.4"
+    "@solana/spl-name-service": "npm:^0.2.1"
     "@solana/spl-token": "npm:^0.3.7"
     "@solana/spl-token-registry": "npm:^0.2.4574"
     "@solana/wallet-adapter-base": "npm:^0.9.20"
