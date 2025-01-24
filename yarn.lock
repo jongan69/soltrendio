@@ -11716,7 +11716,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-chartjs-2@npm:^5.2.0":
+"react-chartjs-2@npm:^5.3.0":
   version: 5.3.0
   resolution: "react-chartjs-2@npm:5.3.0"
   peerDependencies:
@@ -12819,7 +12819,7 @@ __metadata:
     postcss: "npm:^8.5.1"
     pptxgenjs: "npm:^3.12.0"
     react: "npm:18.2.0"
-    react-chartjs-2: "npm:^5.2.0"
+    react-chartjs-2: "npm:^5.3.0"
     react-dom: "npm:18.2.0"
     react-hot-toast: "npm:^2.4.0"
     react-loader-spinner: "npm:^6.1.6"
