@@ -2,9 +2,5 @@
   "crons": [{
     "path": "/api/cron/tweet",
     "schedule": "0 0 * * *"
-  }],
-  "builds": [{
-    "src": "package.json",
-    "use": "@vercel/next"
   }]
 }
