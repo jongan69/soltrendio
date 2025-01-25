@@ -10,21 +10,17 @@ export default async function handler(
     }
     const { contractAddress } = req.body;
     try {
-        const response = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${SOLANA_ADDRESS}&outputMint=${contractAddress}&amount=1&swapMode=ExactIn&autoSlippage=true`);
-        const data = await response.json();
-        const routes = data.routePlan.map((route: any) => {
-            const { label, ammKey } = route.swapInfo;
-            return { label, ammKey };
-        });
+        const response = await fetch(`https://api-v3.raydium.io/pools/info/mint?mint1=${contractAddress}&poolType=all&poolSortField=fee24h&sortType=desc&pageSize=1000&page=1`);
+        const allPools = await response.json();
         return res.status(200).json({
-            routes,
-            slippage: data.slippageBps
+            pools: allPools.data.data || [],
+            count: allPools.data.count || 0
         });
 
     } catch (error) {
         console.error('Error fetching portfolios:', error);
         return res.status(500).json({
-            error: 'Internal server error while fetching SOL Routes',
+            error: 'Internal server error while fetching M3 Vaults',
             errorMessage: error
         });
     }

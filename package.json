@@ -16,6 +16,7 @@
     "@metaplex-foundation/mpl-token-metadata": "3.3.0",
     "@metaplex-foundation/umi": "^0.8.9",
     "@metaplex-foundation/umi-bundle-defaults": "^0.8.9",
+    "@orca-so/whirlpools": "^1.0.2",
     "@project-serum/anchor": "^0.26.0",
     "@solana/spl-name-service": "^0.1.4",
     "@solana/spl-token": "^0.3.7",

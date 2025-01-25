@@ -3,6 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 export const DEFAULT_THEME = "night";
 
 export const SOLANA_ADDRESS = "So11111111111111111111111111111111111111112";
+export const USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 export const DEFAULT_WALLET = "LockmjYWctcbeQCJt5u5z536xbmeU6n5XeQJhuPWxp2"; // Dustfolio
 export const DEFAULT_M3_VAULT = "AvkHzVATyd1hnG5Y7iT7M3aa77UaMWaDJx2UQbEXMp7b"; // M3 Vault
