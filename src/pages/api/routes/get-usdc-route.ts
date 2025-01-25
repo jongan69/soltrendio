@@ -24,7 +24,7 @@ export default async function handler(
     } catch (error) {
         console.error('Error fetching portfolios:', error);
         return res.status(500).json({
-            error: 'Internal server error while fetching Routes',
+            error: 'Internal server error while fetching USDC Routes',
             errorMessage: error
         });
     }
