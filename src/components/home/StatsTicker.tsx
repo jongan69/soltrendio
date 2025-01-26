@@ -106,7 +106,7 @@ export const StatsTicker: React.FC = () => {
     {
       icon: "🕊️",
       label: "Most Tweeted Ticker",
-      value: Array.isArray(stats.mostTweetedTicker) && stats.mostTweetedTicker[0]?.ticker || "$TREND",
+      value: Array.isArray(stats.mostTweetedTicker) && stats.mostTweetedTicker.length > 0 ? stats.mostTweetedTicker[0]?.ticker : "$TREND",
     },
   ];
 
