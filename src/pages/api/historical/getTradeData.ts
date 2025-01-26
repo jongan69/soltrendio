@@ -73,7 +73,7 @@ export default async function handler(
     }
 
     const transactions = await response.json();
-    console.log(`Found ${transactions.length} total transactions`);
+    // console.log(`Found ${transactions.length} total transactions`);
 
     // Create array of promises for processing each transaction
     const tradePromises = transactions.map(async (txn: any) => {
@@ -142,16 +142,16 @@ export default async function handler(
       )
       .map(result => {
         const trade = result.value;
-        console.log('Processed trade:', {
-          tokenIn: trade.tokenIn.symbol,
-          tokenOut: trade.tokenOut.symbol,
-          amountIn: trade.tokenIn.amount,
-          amountOut: trade.tokenOut.amount
-        });
+        // console.log('Processed trade:', {
+        //   tokenIn: trade.tokenIn.symbol,
+        //   tokenOut: trade.tokenOut.symbol,
+        //   amountIn: trade.tokenIn.amount,
+        //   amountOut: trade.tokenOut.amount
+        // });
         return trade;
       });
 
-    console.log(`Successfully processed ${tradeHistory.length} trades`);
+    // console.log(`Successfully processed ${tradeHistory.length} trades`);
 
     // Sort trades by timestamp (newest first)
     const sortedTrades = tradeHistory.sort((a, b) => b.timestamp - a.timestamp);

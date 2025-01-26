@@ -4,9 +4,9 @@ const DEFAULT_IMAGE_URL = process.env.UNKNOWN_IMAGE_URL || "https://s3.coinmarke
 
 // Helper function to process token metadata
 export async function processTokenMetadata(token: any, logo: string, cid: string, mint: string) {
-    console.log(`Token metadata: ${JSON.stringify(token, (_, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    )}`);
+    // console.log(`Token metadata: ${JSON.stringify(token, (_, value) =>
+    //   typeof value === 'bigint' ? value.toString() : value
+    // )}`);
     let tokenName = mint;
     let symbol = mint;
     if(logo.length > 0) {

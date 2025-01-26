@@ -11,12 +11,12 @@ export default async function handler(
         return res.status(400).json({ error: 'Contract address is required' });
     }
     try {
-        console.log(contractAddress);
+        // console.log(contractAddress);
         // Using Orca's API directly
         const response = await fetch('https://api.orca.so/v1/whirlpool/list');
 
         // Log the response status and text for debugging
-        console.log('Response status:', response.status);
+        // console.log('Response status:', response.status);
         const responseData = await response.json();
         // console.log('Response text:', responseData);
 

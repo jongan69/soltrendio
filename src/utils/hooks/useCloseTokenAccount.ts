@@ -58,7 +58,7 @@ export const useCloseTokenAccount = () => {
         signature
       });
 
-      console.log("Transaction confirmed with signature:", signature);
+      // console.log("Transaction confirmed with signature:", signature);
       toast.success("Transaction confirmed successfully!");
       return signature;
     } catch (error) {

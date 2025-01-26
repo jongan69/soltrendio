@@ -55,9 +55,9 @@ export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
     // );    
     const metadataAccountInfo = await fetchDigitalAssetByMetadata(metaplexUmi, metadataPda);
     
-    console.log(`Metadata: ${JSON.stringify(metadataAccountInfo, (_, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    )}`);
+    // console.log(`Metadata: ${JSON.stringify(metadataAccountInfo, (_, value) =>
+    //   typeof value === 'bigint' ? value.toString() : value
+    // )}`);
 
     if (!metadataAccountInfo) {
       return getDefaultTokenMetadata(mint);
@@ -77,7 +77,7 @@ export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
                   tokenStandard === TokenStandard.NonFungibleEdition ||
                   tokenStandard === TokenStandard.ProgrammableNonFungible ||
                   tokenStandard === TokenStandard.ProgrammableNonFungibleEdition;
-    console.log(`isNft: ${isNft}`);
+    // console.log(`isNft: ${isNft}`);
     if (isNft) {
       const collectionName = collectionMetadata?.name ?? metadata.name;
       const collectionLogo = logo?.imageUrl ?? DEFAULT_IMAGE_URL;

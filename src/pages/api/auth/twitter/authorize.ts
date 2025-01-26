@@ -37,8 +37,8 @@ export default async function handler(
     // Generate OAuth nonce and timestamp
     const oauth_nonce = crypto.randomBytes(16).toString('base64');
     const oauth_timestamp = Math.floor(Date.now() / 1000).toString();
-    console.log(oauth_nonce, oauth_timestamp);
-    console.log(CALLBACK_URL);
+    // console.log(oauth_nonce, oauth_timestamp);
+    // console.log(CALLBACK_URL);
     const requestData = {
       url: 'https://api.twitter.com/oauth/request_token',
       method: 'POST',

@@ -69,7 +69,7 @@ export default async function handler(
       screenName
     });
 
-    console.log('origin', origin);
+    // console.log('origin', origin);
     // Close the popup and notify the parent window
     res.setHeader('Content-Type', 'text/html');
     res.send(`

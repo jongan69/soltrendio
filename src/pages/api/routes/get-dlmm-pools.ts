@@ -12,7 +12,7 @@ export default async function handler(
         return res.status(400).json({ error: 'Contract address is required' });
     }
     try {
-        console.log(contractAddress);
+        // console.log(contractAddress);
         const response = await fetch(`https://dlmm-api.meteora.ag/pair/all_with_pagination?include_token_mints=${contractAddress}`);
         const allPairs = await response.json();
         return res.status(200).json({

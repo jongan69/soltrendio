@@ -22,13 +22,13 @@ ChartJS.register(
 );
 
 const SentimentCharts = ({ racismScore, hateSpeechScore, drugUseScore, crudityScore, profanityScore }: any) => {
-  console.log('Chart Scores:', {
-    racism: racismScore,
-    hateSpeech: hateSpeechScore,
-    drugUse: drugUseScore,
-    crudity: crudityScore,
-    profanity: profanityScore
-  });
+  // console.log('Chart Scores:', {
+  //   racism: racismScore,
+  //   hateSpeech: hateSpeechScore,
+  //   drugUse: drugUseScore,
+  //   crudity: crudityScore,
+  //   profanity: profanityScore
+  // });
 
   const options = {
     responsive: true,

@@ -296,7 +296,7 @@ export function HomeContent() {
         const signToastId = toast.loading("Getting Token Data...");
         const whaleResponse = await fetch('/api/stats/getWhaleActivity');
         const whaleActivity = await whaleResponse.json();
-        console.log(whaleActivity);
+        // console.log(whaleActivity);
         // setWhaleAlerts(whaleActivity);
         if (whaleActivity.whaleActivity) {
           const alerts = [
@@ -824,7 +824,7 @@ export function HomeContent() {
       });
 
       const data = await response.json();
-      console.log("Premium purchase response:", data);
+      // console.log("Premium purchase response:", data);
       if (data.isPremium) {
         setHasPremiumAccess(data.isPremium);
         toast.success('Premium access granted!', { id: loadingToast });
@@ -1013,7 +1013,7 @@ export function HomeContent() {
           )}
 
           <WhaleAlerts alerts={alerts} />
-          
+
           {publicKey && hasPremiumAccess && premiumAnalytics && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50">
               {/* Premium Header */}

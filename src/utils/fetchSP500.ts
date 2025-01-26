@@ -64,7 +64,7 @@ export const fetchSP500MarketCap = async (): Promise<number> => {
     // Log summary of results
     const succeeded = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
-    console.log(`Processed ${succeeded} successful and ${failed} failed requests`);
+    // console.log(`Processed ${succeeded} successful and ${failed} failed requests`);
 
     return totalMarketCap;
   } catch (error: any) {

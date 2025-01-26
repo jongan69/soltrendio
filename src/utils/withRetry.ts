@@ -17,7 +17,7 @@ export const withTokenRetry = async <T>(
           await new Promise(resolve => setTimeout(resolve, TOKEN_FETCH_RETRY_DELAY));
           continue;
         }
-        console.log(`Skipping token ${tokenIdentifier} after ${attempts} failed attempts`);
+        // console.log(`Skipping token ${tokenIdentifier} after ${attempts} failed attempts`);
         return null;
       }
     }
@@ -38,7 +38,7 @@ export const withRetry = async <T>(
       } catch (error: any) {
         lastError = error;
         if (error.toString().includes('rate limit') || error.toString().includes('429')) {
-          console.log(`Rate limit hit, attempt ${i + 1}/${maxRetries}, waiting ${delayMs}ms...`);
+          // console.log(`Rate limit hit, attempt ${i + 1}/${maxRetries}, waiting ${delayMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, delayMs * (i + 1))); // Exponential backoff
           continue;
         }

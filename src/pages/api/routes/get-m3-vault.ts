@@ -12,7 +12,7 @@ export default async function handler(
         return res.status(400).json({ error: 'Contract address is required' });
     }
     try {
-        console.log(contractAddress);
+        // console.log(contractAddress);
         const response = await fetch(`https://stake-for-fee-api.meteora.ag/vault/all`);
         // console.log(response);
         const allVaults = await response.json();

@@ -27,7 +27,7 @@ export async function formatTrendsTweet(trends: any) {
         .map((token: any) => `$${token.tokenSymbol}: $${formatNumber(token.totalUsdValue)}`)
         .join('\n');
 
-    console.log(topTweetedTickers);
+    // console.log(topTweetedTickers);
     // Format top tweeted tickers with conditional plural
     const topTickers = topTweetedTickers
         .map((item: any) => `${item.ticker}: ${item.count} ${item.count === 1 ? 'tweet' : 'tweets'}`)

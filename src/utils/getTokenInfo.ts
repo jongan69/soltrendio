@@ -24,11 +24,11 @@ export async function getTokenInfo(address: string) {
       if (!pair?.baseToken) return null;
       
       // Debug log
-      console.log('DexScreener response for', address, ':', {
-        priceUsd: pair.priceUsd,
-        priceNative: pair.priceNative,
-        baseToken: pair.baseToken
-      });
+      // console.log('DexScreener response for', address, ':', {
+      //   priceUsd: pair.priceUsd,
+      //   priceNative: pair.priceNative,
+      //   baseToken: pair.baseToken
+      // });
       
       return {
         name: pair.baseToken.name,

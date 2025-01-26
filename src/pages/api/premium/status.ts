@@ -48,14 +48,14 @@ export default async function handler(
         });
       }
 
-      console.log("Premium status request:", req.body, isPremium, isPaid, isNftOwner);
+      // console.log("Premium status request:", req.body, isPremium, isPaid, isNftOwner);
       // Just checking status
       return res.status(200).json({ 
         isPremium: isPremium,
         cost: PREMIUM_COST
       });
     } catch (error) {
-      console.log("Premium status error:", error);
+      // console.log("Premium status error:", error);
       console.error('Premium status error:', error);
       return res.status(500).json({ error: 'Failed to check premium status' });
     }

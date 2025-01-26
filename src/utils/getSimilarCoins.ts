@@ -36,11 +36,11 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
             result.status === 'fulfilled' ? result.value : []
         );
 
-        console.log("API Responses:", {
-            profiles: latestTokenProfiles,
-            boosts: latestTokenBoosts,
-            top: topTokenBoosts
-        });
+        // console.log("API Responses:", {
+        //     profiles: latestTokenProfiles,
+        //     boosts: latestTokenBoosts,
+        //     top: topTokenBoosts
+        // });
 
         // Function to extract essential token data and remove duplicates
         const processTokens = async (tokens: any[]): Promise<TokenData[]> => {
@@ -143,8 +143,8 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
             .flat()
             .slice(0, 20);
 
-        console.log("Combined tokens count:", combinedTokens.length);
-        console.log("First few combined tokens:", combinedTokens.slice(0, 3));
+        // console.log("Combined tokens count:", combinedTokens.length);
+        // console.log("First few combined tokens:", combinedTokens.slice(0, 3));
 
         if (combinedTokens.length === 0) {
             console.error("No tokens found in any of the API responses");
@@ -179,7 +179,7 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
                 ]
             }`;
 
-        console.log("Sending prompt to AI");
+        // console.log("Sending prompt to AI");
 
         const aiResponse = await fetch('/api/analyze/compare-tokens', {
             method: 'POST',
@@ -196,10 +196,10 @@ export const getSimilarCoins = async (userTokens: Token[]): Promise<TokenCompari
         }
 
         const similarTokens = await aiResponse.json();
-        console.log("AI Response:", similarTokens);
+        // console.log("AI Response:", similarTokens);
 
         const result = Array.isArray(similarTokens) ? similarTokens : similarTokens.similarCoins || [];
-        console.log("Final result:", result);
+        // console.log("Final result:", result);
 
         return result;
     } catch (error) {

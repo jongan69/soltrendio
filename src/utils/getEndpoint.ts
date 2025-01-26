@@ -1,5 +1,5 @@
 export const getEndpoint = async () => {
-    console.log(process.env.NGROK_API_KEY)
+    // console.log(process.env.NGROK_API_KEY)
     try {
         const response = await fetch('https://api.ngrok.com/tunnels',
             {

@@ -15,7 +15,7 @@ export default async function handler(
 
     try {
         const { prompt } = req.body;
-        console.log("Received prompt length:", prompt.length);
+        // console.log("Received prompt length:", prompt.length);
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4-turbo-preview",
@@ -35,13 +35,13 @@ export default async function handler(
         });
 
         const response = completion.choices[0].message.content;
-        console.log("Raw AI response:", response);
+        // console.log("Raw AI response:", response);
 
         try {
             const parsedResponse = JSON.parse(response || '{"similarCoins":[]}');
-            console.log("Parsed response:", parsedResponse);
+            // console.log("Parsed response:", parsedResponse);
             const result = parsedResponse.similarCoins || [];
-            console.log("Final result:", result);
+            // console.log("Final result:", result);
             return res.status(200).json(result);
         } catch (parseError: any) {
             console.error('Failed to parse GPT response:', response);

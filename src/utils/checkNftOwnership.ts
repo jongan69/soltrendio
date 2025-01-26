@@ -55,7 +55,7 @@ export const checkNftOwnership = async (address: string, nftCollection: string):
             page++;
         }
 
-        console.log("Total Owners Found:", assetList.length);
+        // console.log("Total Owners Found:", assetList.length);
 
         // Check if the address owns any NFT in the collection
         return assetList.some((item) => item.OwnerAddress === address);

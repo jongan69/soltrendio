@@ -13,7 +13,7 @@ export default async function handler(req: { query: { cid: any; }; }, res: { sta
   }
 
   const ipfsUrl = `https://ipfs.io/ipfs/${cid}`;
-  console.log(`Retrieving IPFS metadata for CID: ${ipfsUrl}`);
+  // console.log(`Retrieving IPFS metadata for CID: ${ipfsUrl}`);
 
   try {
     const response = await fetch(ipfsUrl, { mode: 'no-cors' });
@@ -23,7 +23,7 @@ export default async function handler(req: { query: { cid: any; }; }, res: { sta
       return
     }
     const data = await response.json();
-    console.log(`Found IPFS data from: ${data.image}`);
+    // console.log(`Found IPFS data from: ${data.image}`);
     res.status(200).json({ imageUrl: data.image });
     return
   } catch (error) {

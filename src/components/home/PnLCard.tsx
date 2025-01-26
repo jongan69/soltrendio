@@ -177,7 +177,7 @@ export function PnLCard({ walletAddress }: PnLCardProps) {
         }
 
         const { tradeHistory } = await tradeResponse.json();
-        console.log('Trade history loaded:', tradeHistory.length, 'trades');
+        // console.log('Trade history loaded:', tradeHistory.length, 'trades');
 
         const BATCH_SIZE = 3;
         const processedTrades: ProcessedTrade[] = [];

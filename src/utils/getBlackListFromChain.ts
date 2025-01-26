@@ -18,7 +18,7 @@ const processTransaction = async (transaction: any, details: any, largeSellerMap
     try {
         // console.log(`Processing transaction: ${transaction.signature}`);
         
-        console.log(details);
+        // console.log(details);
         if (!details?.meta) {
             // console.log('No meta data found for transaction, skipping...');
             return;
@@ -27,19 +27,19 @@ const processTransaction = async (transaction: any, details: any, largeSellerMap
         const preBalance = details.meta.preTokenBalances.find((balance: any) => balance.mint === searchAddress);
         const postBalance = details.meta.postTokenBalances.find((balance: any) => balance.mint === searchAddress);
         
-        console.log('Balance changes:', {
-            preBalance: preBalance?.uiTokenAmount?.uiAmount,
-            postBalance: postBalance?.uiTokenAmount?.uiAmount
-        });
+        // console.log('Balance changes:', {
+        //     preBalance: preBalance?.uiTokenAmount?.uiAmount,
+        //     postBalance: postBalance?.uiTokenAmount?.uiAmount
+        // });
 
         if (preBalance && postBalance) {
             const diff = postBalance.uiTokenAmount.uiAmount - preBalance.uiTokenAmount.uiAmount;
-            console.log(`Token difference: ${diff}`);
+            // console.log(`Token difference: ${diff}`);
             
             if (diff < 0) {
                 const sellerWallet = preBalance.owner;
                 const soldAmount = Math.abs(diff);
-                console.log(`Detected sale: Wallet ${sellerWallet} sold ${soldAmount} tokens`);
+                // console.log(`Detected sale: Wallet ${sellerWallet} sold ${soldAmount} tokens`);
                 
                 const existingSeller = largeSellerMap.get(sellerWallet) || {
                     wallet: sellerWallet,
@@ -72,7 +72,7 @@ const fetchWithRetry = async <T>(
         return await operation();
     } catch (error: any) {
         if (error.toString().includes('429') && retries > 0) {
-            console.log(`Rate limited. Retrying after ${delay/1000}s... (${retries} retries left)`);
+            // console.log(`Rate limited. Retrying after ${delay/1000}s... (${retries} retries left)`);
             await new Promise(resolve => setTimeout(resolve, delay));
             return fetchWithRetry(
                 operation,
@@ -86,7 +86,7 @@ const fetchWithRetry = async <T>(
 
 // Modify the fetchTransactions function
 const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
-    console.log(`Fetching transactions for ${pubKey.toString()}, limit: ${numTx || 'all'}`);
+    // console.log(`Fetching transactions for ${pubKey.toString()}, limit: ${numTx || 'all'}`);
     try {
         let allTransactions = [];
         let before = undefined;
@@ -102,7 +102,7 @@ const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
                 solanaConnection.getSignaturesForAddress(pubKey, options)
             );
             
-            console.log(`Fetched batch of ${result.length} transactions`);
+            // console.log(`Fetched batch of ${result.length} transactions`);
             
             if (result.length === 0) {
                 break;
@@ -121,7 +121,7 @@ const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        console.log(`Total transactions fetched: ${allTransactions.length}`);
+        // console.log(`Total transactions fetched: ${allTransactions.length}`);
         return allTransactions;
         
     } catch (error) {
@@ -133,7 +133,7 @@ const fetchTransactions = async (pubKey: PublicKey, numTx?: number) => {
 // Main function to fetch and process transactions
 export const getBlackList = async (address: string, numTx?: number): Promise<LargeSeller[]> => {
     try {
-        console.log(`Starting getBlackList for address: ${address}`);
+        // console.log(`Starting getBlackList for address: ${address}`);
         const pubKey = new PublicKey(address);
         const largeSellerMap = new Map<string, LargeSeller>();
 
@@ -144,17 +144,17 @@ export const getBlackList = async (address: string, numTx?: number): Promise<Lar
 
         // Process in smaller chunks to avoid RPC limits
         const CHUNK_SIZE = 100;
-        console.log(`Processing ${transactions.length} transactions in chunks of ${CHUNK_SIZE}`);
+        // console.log(`Processing ${transactions.length} transactions in chunks of ${CHUNK_SIZE}`);
         let processedCount = 0;
         
         for (let i = 0; i < transactions.length; i += CHUNK_SIZE) {
             const chunk = transactions.slice(i, i + CHUNK_SIZE);
             processedCount += chunk.length;
-            console.log(`Progress: ${processedCount}/${transactions.length} transactions (${Math.round(processedCount/transactions.length*100)}%)`);
+            // console.log(`Progress: ${processedCount}/${transactions.length} transactions (${Math.round(processedCount/transactions.length*100)}%)`);
             
             const signatures = chunk.map(tx => tx.signature);
             
-            console.log(`Fetching details for chunk ${i / CHUNK_SIZE + 1}/${Math.ceil(transactions.length / CHUNK_SIZE)}`);
+            // console.log(`Fetching details for chunk ${i / CHUNK_SIZE + 1}/${Math.ceil(transactions.length / CHUNK_SIZE)}`);
             
             // Add retry logic here
             const details = await fetchWithRetry(() => 
@@ -168,7 +168,7 @@ export const getBlackList = async (address: string, numTx?: number): Promise<Lar
                 continue;
             }
 
-            console.log(`Processing ${details.length} transactions in current chunk`);
+            // console.log(`Processing ${details.length} transactions in current chunk`);
             
             const processPromises = chunk.map((transaction, index) => {
                 if (!details[index]) {
@@ -191,12 +191,12 @@ export const getBlackList = async (address: string, numTx?: number): Promise<Lar
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        console.log(`Total unique sellers found: ${largeSellerMap.size}`);
+        // console.log(`Total unique sellers found: ${largeSellerMap.size}`);
         const largeSellers = Array.from(largeSellerMap.values())
             .filter(seller => seller.totalSold > 6000000)
             .sort((a, b) => b.totalSold - a.totalSold);
 
-        console.log(`Found ${largeSellers.length} large sellers after filtering`);
+        // console.log(`Found ${largeSellers.length} large sellers after filtering`);
         return largeSellers;
 
     } catch (error) {

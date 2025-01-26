@@ -63,7 +63,7 @@ export default async function handler(
 
     // Generate analytics using OpenAI
     const analytics = await generateAnalytics(tokens);
-    console.log("Analytics:", analytics);
+    // console.log("Analytics:", analytics);
     return res.status(200).json(analytics);
   } catch (error) {
     console.error('Premium analytics error:', error);
