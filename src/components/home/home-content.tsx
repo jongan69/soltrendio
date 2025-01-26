@@ -35,6 +35,7 @@ import { StatsTicker } from './StatsTicker';
 import { PnLCard } from './PnLCard';
 import { WalletInputForm } from './WalletInput';
 import { ThesisSection } from './ThesisComponent';
+import { BestPoolsDisplay } from '@components/home/BestPoolsDisplay';
 
 // Utils
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
@@ -910,6 +911,8 @@ export function HomeContent() {
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
                 <p className="text-sm sm:text-base text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
+                <br />
+                <BestPoolsDisplay tokens={tokens} />
               </div>
             </div>
           </div>

@@ -1,4 +1,3 @@
-import { SOLANA_ADDRESS } from '@utils/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
@@ -54,7 +53,7 @@ export default async function handler(
         const allPools = [
             // DLMM pools
             ...(dlmmData.pairs || []).map((pool: { name: any; address: any; apr: any; apy: any; liquidity: string; trade_volume_24h: any; fees_24h: any; }) => ({
-                source: 'DLMM',
+                source: `DLMM`,
                 name: pool.name,
                 address: pool.address,
                 apr: Number(pool.apr) || 0,
@@ -64,8 +63,9 @@ export default async function handler(
                 fees24h: Number(pool.fees_24h) || 0
             })),
             // Raydium pools
-            ...(radiumData.pools || []).map((pool: { mintA: { symbol: any; }; mintB: { symbol: any; }; id: any; day: { apr: any; feeApr: any; volume: any; volumeFee: any; }; tvl: any; }) => ({
-                source: 'Raydium',
+            ...(radiumData.pools || []).map((pool: { type: any; mintA: { symbol: any; }; mintB: { symbol: any; }; id: any; day: { apr: any; feeApr: any; volume: any; volumeFee: any; }; tvl: any; }) => ({
+                source: `Raydium`,
+                type: pool.type,
                 name: `${pool.mintA.symbol}-${pool.mintB.symbol}`,
                 address: pool.id,
                 apr: Number(pool.day?.apr || 0) + Number(pool.day?.feeApr || 0),
@@ -75,9 +75,11 @@ export default async function handler(
                 fees24h: Number(pool.day?.volumeFee) || 0
             })),
             // Orca pools
-            ...(orcaData.pools || []).map((pool: { name: any; address: any; apr: any; apy: any; tvl: any; volume24h: any; fees24h: any; }) => ({
-                source: 'Orca',
-                name: pool.name || '',
+            ...(orcaData.pools || []).map((pool: {
+                tokenB: any;
+                tokenA: any; name: any; address: any; apr: any; apy: any; tvl: any; volume24h: any; fees24h: any; }) => ({
+                source: `Orca`,
+                name: pool.name || `${pool.tokenA.symbol}-${pool.tokenB.symbol}`,
                 address: pool.address || '',
                 apr: Number(pool.apr) || 0,
                 apy: Number(pool.apy) || 0,
