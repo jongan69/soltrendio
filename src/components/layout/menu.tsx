@@ -10,7 +10,7 @@ type Props = {
 
 export function Menu({ twitterHandle, className }: Props) {
   const { connected } = useWallet();
-  const menuClasses = classNames("menu", className);
+  const menuClasses = classNames("menu", "z-50", className);
 
   return (
     <ul className={menuClasses}>
