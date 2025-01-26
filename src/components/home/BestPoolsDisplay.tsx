@@ -115,7 +115,7 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
     };
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300 max-w-[90vw] w-full">
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300 max-w-[85vw] w-full">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Best Liquidity Pools</h2>
             
             {/* Token Selection Dropdown */}
@@ -143,56 +143,54 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
 
             {/* Pools Display */}
             {!loading && pools.length > 0 && (
-                <div className="max-w-full overflow-x-auto relative">
-                    <div className="w-full overflow-hidden">
-                        <table className="table table-compact w-full">
-                            <thead>
-                                <tr className="text-left">
-                                    {[
-                                        { field: 'source' as SortField, label: 'Source' },
-                                        { field: 'name' as SortField, label: 'Pool' },
-                                        { field: 'apr' as SortField, label: 'APR' },
-                                        { field: 'tvl' as SortField, label: 'TVL' },
-                                        { field: 'volume24h' as SortField, label: '24h Vol' },
-                                        { field: 'fees24h' as SortField, label: 'Fees' }
-                                    ].map(({ field, label }) => (
-                                        <th 
-                                            key={field}
-                                            onClick={() => handleSort(field)}
-                                            className="cursor-pointer hover:bg-gray-100 text-xs whitespace-nowrap p-2"
-                                        >
-                                            <div className="flex items-center gap-1">
-                                                {label}
-                                                {sortField === field && (
-                                                    <span className="text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {getSortedPools().map((pool, index) => (
-                                    <tr 
-                                        key={index} 
-                                        className="hover cursor-pointer transition-colors duration-200"
-                                        onClick={() => handlePoolClick(pool)}
+                <div className="overflow-x-auto">
+                    <table className="table table-compact w-full">
+                        <thead>
+                            <tr className="text-left">
+                                {[
+                                    { field: 'source' as SortField, label: 'Source' },
+                                    { field: 'name' as SortField, label: 'Pool' },
+                                    { field: 'apr' as SortField, label: 'APR' },
+                                    { field: 'tvl' as SortField, label: 'TVL' },
+                                    { field: 'volume24h' as SortField, label: '24h Vol' },
+                                    { field: 'fees24h' as SortField, label: 'Fees' }
+                                ].map(({ field, label }) => (
+                                    <th 
+                                        key={field}
+                                        onClick={() => handleSort(field)}
+                                        className="cursor-pointer hover:bg-gray-100 text-xs whitespace-nowrap p-2"
                                     >
-                                        <td className="p-2">
-                                            <span className="badge badge-ghost text-xs">{pool.source}</span>
-                                        </td>
-                                        <td className="text-xs whitespace-nowrap p-2">{pool.name}</td>
-                                        <td className="text-xs whitespace-nowrap p-2">{pool.apr}%</td>
-                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.tvl))}</td>
-                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.volume24h))}</td>
-                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.fees24h))}</td>
-                                    </tr>
+                                        <div className="flex items-center gap-1">
+                                            {label}
+                                            {sortField === field && (
+                                                <span className="text-xs">
+                                                    {sortDirection === 'asc' ? '↑' : '↓'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </th>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {getSortedPools().map((pool, index) => (
+                                <tr 
+                                    key={index} 
+                                    className="hover cursor-pointer transition-colors duration-200"
+                                    onClick={() => handlePoolClick(pool)}
+                                >
+                                    <td className="p-2">
+                                        <span className="badge badge-ghost text-xs">{pool.source}</span>
+                                    </td>
+                                    <td className="text-xs whitespace-nowrap p-2">{pool.name}</td>
+                                    <td className="text-xs whitespace-nowrap p-2">{pool.apr}%</td>
+                                    <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.tvl))}</td>
+                                    <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.volume24h))}</td>
+                                    <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.fees24h))}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
