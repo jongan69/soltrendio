@@ -60,7 +60,7 @@ export const StatsTicker: React.FC = () => {
     {
       icon: "💰",
       label: "Total Value",
-      value: `$${formatNumber(stats.portfolioMetrics.totalPortfolioValue)}`,
+      value: `$${formatNumber(stats?.portfolioMetrics?.totalPortfolioValue || 0)}`,
     },
     {
       icon: "🏆",
@@ -74,7 +74,7 @@ export const StatsTicker: React.FC = () => {
       label: "Top Token",
       value: stats.topTokensByValue[0]?.tokenSymbol || "N/A",
       subtext: stats.topTokensByValue[0] ? 
-        `$${formatNumber(stats.topTokensByValue[0].totalUsdValue)}` : "",
+        `$${formatNumber(stats?.topTokensByValue[0]?.totalUsdValue || 0)}` : "",
     },
   ];
 
