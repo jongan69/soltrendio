@@ -111,17 +111,19 @@ export default async function handler(
             })
         ];
 
-        // Calculate a score for each pool based on both volume and APR
-        const poolsWithScore = allPools.map(pool => {
-            const volumeScore = Math.log10(Math.max(pool.volume24h, 1));
-            const aprScore = Number(pool.apr) || 0;
-            
-            // Adjust scoring to give more weight to APR
-            return {
-                ...pool,
-                score: (0.8 * aprScore) + (0.2 * volumeScore * 100)  // Increased APR weight to 80%
-            };
-        });
+        // Filter out pools with zero TVL and calculate scores
+        const poolsWithScore = allPools
+            .filter(pool => pool.tvl > 0)
+            .map(pool => {
+                const volumeScore = Math.log10(Math.max(pool.volume24h, 1));
+                const aprScore = Number(pool.apr) || 0;
+                
+                // Adjust scoring to give more weight to APR
+                return {
+                    ...pool,
+                    score: (0.8 * aprScore) + (0.2 * volumeScore * 100)  // Increased APR weight to 80%
+                };
+            });
 
         // Sort pools by combined score in descending order
         const sortedPools = poolsWithScore.sort((a, b) => b.score - a.score);
