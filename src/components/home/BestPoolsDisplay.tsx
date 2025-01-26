@@ -114,13 +114,13 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
     };
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Best Liquidity Pools</h2>
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Best Liquidity Pools</h2>
             
             {/* Token Selection Dropdown */}
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
                 <select 
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full text-sm sm:text-base"
                     value={selectedToken}
                     onChange={(e) => handleTokenSelect(e.target.value)}
                 >
@@ -135,14 +135,14 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
 
             {/* Loading State */}
             {loading && (
-                <div className="flex justify-center items-center py-8">
+                <div className="flex justify-center items-center py-4 sm:py-8">
                     <div className="loading loading-spinner loading-lg"></div>
                 </div>
             )}
 
             {/* Pools Display */}
             {!loading && pools.length > 0 && (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-2 sm:mx-0">
                     <table className="table w-full">
                         <thead>
                             <tr>
@@ -151,13 +151,13 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
                                     { field: 'name' as SortField, label: 'Pool' },
                                     { field: 'apr' as SortField, label: 'APR' },
                                     { field: 'tvl' as SortField, label: 'TVL' },
-                                    { field: 'volume24h' as SortField, label: '24h Volume' },
-                                    { field: 'fees24h' as SortField, label: '24h Fees' }
+                                    { field: 'volume24h' as SortField, label: '24h Vol' },
+                                    { field: 'fees24h' as SortField, label: 'Fees' }
                                 ].map(({ field, label }) => (
                                     <th 
                                         key={field}
                                         onClick={() => handleSort(field)}
-                                        className="cursor-pointer hover:bg-gray-100"
+                                        className="cursor-pointer hover:bg-gray-100 text-xs sm:text-sm whitespace-nowrap"
                                     >
                                         <div className="flex items-center gap-1">
                                             {label}
@@ -179,13 +179,13 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
                                     onClick={() => handlePoolClick(pool)}
                                 >
                                     <td>
-                                        <span className="badge badge-ghost">{pool.source}</span>
+                                        <span className="badge badge-ghost text-xs sm:text-sm">{pool.source}</span>
                                     </td>
-                                    <td>{pool.name}</td>
-                                    <td>{pool.apr}%</td>
-                                    <td>${pool.tvl}</td>
-                                    <td>${pool.volume24h}</td>
-                                    <td>${pool.fees24h}</td>
+                                    <td className="text-xs sm:text-sm whitespace-nowrap">{pool.name}</td>
+                                    <td className="text-xs sm:text-sm whitespace-nowrap">{pool.apr}%</td>
+                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.tvl}</td>
+                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.volume24h}</td>
+                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.fees24h}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -195,7 +195,7 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
 
             {/* No Pools State */}
             {!loading && selectedToken && pools.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-4 sm:py-8 text-gray-500 text-sm sm:text-base">
                     No liquidity pools found for this token
                 </div>
             )}
