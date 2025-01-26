@@ -36,6 +36,7 @@ import { PnLCard } from './PnLCard';
 import { WalletInputForm } from './WalletInput';
 import { ThesisSection } from './ThesisComponent';
 import { BestPoolsDisplay } from '@components/home/BestPoolsDisplay';
+import { WhaleAlert, WhaleAlerts } from "./WhaleAlerts";
 
 // Utils
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
@@ -93,6 +94,9 @@ export function HomeContent() {
   const [createdPortId, setCreatedPortId] = useState<string | null>(null);
   const [hasEligibleTokens, setHasEligibleTokens] = useState<boolean>(false);
   const [isCreatingPortfolio, setIsCreatingPortfolio] = useState<boolean>(false);
+  // const [whaleAlerts, setWhaleAlerts] = useState();
+  const [alerts, setAlerts] = useState<WhaleAlert[]>([]);
+
   const [twitterAuth, setTwitterAuth] = useState<TwitterAuthState>({
     isLinked: false
   });
@@ -290,6 +294,17 @@ export function HomeContent() {
         setSignState("loading");
         setLoadingMessage("Initializing wallet connection...");
         const signToastId = toast.loading("Getting Token Data...");
+        const whaleResponse = await fetch('/api/stats/getWhaleActivity');
+        const whaleActivity = await whaleResponse.json();
+        console.log(whaleActivity);
+        // setWhaleAlerts(whaleActivity);
+        if (whaleActivity.whaleActivity) {
+          const alerts = [
+            ...whaleActivity.whaleActivity.bullish?.map((item: any) => ({ ...item, type: 'BULLISH' as const })),
+            ...whaleActivity.whaleActivity.bearish?.map((item: any) => ({ ...item, type: 'BEARISH' as const }))
+          ];
+          setAlerts(alerts);
+        }
 
         try {
           // Validate the address first
@@ -317,7 +332,7 @@ export function HomeContent() {
             setTrendsData([]);
             setTopSymbols([]);
             setLoading(false);
-            
+
             toast.error("No tokens found in this wallet", { id: signToastId });
             return;
           }
@@ -913,7 +928,6 @@ export function HomeContent() {
               </div>
             </div>
           </div>
-          
           <BestPoolsDisplay tokens={tokens} />
           {/* Thesis Section - Updated button layout */}
           <ThesisSection
@@ -998,6 +1012,8 @@ export function HomeContent() {
             </div>
           )}
 
+          <WhaleAlerts alerts={alerts} />
+          
           {publicKey && hasPremiumAccess && premiumAnalytics && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-purple-200/50">
               {/* Premium Header */}

@@ -73,10 +73,119 @@ code {
   background-color: #f44336; /* Example color for error state */
 }
 
-/* Should go in item-list.css */
-/* .custom-lock-cursor:hover {
-  cursor: url('../../public/lock.png') 16 16, auto;
-} */
+.whale-alerts {
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 1rem;
+}
+
+.whale-alerts__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+}
+
+.whale-alerts__icon {
+  font-size: 1.75rem;
+}
+
+.whale-alerts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.alert-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.alert-card:hover {
+  transform: translateY(-2px);
+}
+
+.alert-card.bullish {
+  border-left: 4px solid #22c55e;
+}
+
+.alert-card.bearish {
+  border-left: 4px solid #ef4444;
+}
+
+.alert-card__header {
+  margin-bottom: 1rem;
+}
+
+.alert-card__token {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.alert-card__symbol {
+  color: #64748b;
+  margin-left: 0.5rem;
+}
+
+.alert-card__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-card__score {
+  display: flex;
+  flex-direction: column;
+}
+
+.score-label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.score-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.trend-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trend-badge.bullish {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.trend-badge.bearish {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.alert-card__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.alert-card__link:hover {
+  transform: translateY(-2px);
+}
 
 .tip-amount-container {
   border-radius: 10px;
@@ -89,54 +198,5 @@ code {
   cursor: crosshair;
 }
 
-.selected-item {
-  box-shadow: 0 0 10px 2px green;
-  border: 2px solid green;
-}
 
-.confirm-selection-button {
-  position: fixed;
-  bottom: 5vh; /* 5% of viewport height */
-  left: 5vw; /* 5% of viewport width */
-  z-index: 1000;
-  padding: 10px 20px;
-  background-color: #007bff; /* Blue color */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
 
-.confirm-selection-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
-}
-
-.close-token-accounts-button {
-  position: fixed;
-  bottom: 5vh; /* 5% of viewport height */
-  right: 5vw; /* 5% of viewport width */
-  z-index: 1000;
-  padding: 10px 20px;
-  background-color: #00ff44; /* Green color */
-  color: rgb(0, 0, 0);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.close-token-accounts-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
-}
-
-/* Media query for very small screens */
-@media (max-width: 600px) {
-  .confirm-selection-button {
-    bottom: 10vh; /* 10% of viewport height to ensure spacing */
-    left: 5vw; /* 5% of viewport width */
-  }
-
-  .close-token-accounts-button {
-    bottom: 5vh; /* 5% of viewport height */
-    right: 5vw; /* 5% of viewport width */
-  }
-}

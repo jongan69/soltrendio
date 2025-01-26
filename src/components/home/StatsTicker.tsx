@@ -3,6 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatNumber } from '../../utils/formatNumber'; // We'll create this utility
 
 type StatsData = {
+  trendPrice: string;
+  bitcoinPrice: string;
+  solanaPrice: string;
+  ethereumPrice: string;
   totalUniqueWallets: number;
   portfolioMetrics: {
     averagePortfolioValue: number;
@@ -18,6 +22,16 @@ type StatsData = {
     tokenSymbol: string;
     totalUsdValue: number;
   }>;
+  mostTweetedTicker: Array<{
+    ticker: string;
+    // Add other properties if they exist
+  }>;
+  whaleActivity: {
+    bullish: Array<{
+      symbol: string;
+      bullishScore: number;
+    }>;
+  };
 };
 
 export const StatsTicker: React.FC = () => {
@@ -43,7 +57,7 @@ export const StatsTicker: React.FC = () => {
   useEffect(() => {
     if (stats) {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % 4);
+        setCurrentIndex((prev) => (prev + 1) % 5);
       }, 5000); // Rotate stats every 5 seconds
       return () => clearInterval(interval);
     }
@@ -53,9 +67,29 @@ export const StatsTicker: React.FC = () => {
 
   const statsItems = [
     {
+      icon: "💎",
+      label: "TREND Price",
+      value: `$${stats.trendPrice}`,
+    },
+    {
+      icon: "🔥",
+      label: "SOL Price",
+      value: `$${Number(stats.solanaPrice).toFixed(2)}`,
+    },
+    {
+      icon: "😹",
+      label: "ETH Price",
+      value: `$${Number(stats.ethereumPrice).toFixed(2)}`,
+    },
+    {
+      icon: "₿",
+      label: "Bitcoin",
+      value: `$${stats.bitcoinPrice}`,
+    },
+    {
       icon: "👥",
       label: "Total Wallets",
-      value: `${stats.totalUniqueWallets} wallets analyzed`,
+      value: `${stats.totalUniqueWallets} wallets`,
     },
     {
       icon: "💰",
@@ -63,18 +97,16 @@ export const StatsTicker: React.FC = () => {
       value: `$${formatNumber(stats?.portfolioMetrics?.totalPortfolioValue || 0)}`,
     },
     {
-      icon: "🏆",
-      label: "Top Wallet",
-      value: stats.topDomainsByValue[0]?.name || stats.topDomainsByValue[0]?.addresses[0] || "N/A",
-      subtext: stats.topDomainsByValue[0] ? 
-        `$${formatNumber(stats.topDomainsByValue[0].totalValue)}` : "",
+      icon: "🐋",
+      label: "Whale Alert",
+      value: stats.whaleActivity?.bullish[0]?.symbol || "N/A",
+      subtext: stats.whaleActivity?.bullish[0] ? 
+        `Score: ${stats.whaleActivity.bullish[0].bullishScore}` : "",
     },
     {
-      icon: "🪙",
-      label: "Top Token",
-      value: stats.topTokensByValue[0]?.tokenSymbol || "N/A",
-      subtext: stats.topTokensByValue[0] ? 
-        `$${formatNumber(stats?.topTokensByValue[0]?.totalUsdValue || 0)}` : "",
+      icon: "🕊️",
+      label: "Most Tweeted Ticker",
+      value: Array.isArray(stats.mostTweetedTicker) && stats.mostTweetedTicker[0]?.ticker || "$TREND",
     },
   ];
 
