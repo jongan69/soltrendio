@@ -134,7 +134,7 @@ const Home: NextPage = () => {
           <HomeContent />
           <Footer />
         </PageContainer>
-        <div className="drawer-side">
+        <div className="drawer-side z-50">
           <label htmlFor="my-drawer-3" className="drawer-overlay"></label>
           <Menu
             // twitterHandle={twitterHandle}
