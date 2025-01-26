@@ -910,9 +910,10 @@ export function HomeContent() {
                 <p className="text-sm sm:text-base text-gray-700">Total Value</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
                 <p className="text-sm sm:text-base text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{specificTokenBalance}</p>
                 <br />
-                <BestPoolsDisplay tokens={tokens} />
+                <div className="max-w-full overflow-x-auto">
+                  <BestPoolsDisplay tokens={tokens} />
+                </div>
               </div>
             </div>
           </div>
