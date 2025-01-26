@@ -1,8 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { fetchWhirlpoolsByTokenPair } from '@orca-so/whirlpools';
-import { Connection } from '@solana/web3.js';
-import { SOLANA_ADDRESS } from '@utils/globals';
-
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -10,28 +6,36 @@ export default async function handler(
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
-    if(!process.env.NEXT_PUBLIC_SOLANA_RPC_URL) {
-        throw new Error('NEXT_PUBLIC_SOLANA_RPC_URL is not set');
-    }   
-    
     const { contractAddress } = req.body;
+    if (!contractAddress) {
+        return res.status(400).json({ error: 'Contract address is required' });
+    }
     try {
-        const rpc = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL);
+        console.log(contractAddress);
+        // Using Orca's API directly
+        const response = await fetch('https://api.orca.so/v1/whirlpool/list');
 
-        const pools = await fetchWhirlpoolsByTokenPair(
-            rpc,
-            contractAddress,
-            SOLANA_ADDRESS
-          );
+        // Log the response status and text for debugging
+        console.log('Response status:', response.status);
+        const responseData = await response.json();
+        // console.log('Response text:', responseData);
+
+        // Only try to parse if we got a successful response
+        if (!response.ok) {
+            throw new Error(`API responded with status ${response.status}: ${responseData}`);
+        }
+
+        const data = responseData.whirlpools?.filter((pool: any) => pool.tokenA.mint === contractAddress || pool.tokenB.mint === contractAddress);
+
         return res.status(200).json({
-            pools
+            pools: data || []
         });
 
     } catch (error) {
-        console.error('Error fetching portfolios:', error);
+        console.error('Error fetching Orca whirlpools:', error);
         return res.status(500).json({
-            error: 'Internal server error while fetching M3 Vaults',
-            errorMessage: error
+            error: 'Internal server error while fetching Orca whirlpools',
+            errorMessage: error instanceof Error ? error.message : String(error)
         });
     }
-}
+};

@@ -22,7 +22,7 @@ export default async function handler(
         });
 
     } catch (error) {
-        console.error('Error fetching portfolios:', error);
+        console.error('Error fetching SOL Routes:', error);
         return res.status(500).json({
             error: 'Internal server error while fetching SOL Routes',
             errorMessage: error
