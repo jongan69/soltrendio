@@ -306,8 +306,7 @@ export function HomeContent() {
 
           // Add immediate check for empty wallet
           if (!tokenAccounts?.value || tokenAccounts.value.length === 0) {
-            // Reset all relevant states
-            setSignState("initial");
+            setSignState("error");
             setTokens([]);
             setTotalAccounts(0);
             setTotalValue(0);
@@ -317,9 +316,9 @@ export function HomeContent() {
             setManualAddress("");
             setTrendsData([]);
             setTopSymbols([]);
-
-            toast.error("No tokens found in this wallet", { id: signToastId });
             setLoading(false);
+            
+            toast.error("No tokens found in this wallet", { id: signToastId });
             return;
           }
 

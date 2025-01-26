@@ -7,21 +7,21 @@ interface PnLCardProps {
   walletAddress: string;
 }
 
-interface Trade {
-  tokenIn: {
-    mint: string;
-    symbol: string;
-    amount: number;
-    decimals: number;
-  };
-  tokenOut: {
-    mint: string;
-    symbol: string;
-    amount: number;
-    decimals: number;
-  };
-  timestamp: number;
-}
+// interface Trade {
+//   tokenIn: {
+//     mint: string;
+//     symbol: string;
+//     amount: number;
+//     decimals: number;
+//   };
+//   tokenOut: {
+//     mint: string;
+//     symbol: string;
+//     amount: number;
+//     decimals: number;
+//   };
+//   timestamp: number;
+// }
 
 interface ProcessedTrade {
   timestamp: number;
