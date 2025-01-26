@@ -113,7 +113,7 @@ export default async function handler(
 
         // Filter out pools with zero TVL and calculate scores
         const poolsWithScore = allPools
-            .filter(pool => pool.tvl > 0)
+            .filter(pool => pool.tvl > 0 && pool.volume24h > 0)
             .map(pool => {
                 const volumeScore = Math.log10(Math.max(pool.volume24h, 1));
                 const aprScore = Number(pool.apr) || 0;

@@ -901,7 +901,7 @@ export function HomeContent() {
 
       {/* Main Content - Updated spacing and responsiveness */}
       {hasFetchedData ? (
-        <div className="space-y-4 sm:space-y-8">
+        <div className="space-y-4 sm:space-y-8 overflow-x-hidden max-w-full">
           {/* Token Balance Card */}
           <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
@@ -911,13 +911,11 @@ export function HomeContent() {
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
                 <p className="text-sm sm:text-base text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
                 <br />
-                <div className="max-w-full overflow-x-auto">
-                  <BestPoolsDisplay tokens={tokens} />
-                </div>
               </div>
             </div>
           </div>
-
+          
+          <BestPoolsDisplay tokens={tokens} />
           {/* Thesis Section - Updated button layout */}
           <ThesisSection
             thesis={thesis}

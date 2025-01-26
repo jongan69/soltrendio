@@ -1,3 +1,4 @@
+import { formatNumber } from '@utils/formatNumber';
 import React from 'react';
 import { useState } from 'react';
 
@@ -114,7 +115,7 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
     };
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300">
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl transition-all duration-300 max-w-[90vw] w-full">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Best Liquidity Pools</h2>
             
             {/* Token Selection Dropdown */}
@@ -135,67 +136,69 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
 
             {/* Loading State */}
             {loading && (
-                <div className="flex justify-center items-center py-4 sm:py-8">
+                <div className="flex justify-center items-center py-4">
                     <div className="loading loading-spinner loading-lg"></div>
                 </div>
             )}
 
             {/* Pools Display */}
             {!loading && pools.length > 0 && (
-                <div className="overflow-x-auto -mx-2 sm:mx-0">
-                    <table className="table w-full">
-                        <thead>
-                            <tr>
-                                {[
-                                    { field: 'source' as SortField, label: 'Source' },
-                                    { field: 'name' as SortField, label: 'Pool' },
-                                    { field: 'apr' as SortField, label: 'APR' },
-                                    { field: 'tvl' as SortField, label: 'TVL' },
-                                    { field: 'volume24h' as SortField, label: '24h Vol' },
-                                    { field: 'fees24h' as SortField, label: 'Fees' }
-                                ].map(({ field, label }) => (
-                                    <th 
-                                        key={field}
-                                        onClick={() => handleSort(field)}
-                                        className="cursor-pointer hover:bg-gray-100 text-xs sm:text-sm whitespace-nowrap"
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            {label}
-                                            {sortField === field && (
-                                                <span className="text-xs">
-                                                    {sortDirection === 'asc' ? '↑' : '↓'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {getSortedPools().map((pool, index) => (
-                                <tr 
-                                    key={index} 
-                                    className="hover cursor-pointer transition-colors duration-200"
-                                    onClick={() => handlePoolClick(pool)}
-                                >
-                                    <td>
-                                        <span className="badge badge-ghost text-xs sm:text-sm">{pool.source}</span>
-                                    </td>
-                                    <td className="text-xs sm:text-sm whitespace-nowrap">{pool.name}</td>
-                                    <td className="text-xs sm:text-sm whitespace-nowrap">{pool.apr}%</td>
-                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.tvl}</td>
-                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.volume24h}</td>
-                                    <td className="text-xs sm:text-sm whitespace-nowrap">${pool.fees24h}</td>
+                <div className="max-w-full overflow-x-auto relative">
+                    <div className="w-full overflow-hidden">
+                        <table className="table table-compact w-full">
+                            <thead>
+                                <tr className="text-left">
+                                    {[
+                                        { field: 'source' as SortField, label: 'Source' },
+                                        { field: 'name' as SortField, label: 'Pool' },
+                                        { field: 'apr' as SortField, label: 'APR' },
+                                        { field: 'tvl' as SortField, label: 'TVL' },
+                                        { field: 'volume24h' as SortField, label: '24h Vol' },
+                                        { field: 'fees24h' as SortField, label: 'Fees' }
+                                    ].map(({ field, label }) => (
+                                        <th 
+                                            key={field}
+                                            onClick={() => handleSort(field)}
+                                            className="cursor-pointer hover:bg-gray-100 text-xs whitespace-nowrap p-2"
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                {label}
+                                                {sortField === field && (
+                                                    <span className="text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {getSortedPools().map((pool, index) => (
+                                    <tr 
+                                        key={index} 
+                                        className="hover cursor-pointer transition-colors duration-200"
+                                        onClick={() => handlePoolClick(pool)}
+                                    >
+                                        <td className="p-2">
+                                            <span className="badge badge-ghost text-xs">{pool.source}</span>
+                                        </td>
+                                        <td className="text-xs whitespace-nowrap p-2">{pool.name}</td>
+                                        <td className="text-xs whitespace-nowrap p-2">{pool.apr}%</td>
+                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.tvl))}</td>
+                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.volume24h))}</td>
+                                        <td className="text-xs whitespace-nowrap p-2">${formatNumber(Number(pool.fees24h))}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
             {/* No Pools State */}
             {!loading && selectedToken && pools.length === 0 && (
-                <div className="text-center py-4 sm:py-8 text-gray-500 text-sm sm:text-base">
+                <div className="text-center py-4 text-gray-500 text-sm">
                     No liquidity pools found for this token
                 </div>
             )}

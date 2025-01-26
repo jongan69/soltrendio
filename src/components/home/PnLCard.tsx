@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Circles } from 'react-loader-spinner';
 import { toast } from 'react-hot-toast';
+import { formatNumber } from '@utils/formatNumber';
 
 interface PnLCardProps {
   walletAddress: string;
@@ -37,24 +38,24 @@ interface PnLData {
   trades: ProcessedTrade[];
 }
 
-function formatNumber(n: number | null | undefined): string {
-  // Return '0.000000' for null, undefined, or NaN values
-  if (n === null || n === undefined || isNaN(n)) {
-    return '0.000000';
-  }
+// function formatNumber(n: number | null | undefined): string {
+//   // Return '0.000000' for null, undefined, or NaN values
+//   if (n === null || n === undefined || isNaN(n)) {
+//     return '0.000000';
+//   }
 
-  // Convert to number if it's not already
-  const num = Number(n);
+//   // Convert to number if it's not already
+//   const num = Number(n);
   
-  if (!isFinite(num)) {
-    return '0.000000';
-  }
+//   if (!isFinite(num)) {
+//     return '0.000000';
+//   }
 
-  if (Math.abs(num) < 0.000001) {
-    return num.toFixed(12);
-  }
-  return num.toFixed(6);
-}
+//   if (Math.abs(num) < 0.000001) {
+//     return num.toFixed(12);
+//   }
+//   return num.toFixed(6);
+// }
 
 export function PnLCard({ walletAddress }: PnLCardProps) {
   const [loading, setLoading] = useState(true);
