@@ -81,6 +81,8 @@ export default async function handler(
                 source: `Orca`,
                 name: pool.name || `${pool.tokenA.symbol}-${pool.tokenB.symbol}`,
                 address: pool.address || '',
+                tokenAMint: pool.tokenA.mint,
+                tokenBMint: pool.tokenB.mint,
                 apr: Number(pool.apr) || 0,
                 apy: Number(pool.apy) || 0,
                 tvl: Number(pool.tvl) || 0,

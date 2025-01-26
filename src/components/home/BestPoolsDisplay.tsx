@@ -12,6 +12,8 @@ interface Pool {
     fees24h: string;
     score: string;
     type?: string;
+    tokenAMint?: string;
+    tokenBMint?: string;
 }
 
 // Add new type for sort fields
@@ -57,7 +59,7 @@ export const BestPoolsDisplay: React.FC<BestPoolsDisplayProps> = ({ tokens }) =>
         let url = '';
         switch (pool.source.toLowerCase()) {
             case 'orca':
-                url = `https://www.orca.so/liquidity`;
+                url = `https://www.orca.so/pools?tokens=${pool.tokenAMint}&tokens=${pool.tokenBMint}`;
                 break;
             case 'raydium':
                 if (pool?.type === 'Standard') {
