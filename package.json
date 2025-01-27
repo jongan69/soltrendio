@@ -14,7 +14,7 @@
     "@bonfida/spl-name-service": "^3.0.7",
     "@jup-ag/api": "^6.0.36",
     "@metaplex-foundation/mpl-token-metadata": "3.3.0",
-    "@metaplex-foundation/umi": "^0.8.9",
+    "@metaplex-foundation/umi": "^1.0.0",
     "@metaplex-foundation/umi-bundle-defaults": "^0.8.9",
     "@orca-so/whirlpools": "^1.0.2",
     "@project-serum/anchor": "^0.26.0",
