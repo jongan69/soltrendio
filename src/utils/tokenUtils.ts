@@ -191,7 +191,7 @@ export const getAddressLookupTableAccounts = async (connection: Connection, keys
     if (accountInfo) {
       const addressLookupTableAccount = new AddressLookupTableAccount({
         key: new PublicKey(addressLookupTableAddress),
-        state: AddressLookupTableAccount.deserialize(accountInfo.data),
+        state: AddressLookupTableAccount.deserialize(new Uint8Array(accountInfo.data)),
       });
       if (typeof addressLookupTableAccount !== "undefined") {
         acc.push(addressLookupTableAccount);
