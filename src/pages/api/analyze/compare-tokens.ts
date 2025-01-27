@@ -2,7 +2,8 @@ import OpenAI from "openai";
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: 'https://api.deepseek.com',
+    apiKey: process.env.DEEP_SEEK_API_KEY,
 });
 
 export default async function handler(
@@ -18,7 +19,7 @@ export default async function handler(
         // console.log("Received prompt length:", prompt.length);
 
         const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo-preview",
+            model: "deepseek-chat",
             messages: [
                 {
                     role: "system",

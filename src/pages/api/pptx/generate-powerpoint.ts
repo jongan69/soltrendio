@@ -6,11 +6,9 @@ import { PowerPoint } from 'src/models/PowerPoint';
 import mongoose from 'mongoose';
 import { connectDB } from '../../../utils/mongooseDb';
 
-
-
-
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    baseURL: 'https://api.deepseek.com',
+    apiKey: process.env.DEEP_SEEK_API_KEY
 });
 
 export const config = {
@@ -24,7 +22,7 @@ export const config = {
 
 async function generateThesisSummary(thesis: string): Promise<string> {
     const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: "deepseek-chat",
         messages: [{
             role: "user",
             content: `Summarize this investment thesis in one clear, concise but very stupid sentence: "${thesis}"`
