@@ -32,7 +32,8 @@ export default async function handler(req: { method: string; body: { text: any; 
     `,
                 }
             ],
-            model: "deepseek-chat",
+            // model: "deepseek-chat",
+            model: "gpt-4o-mini",
             temperature: 0.7,
             max_tokens: 4096,
             response_format: { type: "json_object" }

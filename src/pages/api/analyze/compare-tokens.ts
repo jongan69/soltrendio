@@ -19,7 +19,7 @@ export default async function handler(
         // console.log("Received prompt length:", prompt.length);
 
         const completion = await openai.chat.completions.create({
-            model: "deepseek-chat",
+            model: "deepseek-reasoner",
             messages: [
                 {
                     role: "system",

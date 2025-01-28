@@ -4,8 +4,8 @@ import { isSolanaAddress } from '../../../utils/isSolanaAddress';
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEP_SEEK_API_KEY,
+    // baseURL: 'https://api.deepseek.com',
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -65,7 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const timeout = setTimeout(() => controller.abort(), 50000); // 50 second timeout
 
     const completion = await openai.chat.completions.create({
-      model: "deepseek-chat",
+      // model: "deepseek-chat",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
