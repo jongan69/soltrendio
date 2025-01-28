@@ -69,7 +69,7 @@
     "eslint": "^8.31.0",
     "eslint-config-next": "13.1.1",
     "postcss": "^8.5.1",
-    "tailwindcss": "^3.2.4",
+    "tailwindcss": "^4.0.0",
     "typescript": "5.7.3"
   },
   "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
