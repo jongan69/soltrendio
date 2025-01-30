@@ -20,9 +20,15 @@ interface DexScreenerToken {
     };
     volume: {
         h24: number;
+        h6: number;
+        h1: number;
+        m5: number;
     };
     priceChange: {
         h24: number;
+        h6: number;
+        h1: number;
+        m5: number;
     };
     liquidity: {
         usd: number;
@@ -47,9 +53,15 @@ interface CoinAnalysis {
     pairAddress: string;
     liquidityUSD: number;
     volume24h: number;
+    volume6h: number;
+    volume1h: number;
+    volume5m: number;
     priceChange24h: string;
+    priceChange6h: string;
+    priceChange1h: string;
+    priceChange5m: string;
     holderCount: number;
-    holderCountChange: {
+    holderCountChange?: {
         day1: number;
         day7: number;
         day30: number;
@@ -58,7 +70,7 @@ interface CoinAnalysis {
     isMintable: boolean;
     isFreezable: boolean;
     metrics: {
-        isTrending: boolean;
+        isTwitterTrending: boolean;
         volumeIncreasing: boolean;
         hasBullishWhaleActivity: boolean;
         holdersIncreasing: boolean;
@@ -94,7 +106,7 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
         ]);
 
         if (!dexScreenerData) return null;
-
+        // console.log(holderHistory);
         const validPair = dexScreenerData.pairs.find(
             (pair: DexScreenerToken) =>
                 (pair.quoteToken.address === 'So11111111111111111111111111111111111111112' ||
@@ -113,22 +125,12 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
             whaleActivity: whaleActivity || []
         }, holderHistory);
 
-        const holderCountChange = {
-            day1: 0,
-            day7: 0,
-            day30: 0,
-            // hourly: 0
-        };
-
-        if (holderHistory?.historicalHolderCount) {
-            holderCountChange.day1 = getHolderCountChange(holderHistory.historicalHolderCount, 1);
-            holderCountChange.day7 = getHolderCountChange(holderHistory.historicalHolderCount, 7);
-            holderCountChange.day30 = getHolderCountChange(holderHistory.historicalHolderCount, 30);
-        }
-
-        // if (hourlyHolderHistory?.hourlyHolderCount) {
-        //     holderCountChange.hourly = getHolderCountChange(hourlyHolderHistory.hourlyHolderCount, 1);
-        // }
+        // Initialize holderCountChange only if we have valid holder history
+        const holderCountChangeData = holderHistory?.historicalHolderCount ? {
+            day1: getHolderCountChange(holderHistory.historicalHolderCount, 1),
+            day7: getHolderCountChange(holderHistory.historicalHolderCount, 7),
+            day30: getHolderCountChange(holderHistory.historicalHolderCount, 30),
+        } : undefined;
 
         return {
             symbol: validPair.baseToken.symbol,
@@ -136,12 +138,18 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
             contractAddress: contractAddress,
             liquidityUSD: validPair.liquidity.usd,
             volume24h: validPair.volume.h24,
+            volume6h: validPair.volume.h6,
+            volume1h: validPair.volume.h1,
+            volume5m: validPair.volume.m5,
             priceChange24h: `${validPair.priceChange.h24}%`,
+            priceChange6h: `${validPair.priceChange.h6}%`,
+            priceChange1h: `${validPair.priceChange.h1}%`,
+            priceChange5m: `${validPair.priceChange.m5}%`,
             burnedTokens: getBurnedAmount(pairDetails.ll.locks),
             isMintable: pairDetails.ta.solana.isMintable,
             isFreezable: pairDetails.ta.solana.isFreezable,
             metrics: analysis,
-            holderCountChange: holderCountChange,
+            ...(holderCountChangeData && { holderCountChange: holderCountChangeData }),
             holderCount: pairDetails.holders,
         };
 
@@ -177,17 +185,26 @@ function getBurnedAmount(locks: Array<{ tag: string; amount: string }>): string 
 }
 
 function getHolderCountChange(history: Array<{ day: string; holder_num: number }>, days: number): number {
-    if (!history?.length || history.length < days) return 0;
+    if (!history?.length) return 0;
+    
+    // Filter out future dates and sort by date descending
+    const validHistory = history
+        .filter(item => new Date(item.day) <= new Date())
+        .sort((a, b) => new Date(b.day).getTime() - new Date(a.day).getTime());
 
-    // Sort once and cache the result
-    if (!history[0].hasOwnProperty('timestamp')) {
-        history.forEach(item => {
-            (item as any).timestamp = new Date(item.day).getTime();
-        });
-        history.sort((a, b) => (b as any).timestamp - (a as any).timestamp);
+    console.log('Valid history:', validHistory);
+    
+    if (validHistory.length < 2) {
+        // Use the raw history if no valid dates (temporary fix for date issue)
+        const sortedHistory = [...history].sort((a, b) => 
+            new Date(b.day).getTime() - new Date(a.day).getTime()
+        );
+        const compareIndex = Math.min(days - 1, sortedHistory.length - 1);
+        return sortedHistory[0].holder_num - sortedHistory[compareIndex].holder_num;
     }
 
-    return history[0].holder_num - history[Math.min(days - 1, history.length - 1)].holder_num;
+    const compareIndex = Math.min(days - 1, validHistory.length - 1);
+    return validHistory[0].holder_num - validHistory[compareIndex].holder_num;
 }
 
 function analyzeMetrics(
@@ -195,7 +212,7 @@ function analyzeMetrics(
     trends: TrendData,
     holderHistory?: HistoricalHolderResponse
 ): {
-    isTrending: boolean;
+    isTwitterTrending: boolean;
     volumeIncreasing: boolean;
     hasBullishWhaleActivity: boolean;
     holdersIncreasing: boolean;
@@ -218,9 +235,9 @@ function analyzeMetrics(
 
         holdersIncreasing = increasingDays > (sortedHistory.length - 1) / 2;
     }
-    console.log(trends.whaleActivity.bullish);
+    // console.log(trends.whaleActivity.bullish);
     return {
-        isTrending: trends.topTweetedTickers.some(t => t.ticker.replace('$', '') === symbol),
+        isTwitterTrending: trends.topTweetedTickers.some(t => t.ticker.replace('$', '') === symbol),
         hasBullishWhaleActivity: trends.whaleActivity.bullish.some(t => t.symbol === symbol),
         volumeIncreasing: pair.volume.h24 > 0,
         holdersIncreasing,
