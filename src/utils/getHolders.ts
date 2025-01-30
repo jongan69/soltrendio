@@ -2,7 +2,7 @@ export default async function getHistoricalHolderCount(contractAddress: string) 
     try {
         // Create an AbortController instance
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
 
         const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stats/getHistoricalHolderCount`, {
             method: 'POST',
@@ -18,7 +18,7 @@ export default async function getHistoricalHolderCount(contractAddress: string) 
         return historicalHolderCount;
     } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-            console.error("Request timed out after 30 seconds");
+            console.error("Request timed out after 10 seconds");
         } else {
             console.error("Error fetching historical holder count:", error);
         }
