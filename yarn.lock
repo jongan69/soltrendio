@@ -319,6 +319,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@duneanalytics/client-sdk@npm:^0.2.5":
+  version: 0.2.5
+  resolution: "@duneanalytics/client-sdk@npm:0.2.5"
+  dependencies:
+    deprecated: "npm:^0.0.2"
+    loglevel: "npm:^1.8.0"
+  checksum: 10c0/2b21fed16d2eefae00e7fc9d629e18b0a772a92b6086e49d155680755ba4e1fdd88a6893e4fd70045409fb1a5796850a6f7b381e87c0a915f4366cff6a182954
+  languageName: node
+  linkType: hard
+
 "@emnapi/runtime@npm:^1.2.0":
   version: 1.3.1
   resolution: "@emnapi/runtime@npm:1.3.1"
@@ -6631,6 +6641,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deprecated@npm:^0.0.2":
+  version: 0.0.2
+  resolution: "deprecated@npm:0.0.2"
+  checksum: 10c0/40b3f0d67967919872fbb022f3689356daef9066e280ae457d307f0f67d9e4ebf3b624804a6ebd2296a68213e834bf506072cb4f167a61a5383a4eef863b5bf7
+  languageName: node
+  linkType: hard
+
 "dequal@npm:^2.0.0, dequal@npm:^2.0.3":
   version: 2.0.3
   resolution: "dequal@npm:2.0.3"
@@ -9336,7 +9353,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loglevel@npm:^1.8.1":
+"loglevel@npm:^1.8.0, loglevel@npm:^1.8.1":
   version: 1.9.2
   resolution: "loglevel@npm:1.9.2"
   checksum: 10c0/1e317fa4648fe0b4a4cffef6de037340592cee8547b07d4ce97a487abe9153e704b98451100c799b032c72bb89c9366d71c9fb8192ada8703269263ae77acdc7
@@ -12260,6 +12277,7 @@ __metadata:
   resolution: "soltrendio@workspace:."
   dependencies:
     "@bonfida/spl-name-service": "npm:^3.0.7"
+    "@duneanalytics/client-sdk": "npm:^0.2.5"
     "@jup-ag/api": "npm:^6.0.36"
     "@metaplex-foundation/mpl-token-metadata": "npm:3.3.0"
     "@metaplex-foundation/umi": "npm:^1.0.0"

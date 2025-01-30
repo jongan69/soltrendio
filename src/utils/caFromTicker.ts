@@ -28,7 +28,7 @@ export async function getSolanaTokenCA(ticker: string) {
     // Iterate through the pairs to find a match on the Solana chain
     for (const pair of data.pairs || []) {
       if (pair.chainId === 'solana') {
-        console.log(`Found token on Solana: ${pair.baseToken?.symbol}`);
+        // console.log(`Found token on Solana: ${pair.baseToken?.symbol}`);
 
         const baseToken = pair.baseToken || {};
         const quoteToken = pair.quoteToken || {};
