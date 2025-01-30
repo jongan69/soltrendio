@@ -65,7 +65,7 @@ export default async function handler(
     const totalAmountStaked = getValue(m3VaultData, { total_staked_amount: 0 }).total_staked_amount;
     const largeHoldersCount = getValue(largeHolders, 0);
     const solanaPrice = getValue(jupiterSwapResponse2, { data: { [SOLANA_ADDRESS]: { price: 0 } } })
-      .data[SOLANA_ADDRESS].price;
+      .data[SOLANA_ADDRESS]?.price;
     const btcPrice = getValue(bitcoinPrice, 0);
     const sp500Cap = getValue(sp500MarketCap, 0);
     const spx6900Cap = getValue(spx6900MarketCap, 0);

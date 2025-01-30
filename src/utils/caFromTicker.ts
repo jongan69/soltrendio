@@ -68,13 +68,3 @@ export async function getSolanaTokenCA(ticker: string) {
     return null;
   }
 }
-
-// Example Usage
-// const ticker = "LOCKIN";
-// getSolanaTokenCA(ticker).then((tokenAddress) => {
-//   if (tokenAddress) {
-//     console.log(`The contract address for ${ticker} is: ${tokenAddress}`);
-//   } else {
-//     console.log(`Token ${ticker} not found.`);
-//   }
-// });

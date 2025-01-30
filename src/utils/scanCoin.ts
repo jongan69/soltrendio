@@ -2,6 +2,7 @@ import { getSolanaTokenCA } from "./caFromTicker";
 import getTrends from "./getTrends";
 import getHistoricalHolderCount from "./getHolders";
 import { isSolanaAddress } from "./isSolanaAddress";
+import getHourlyHistoricalHolderCount from "./getHourlyHolders";
 
 interface DexScreenerToken {
     baseToken: {
@@ -116,19 +117,27 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
         // 4. Get Historical Holder Data
         const holderHistory = await getHistoricalHolderCount(contractAddress);
 
-        // 5. Analyze Metrics
+        // 5. Get Hourly Historical Holder Data 
+        const hourlyHolderHistory = await getHourlyHistoricalHolderCount(contractAddress);
+
+        // 6. Analyze Metrics
         const analysis = analyzeMetrics(validPair, pairDetails, trendsData, holderHistory);
 
         const holderCountChange = {
             day1: 0,
             day7: 0,
-            day30: 0
+            day30: 0,
+            hourly: 0
         };
 
         if (holderHistory?.historicalHolderCount) {
             holderCountChange.day1 = getHolderCountChange(holderHistory.historicalHolderCount, 1);
             holderCountChange.day7 = getHolderCountChange(holderHistory.historicalHolderCount, 7);
             holderCountChange.day30 = getHolderCountChange(holderHistory.historicalHolderCount, 30);
+        }
+
+        if (hourlyHolderHistory?.hourlyHolderCount) {
+            holderCountChange.hourly = getHolderCountChange(hourlyHolderHistory.hourlyHolderCount, 1);
         }
 
         return {

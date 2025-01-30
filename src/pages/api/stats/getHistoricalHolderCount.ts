@@ -31,11 +31,11 @@ export default async function handler(
             historicalHolderCount: query_result.result?.rows || []
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching historical holder count:', error);
         return res.status(500).json({
             error: 'Internal server error while fetching historical holder count',
-            errorMessage: error
+            errorMessage: error.message.error
         });
     }
 }

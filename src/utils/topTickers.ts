@@ -48,17 +48,25 @@ export const getTopTickers = async (): Promise<TickerCount[] | null> => {
             throw new Error('Invalid response format');
         }
 
-        // Map, sort, and take only top 5 tickers
-        const tickersWithCA = await Promise.all(data.data
-            .map(async (item) => ({
-                ticker: item.ticker,
-                count: item.count,
-                ca: await getSolanaTokenCA(item.ticker)
-            })));
-
-        return tickersWithCA
+        // Pre-sort by count and take top N before CA lookup
+        const topNTickers = data.data
             .sort((a, b) => b.count - a.count)
             .slice(0, TOP_N);
+
+        // Perform CA lookups in parallel
+        const tickersWithCA = await Promise.all(
+            topNTickers.map(async item => {
+                const ca = await getSolanaTokenCA(item.ticker);
+                return {
+                    ticker: item.ticker,
+                    count: item.count,
+                    ca
+                };
+            })
+        );
+
+        // Filter out any tickers that didn't get a CA
+        return tickersWithCA.filter(item => item.ca);
 
     } catch (error) {
         if (error instanceof Error) {
