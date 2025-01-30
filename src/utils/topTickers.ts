@@ -1,4 +1,5 @@
 import { getSolanaTokenCA } from "./caFromTicker";
+import { scanCoin } from "./scanCoin";
 
 interface TwitterTrendingResponse {
     success: boolean;
@@ -16,10 +17,10 @@ interface TwitterTrendingResponse {
 interface TickerCount {
     ticker: string;
     count: number;
-    ca: any;
+    ca?: string;
 }
 
-export const getTopTickers = async (): Promise<TickerCount[] | null> => {
+export const getTopTickers = async (withCA: boolean = false): Promise<TickerCount[] | null> => {
     const TIMEOUT_MS = 40000; // 40 seconds timeout
     const TOP_N = 25; // Number of top tickers to return
     
@@ -56,17 +57,24 @@ export const getTopTickers = async (): Promise<TickerCount[] | null> => {
         // Perform CA lookups in parallel
         const tickersWithCA = await Promise.all(
             topNTickers.map(async item => {
-                const ca = await getSolanaTokenCA(item.ticker);
-                return {
-                    ticker: item.ticker,
-                    count: item.count,
-                    ca
-                };
+                if (withCA) {
+                    const ca = await getSolanaTokenCA(item.ticker);
+                    return {
+                        ticker: item.ticker,
+                        count: item.count,
+                        ca,
+                    };
+                } else {
+                    return {
+                        ticker: item.ticker,
+                        count: item.count,
+                    };
+                }
             })
         );
 
-        // Filter out any tickers that didn't get a CA
-        return tickersWithCA.filter(item => item.ca);
+        // Only filter if withCA is true
+        return withCA ? tickersWithCA.filter(item => item.ca) : tickersWithCA;
 
     } catch (error) {
         if (error instanceof Error) {

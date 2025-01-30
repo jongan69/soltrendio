@@ -1,8 +1,9 @@
 import { getSolanaTokenCA } from "./caFromTicker";
-import getTrends from "./getTrends";
 import getHistoricalHolderCount from "./getHolders";
 import { isSolanaAddress } from "./isSolanaAddress";
-import getHourlyHistoricalHolderCount from "./getHourlyHolders";
+// import getHourlyHistoricalHolderCount from "./getHourlyHolders";
+import { getTopTickers } from "./topTickers";
+import { getLatestWhaleActivity } from "./getAssetDashWhaleWatch";
 
 interface DexScreenerToken {
     baseToken: {
@@ -28,33 +29,16 @@ interface DexScreenerToken {
     };
 }
 
-interface PairDetails {
-    holders: number;
-    ll: {
-        locks: Array<{
-            tag: string;
-            amount: string;
-        }>;
-    };
-    ta: {
-        solana: {
-            isMintable: boolean;
-            isFreezable: boolean;
-        };
-    };
-}
-
 interface TrendData {
     topTweetedTickers: Array<{
         ticker: string;
         count: number;
+        ca?: string;
     }>;
-    whaleActivity: Array<{
-        contractAddress: string;
-        buys: number;
-        sells: number;
-        timestamp: number;
-    }>;
+    whaleActivity: {
+        bullish: Array<{ symbol: string }>;
+        bearish: Array<{ symbol: string }>;
+    };
 }
 
 interface CoinAnalysis {
@@ -76,6 +60,7 @@ interface CoinAnalysis {
     metrics: {
         isTrending: boolean;
         volumeIncreasing: boolean;
+        hasBullishWhaleActivity: boolean;
         holdersIncreasing: boolean;
         buyPressureIncreasing: boolean;
     };
@@ -90,15 +75,26 @@ interface HistoricalHolderResponse {
 
 export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
     try {
-        // Determine if input is contract address or ticker
-        const isAddress = isSolanaAddress(input); // Simple check, can be made more robust
+        const isAddress = isSolanaAddress(input);
         const contractAddress = isAddress ? input : await getSolanaTokenCA(input);
 
-        // 1. Get DexScreener Latest Data
-        const dexScreenerData = await getDexScreenerData(contractAddress);
+        // Parallelize API calls
+        const [
+            dexScreenerData,
+            trendsData,
+            whaleActivity,
+            holderHistory,
+            // hourlyHolderHistory
+        ] = await Promise.all([
+            getDexScreenerData(contractAddress),
+            getTopTickers(),
+            getLatestWhaleActivity(),
+            getHistoricalHolderCount(contractAddress),
+            // getHourlyHistoricalHolderCount(contractAddress)
+        ]);
+
         if (!dexScreenerData) return null;
 
-        // Filter for SOL or USDC pairs with sufficient liquidity
         const validPair = dexScreenerData.pairs.find(
             (pair: DexScreenerToken) =>
                 (pair.quoteToken.address === 'So11111111111111111111111111111111111111112' ||
@@ -108,26 +104,20 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
 
         if (!validPair) return null;
 
-        // 2. Get Pair Details
+        // Get pair details after finding valid pair
         const pairDetails = await getPairDetails(validPair.pairAddress);
 
-        // 3. Get Trends Data
-        const trendsData = await getTrends();
-
-        // 4. Get Historical Holder Data
-        const holderHistory = await getHistoricalHolderCount(contractAddress);
-
-        // 5. Get Hourly Historical Holder Data 
-        const hourlyHolderHistory = await getHourlyHistoricalHolderCount(contractAddress);
-
         // 6. Analyze Metrics
-        const analysis = analyzeMetrics(validPair, pairDetails, trendsData, holderHistory);
+        const analysis = analyzeMetrics(validPair, {
+            topTweetedTickers: trendsData || [],
+            whaleActivity: whaleActivity || []
+        }, holderHistory);
 
         const holderCountChange = {
             day1: 0,
             day7: 0,
             day30: 0,
-            hourly: 0
+            // hourly: 0
         };
 
         if (holderHistory?.historicalHolderCount) {
@@ -136,9 +126,9 @@ export async function scanCoin(input: string): Promise<CoinAnalysis | null> {
             holderCountChange.day30 = getHolderCountChange(holderHistory.historicalHolderCount, 30);
         }
 
-        if (hourlyHolderHistory?.hourlyHolderCount) {
-            holderCountChange.hourly = getHolderCountChange(hourlyHolderHistory.hourlyHolderCount, 1);
-        }
+        // if (hourlyHolderHistory?.hourlyHolderCount) {
+        //     holderCountChange.hourly = getHolderCountChange(hourlyHolderHistory.hourlyHolderCount, 1);
+        // }
 
         return {
             symbol: validPair.baseToken.symbol,
@@ -187,20 +177,27 @@ function getBurnedAmount(locks: Array<{ tag: string; amount: string }>): string 
 }
 
 function getHolderCountChange(history: Array<{ day: string; holder_num: number }>, days: number): number {
-    if (history.length < days) return 0;
-    const sortedHistory = history
-        .sort((a, b) => new Date(b.day).getTime() - new Date(a.day).getTime());
-    return sortedHistory[0].holder_num - sortedHistory[Math.min(days - 1, sortedHistory.length - 1)].holder_num;
+    if (!history?.length || history.length < days) return 0;
+
+    // Sort once and cache the result
+    if (!history[0].hasOwnProperty('timestamp')) {
+        history.forEach(item => {
+            (item as any).timestamp = new Date(item.day).getTime();
+        });
+        history.sort((a, b) => (b as any).timestamp - (a as any).timestamp);
+    }
+
+    return history[0].holder_num - history[Math.min(days - 1, history.length - 1)].holder_num;
 }
 
 function analyzeMetrics(
     pair: DexScreenerToken,
-    details: PairDetails,
     trends: TrendData,
     holderHistory?: HistoricalHolderResponse
 ): {
     isTrending: boolean;
     volumeIncreasing: boolean;
+    hasBullishWhaleActivity: boolean;
     holdersIncreasing: boolean;
     buyPressureIncreasing: boolean;
 } {
@@ -208,25 +205,23 @@ function analyzeMetrics(
 
     // Calculate if holders are increasing based on historical data
     let holdersIncreasing = false;
-    if (holderHistory && holderHistory.historicalHolderCount?.length >= 2) {
-        const sortedHistory = holderHistory.historicalHolderCount
-            .sort((a, b) => new Date(b.day).getTime() - new Date(a.day).getTime())
-            .slice(0, 7); // Get last 7 days
+    const historicalHolders = holderHistory?.historicalHolderCount;
+    if (historicalHolders && historicalHolders.length >= 2) {
+        const sortedHistory = historicalHolders
+            .slice(0, 7)
+            .sort((a, b) => new Date(b.day).getTime() - new Date(a.day).getTime());
 
-        // Calculate if trend is increasing
-        let increasingDays = 0;
-        for (let i = 0; i < sortedHistory.length - 1; i++) {
-            if (sortedHistory[i].holder_num > sortedHistory[i + 1].holder_num) {
-                increasingDays++;
-            }
-        }
+        // Count increasing days using reduce
+        const increasingDays = sortedHistory.slice(1).reduce((count, curr, index) => {
+            return count + (curr.holder_num < sortedHistory[index].holder_num ? 1 : 0);
+        }, 0);
 
-        // Consider trend increasing if majority of days show increase
         holdersIncreasing = increasingDays > (sortedHistory.length - 1) / 2;
     }
-
+    console.log(trends.whaleActivity.bullish);
     return {
         isTrending: trends.topTweetedTickers.some(t => t.ticker.replace('$', '') === symbol),
+        hasBullishWhaleActivity: trends.whaleActivity.bullish.some(t => t.symbol === symbol),
         volumeIncreasing: pair.volume.h24 > 0,
         holdersIncreasing,
         buyPressureIncreasing: pair.txns.buys > pair.txns.sells

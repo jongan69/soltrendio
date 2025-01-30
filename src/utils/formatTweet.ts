@@ -1,8 +1,8 @@
 import { formatNumber } from './formatNumber';
 // import { fetchJupiterSwap } from './fetchJupiterSwap';
 // import { DEFAULT_TOKEN_3, SOLANA_ADDRESS } from './globals';
-import { fetchSP500MarketCap } from './fetchSP500';
-import { fetch6900 } from './fetch6900';
+// import { fetchSP500MarketCap } from './fetchSP500';
+// import { fetch6900 } from './fetch6900';
 
 export async function formatTrendsTweet(trends: any) {
     const {
@@ -29,9 +29,11 @@ export async function formatTrendsTweet(trends: any) {
 
     // console.log(topTweetedTickers);
     // Format top tweeted tickers with conditional plural
-    const topTickers = topTweetedTickers
-        .map((item: any) => `${item.ticker}: ${item.count} ${item.count === 1 ? 'tweet' : 'tweets'}`)
-        .join('\n');
+    const topTickers = topTweetedTickers?.length 
+        ? topTweetedTickers
+            .map((item: any) => `${item.ticker}: ${item.count} ${item.count === 1 ? 'tweet' : 'tweets'}`)
+            .join('\n')
+        : '';
 
     const bullishWhaleActivity = whaleActivity.bullish.map((item: any) => 
         `${item.name} ( ${item.symbol.startsWith('$') ? item.symbol : '$' + item.symbol} ) Score: ${item.bullishScore}`
@@ -43,9 +45,9 @@ export async function formatTrendsTweet(trends: any) {
     // const jupiterSwapPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
     // const solanaPrice = jupiterSwapResponse2.data[SOLANA_ADDRESS].price;
     // const bitcoinPrice = await fetchBitcoinPrice();
-    const sp500MarketCap = await fetchSP500MarketCap();
-    const spx6900MarketCap = await fetch6900();
-    const percentOfMissionCompleted = ((spx6900MarketCap / sp500MarketCap) * 100).toFixed(5);
+    // const sp500MarketCap = await fetchSP500MarketCap();
+    // const spx6900MarketCap = await fetch6900();
+    // const percentOfMissionCompleted = ((spx6900MarketCap / sp500MarketCap) * 100).toFixed(5);
     return `📊 Soltrendio Analytics Update
 
 📈 $TREND Price: $${trendPrice}
@@ -54,10 +56,6 @@ export async function formatTrendsTweet(trends: any) {
 🪙 Bitcoin Price: $${bitcoinPrice}
 💻 Solana Price: $${Number(solanaPrice).toFixed(2)}
 😂 Ethereum Price: $${Number(ethereumPrice).toFixed(2)}
-🏠 S&P 500 Market Cap: $${formatNumber(sp500MarketCap)}
-🎰 $SPX Market Cap: $${formatNumber(spx6900MarketCap)}
-
-Percent of Flippeneing: ${percentOfMissionCompleted}%
 
 👥 Total Wallets: ${totalUniqueWallets}
 💼 Active Wallets: ${portfolioMetrics.activeWallets}
@@ -67,7 +65,7 @@ Percent of Flippeneing: ${percentOfMissionCompleted}%
 📈 Top Tokens:
 ${topTokens}
 
-${topTweetedTickers !== null ? `🐦 Top Tweeted Tickers:
+${topTweetedTickers?.length ? `🐦 Top Tweeted Tickers:
 ${topTickers}` : ''}
 
 🐋 Recent Bullish Whale Activity:

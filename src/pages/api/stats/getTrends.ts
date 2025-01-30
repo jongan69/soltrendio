@@ -5,13 +5,12 @@ import { DEFAULT_M3_VAULT, DEFAULT_TOKEN_3, SOLANA_ADDRESS } from '@utils/global
 import { getM3Vault } from '@utils/getM3Vault';
 import { formatNumber } from '@utils/formatNumber';
 import { getLargeHolders } from '@utils/getLargeHolders';
-import { fetch6900 } from '@utils/fetch6900';
-import { fetchSP500MarketCap } from '@utils/fetchSP500';
+// import { fetch6900 } from '@utils/fetch6900';
+// import { fetchSP500MarketCap } from '@utils/fetchSP500';
 import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 import { getTopTickers } from '@utils/topTickers';
 import { fetchEthereumPrice } from '@utils/ethereumPrice';
 import { getLatestWhaleActivity } from '@utils/getAssetDashWhaleWatch';
-import { getSolanaTokenCA } from '@utils/caFromTicker';
 
 export default async function handler(
   req: NextApiRequest,
@@ -33,9 +32,9 @@ export default async function handler(
       getLargeHolders(DEFAULT_TOKEN_3),
       fetchJupiterSwap(SOLANA_ADDRESS),
       fetchBitcoinPrice(),
-      fetchSP500MarketCap(),
-      fetch6900(),
-      getTopTickers(),
+      // fetchSP500MarketCap(),
+      // fetch6900(),
+      getTopTickers(true),
       getLatestWhaleActivity(),
       fetchEthereumPrice()
     ]);
@@ -52,8 +51,8 @@ export default async function handler(
       largeHolders,
       jupiterSwapResponse2,
       bitcoinPrice,
-      sp500MarketCap,
-      spx6900MarketCap,
+      // sp500MarketCap,
+      // spx6900MarketCap,
       topTickers,
       whaleActivity,
       ethereumPrice
@@ -67,9 +66,9 @@ export default async function handler(
     const solanaPrice = getValue(jupiterSwapResponse2, { data: { [SOLANA_ADDRESS]: { price: 0 } } })
       .data[SOLANA_ADDRESS]?.price;
     const btcPrice = getValue(bitcoinPrice, 0);
-    const sp500Cap = getValue(sp500MarketCap, 0);
-    const spx6900Cap = getValue(spx6900MarketCap, 0);
-    const percentOfSpx6900flippingSp500 = ((spx6900Cap / sp500Cap) * 100).toFixed(5);
+    // const sp500Cap = getValue(sp500MarketCap, 0);
+    // const spx6900Cap = getValue(spx6900MarketCap, 0);
+    // const percentOfSpx6900flippingSp500 = ((spx6900Cap / sp500Cap) * 100).toFixed(5);
     const topTickersData = getValue(topTickers, []);
     const whaleActivityData = getValue(whaleActivity, { bullish: [], bearish: [] });
     const ethPrice = getValue(ethereumPrice, 0);
@@ -422,9 +421,9 @@ export default async function handler(
       bitcoinPrice: btcPrice,
       solanaPrice,
       ethereumPrice: ethPrice,
-      sp500MarketCap: sp500Cap,
-      spx6900MarketCap: spx6900Cap,
-      percentOfSpx6900flippingSp500,
+      // sp500MarketCap: sp500Cap,
+      // spx6900MarketCap: spx6900Cap,
+      // percentOfSpx6900flippingSp500,
       portfolioMetrics: {
         averagePortfolioValue: aggregationResult[0]?.averageTotalValue || 0,
         averageTokenHoldingValue: aggregationResult[0]?.averageHoldingValue || 0,
