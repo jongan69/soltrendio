@@ -1586,38 +1586,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@orca-so/whirlpools-client@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@orca-so/whirlpools-client@npm:1.0.2"
-  peerDependencies:
-    "@solana/web3.js": ^2.0.0
-  checksum: 10c0/175e0b59b666cddf9dc23861e95248c9a8b7fb9370e2fb2fbc6ba6504e70bfb9b71f9d0c87931225974d94bd9324a1e3c1ad29fd1afc948d84149c8dfe2354f1
-  languageName: node
-  linkType: hard
-
-"@orca-so/whirlpools-core@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@orca-so/whirlpools-core@npm:1.0.2"
-  checksum: 10c0/6a35cb4c9c0815d4185879fdcfa274058403ac941fd92113dd19c776d52236041f69d9d4f85707168f362c2a6596fc0d78c133470d72ae64d0be23ba231be2a4
-  languageName: node
-  linkType: hard
-
-"@orca-so/whirlpools@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "@orca-so/whirlpools@npm:1.0.2"
-  dependencies:
-    "@orca-so/whirlpools-client": "npm:1.0.2"
-    "@orca-so/whirlpools-core": "npm:1.0.2"
-    "@solana-program/memo": "npm:^0.6.1"
-    "@solana-program/system": "npm:^0.6.2"
-    "@solana-program/token": "npm:^0.4.1"
-    "@solana-program/token-2022": "npm:^0.3.1"
-  peerDependencies:
-    "@solana/web3.js": ^2.0.0
-  checksum: 10c0/ef6616f6994516641725329a5e3af080b31039db377a466ae3485bfb7a9c07b15e82070b8c715742ef39704147ecd3a5cfab3ab7255761118876f7185939d259
-  languageName: node
-  linkType: hard
-
 "@particle-network/analytics@npm:^1.0.1":
   version: 1.0.2
   resolution: "@particle-network/analytics@npm:1.0.2"
@@ -1972,33 +1940,6 @@ __metadata:
     "@react-native-async-storage/async-storage":
       optional: true
   checksum: 10c0/df7006156e4f80a75c0a5b63f654ddb3af01f6dc4c85bba9fca9fd3fe0357ab811d898c9b2926c6c2bdedb8791822dabb6ac5682db99179ce649196ba29ce2bd
-  languageName: node
-  linkType: hard
-
-"@solana-program/memo@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@solana-program/memo@npm:0.6.1"
-  peerDependencies:
-    "@solana/web3.js": ^2.0.0
-  checksum: 10c0/b047d742c4320eeabe38ff32643f6c57a24c1582b1b7168525af457e4c94d15223c7ff4b13af081b63e02120530faa2cec4f2054577810996d866f327c7c8051
-  languageName: node
-  linkType: hard
-
-"@solana-program/system@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "@solana-program/system@npm:0.6.2"
-  peerDependencies:
-    "@solana/web3.js": ^2.0.0
-  checksum: 10c0/ccdbb5464132aba7634f298d90dd8189f557fc5bb3e0f51c7f43323d87da9b50ccde1885ad2dbfe11094acf15bf767620310bc23b1dd9b7c91592b437dbae113
-  languageName: node
-  linkType: hard
-
-"@solana-program/token-2022@npm:^0.3.1":
-  version: 0.3.4
-  resolution: "@solana-program/token-2022@npm:0.3.4"
-  peerDependencies:
-    "@solana/web3.js": ^2.0.0
-  checksum: 10c0/2f8060e0e6a8b7baaf3f797ca73b1cfd5661b242b30058b82c5e193ca9884b2aa18622144be9b21c75f9976487b32c440cb0bab5653a0e2111e2699dc1a9b76d
   languageName: node
   linkType: hard
 
@@ -2676,17 +2617,18 @@ __metadata:
   linkType: hard
 
 "@solana/spl-token@npm:^0.4.9":
-  version: 0.4.9
-  resolution: "@solana/spl-token@npm:0.4.9"
+  version: 0.4.11
+  resolution: "@solana/spl-token@npm:0.4.11"
   dependencies:
     "@solana/buffer-layout": "npm:^4.0.0"
     "@solana/buffer-layout-utils": "npm:^0.2.0"
     "@solana/spl-token-group": "npm:^0.0.7"
     "@solana/spl-token-metadata": "npm:^0.1.6"
+    "@solana/zk-sdk": "npm:0.1.0"
     buffer: "npm:^6.0.3"
   peerDependencies:
-    "@solana/web3.js": ^1.95.3
-  checksum: 10c0/66f22a026fbc34a5e28391fc75c9a902e852fadf6538d18464b4f036d95d75ecccb2d96f07cbebdc6cb530558566c4296e613761969431fef549ec10e8d4024f
+    "@solana/web3.js": ^1.95.5
+  checksum: 10c0/0609ea6e14769ce649e5398ff296d53675ee36f1eeda9adf4462942728e5160093e86b74c6061c95776255159770dfc9c36b34e0210359003d5918d149828a8a
   languageName: node
   linkType: hard
 
@@ -3472,6 +3414,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@solana/zk-sdk@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@solana/zk-sdk@npm:0.1.0"
+  checksum: 10c0/5728c05e7d6f43f0e3ad47076b87c26af5aea64f494c0fdf6c56858b611f145fa2dc2f6812e5d2cee8ba6ba469034be5254fcccbcd28fcc591c3df028ee067ae
+  languageName: node
+  linkType: hard
+
 "@solflare-wallet/metamask-sdk@npm:^1.0.2":
   version: 1.0.3
   resolution: "@solflare-wallet/metamask-sdk@npm:1.0.3"
@@ -3686,109 +3635,109 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/node@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/node@npm:4.0.0"
+"@tailwindcss/node@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/node@npm:4.0.1"
   dependencies:
     enhanced-resolve: "npm:^5.18.0"
     jiti: "npm:^2.4.2"
-    tailwindcss: "npm:4.0.0"
-  checksum: 10c0/5d7656641f905cdb8dc5ce818b57eb93fd1bd7a52480fe4047882c7175e1b2401b1e7fb6a6027cc785daa52c4107aa8f2998cdbad2195b5cf1d50171db28a55e
+    tailwindcss: "npm:4.0.1"
+  checksum: 10c0/98ccac651ea2721bd14afa0d2ee4ba3e5bfa19d1b21e58b6e334964755140ac545381283892768a7b05857d482dbefa96409e301f43c5e41434156d719f456eb
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-android-arm64@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-android-arm64@npm:4.0.0"
+"@tailwindcss/oxide-android-arm64@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-android-arm64@npm:4.0.1"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-darwin-arm64@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-darwin-arm64@npm:4.0.0"
+"@tailwindcss/oxide-darwin-arm64@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-darwin-arm64@npm:4.0.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-darwin-x64@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-darwin-x64@npm:4.0.0"
+"@tailwindcss/oxide-darwin-x64@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-darwin-x64@npm:4.0.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-freebsd-x64@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-freebsd-x64@npm:4.0.0"
+"@tailwindcss/oxide-freebsd-x64@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-freebsd-x64@npm:4.0.1"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.0.0"
+"@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.0.1"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm64-gnu@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-linux-arm64-gnu@npm:4.0.0"
+"@tailwindcss/oxide-linux-arm64-gnu@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-linux-arm64-gnu@npm:4.0.1"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm64-musl@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-linux-arm64-musl@npm:4.0.0"
+"@tailwindcss/oxide-linux-arm64-musl@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-linux-arm64-musl@npm:4.0.1"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-x64-gnu@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-linux-x64-gnu@npm:4.0.0"
+"@tailwindcss/oxide-linux-x64-gnu@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-linux-x64-gnu@npm:4.0.1"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-x64-musl@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-linux-x64-musl@npm:4.0.0"
+"@tailwindcss/oxide-linux-x64-musl@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-linux-x64-musl@npm:4.0.1"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-win32-arm64-msvc@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-win32-arm64-msvc@npm:4.0.0"
+"@tailwindcss/oxide-win32-arm64-msvc@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-win32-arm64-msvc@npm:4.0.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-win32-x64-msvc@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide-win32-x64-msvc@npm:4.0.0"
+"@tailwindcss/oxide-win32-x64-msvc@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide-win32-x64-msvc@npm:4.0.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/oxide@npm:4.0.0"
+"@tailwindcss/oxide@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@tailwindcss/oxide@npm:4.0.1"
   dependencies:
-    "@tailwindcss/oxide-android-arm64": "npm:4.0.0"
-    "@tailwindcss/oxide-darwin-arm64": "npm:4.0.0"
-    "@tailwindcss/oxide-darwin-x64": "npm:4.0.0"
-    "@tailwindcss/oxide-freebsd-x64": "npm:4.0.0"
-    "@tailwindcss/oxide-linux-arm-gnueabihf": "npm:4.0.0"
-    "@tailwindcss/oxide-linux-arm64-gnu": "npm:4.0.0"
-    "@tailwindcss/oxide-linux-arm64-musl": "npm:4.0.0"
-    "@tailwindcss/oxide-linux-x64-gnu": "npm:4.0.0"
-    "@tailwindcss/oxide-linux-x64-musl": "npm:4.0.0"
-    "@tailwindcss/oxide-win32-arm64-msvc": "npm:4.0.0"
-    "@tailwindcss/oxide-win32-x64-msvc": "npm:4.0.0"
+    "@tailwindcss/oxide-android-arm64": "npm:4.0.1"
+    "@tailwindcss/oxide-darwin-arm64": "npm:4.0.1"
+    "@tailwindcss/oxide-darwin-x64": "npm:4.0.1"
+    "@tailwindcss/oxide-freebsd-x64": "npm:4.0.1"
+    "@tailwindcss/oxide-linux-arm-gnueabihf": "npm:4.0.1"
+    "@tailwindcss/oxide-linux-arm64-gnu": "npm:4.0.1"
+    "@tailwindcss/oxide-linux-arm64-musl": "npm:4.0.1"
+    "@tailwindcss/oxide-linux-x64-gnu": "npm:4.0.1"
+    "@tailwindcss/oxide-linux-x64-musl": "npm:4.0.1"
+    "@tailwindcss/oxide-win32-arm64-msvc": "npm:4.0.1"
+    "@tailwindcss/oxide-win32-x64-msvc": "npm:4.0.1"
   dependenciesMeta:
     "@tailwindcss/oxide-android-arm64":
       optional: true
@@ -3812,21 +3761,21 @@ __metadata:
       optional: true
     "@tailwindcss/oxide-win32-x64-msvc":
       optional: true
-  checksum: 10c0/705da4bce9b823fbe0b6996f160c0ef745ff2c118156b30593ef9fec92d9acafb13bff4a335f4b95980fad2663e3f16cb312bdfba62c7f78d356fa5bc66e5e84
+  checksum: 10c0/19cd901b7301c3a0c5c36ca41eabbec752119cdcec9963fabbfb2505022e11d7f0b1164a7917c7b5361e7a12056c9695c5d7da4005ca1e43736692e2f77f9be6
   languageName: node
   linkType: hard
 
 "@tailwindcss/postcss@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@tailwindcss/postcss@npm:4.0.0"
+  version: 4.0.1
+  resolution: "@tailwindcss/postcss@npm:4.0.1"
   dependencies:
     "@alloc/quick-lru": "npm:^5.2.0"
-    "@tailwindcss/node": "npm:^4.0.0"
-    "@tailwindcss/oxide": "npm:^4.0.0"
+    "@tailwindcss/node": "npm:^4.0.1"
+    "@tailwindcss/oxide": "npm:^4.0.1"
     lightningcss: "npm:^1.29.1"
     postcss: "npm:^8.4.41"
-    tailwindcss: "npm:4.0.0"
-  checksum: 10c0/a605393e9939026d8b723f676dfe5ba0bfcfc8dc3c3c26329890b0f9119b1f78ef9c8c6983bdeecbd5dc88bd2700a31f64ebdd386ac4c973ba789237baa8d55c
+    tailwindcss: "npm:4.0.1"
+  checksum: 10c0/34a95ec1e730a266a30a45f25a2837c39ce66839376a1da239ee37f453edff8fe7b59952030f8391b1f557da3c17338e85e9e432ff0a1d3dbb7161a3092f900e
   languageName: node
   linkType: hard
 
@@ -7799,13 +7748,6 @@ __metadata:
   version: 1.0.0
   resolution: "fs.realpath@npm:1.0.0"
   checksum: 10c0/444cf1291d997165dfd4c0d58b69f0e4782bfd9149fd72faa4fe299e68e0e93d6db941660b37dd29153bf7186672ececa3b50b7e7249477b03fdf850f287c948
-  languageName: node
-  linkType: hard
-
-"fs@npm:^0.0.1-security":
-  version: 0.0.1-security
-  resolution: "fs@npm:0.0.1-security"
-  checksum: 10c0/e0c0b585ec6f7483d63d067215d9d6bb2e0dba5912060d32554c8e566a0e22ee65e4c2a2b0567476efbbfb47682554b4711d69cab49950d01f227a3dfa7d671a
   languageName: node
   linkType: hard
 
@@ -12282,7 +12224,6 @@ __metadata:
     "@metaplex-foundation/mpl-token-metadata": "npm:3.3.0"
     "@metaplex-foundation/umi": "npm:^1.0.0"
     "@metaplex-foundation/umi-bundle-defaults": "npm:^0.8.9"
-    "@orca-so/whirlpools": "npm:^1.0.2"
     "@project-serum/anchor": "npm:^0.26.0"
     "@solana/spl-name-service": "npm:^0.1.4"
     "@solana/spl-token": "npm:^0.4.9"
@@ -12310,7 +12251,6 @@ __metadata:
     eslint: "npm:^8.31.0"
     eslint-config-next: "npm:13.1.1"
     framer-motion: "npm:^11.15.0"
-    fs: "npm:^0.0.1-security"
     google-trends-api: "npm:^4.9.2"
     he: "npm:^1.2.0"
     jito-ts: "npm:^4.1.1"
@@ -12739,10 +12679,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:4.0.0":
-  version: 4.0.0
-  resolution: "tailwindcss@npm:4.0.0"
-  checksum: 10c0/418b1cb02c46f5064bdd4931d8bb030e5c2a986744226dc282b47ecd4b95d1eb919a6f35a68cac948fbf3224fd976feafd9476e289cb5774062f6a3b2a49606e
+"tailwindcss@npm:4.0.1":
+  version: 4.0.1
+  resolution: "tailwindcss@npm:4.0.1"
+  checksum: 10c0/06a512f34a3eb89ad3de83952d6b4f00a8a07d9859145a7c60e6cb20dcaaed97a2b96e0a204823cb63d385575eb0380b26be124f02e73d729fd8a98ac4ed7087
   languageName: node
   linkType: hard
 
