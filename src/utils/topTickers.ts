@@ -1,3 +1,5 @@
+import { getSolanaTokenCA } from "./caFromTicker";
+
 interface TwitterTrendingResponse {
     success: boolean;
     data: {
@@ -14,6 +16,7 @@ interface TwitterTrendingResponse {
 interface TickerCount {
     ticker: string;
     count: number;
+    ca: any;
 }
 
 export const getTopTickers = async (): Promise<TickerCount[] | null> => {
@@ -46,11 +49,14 @@ export const getTopTickers = async (): Promise<TickerCount[] | null> => {
         }
 
         // Map, sort, and take only top 5 tickers
-        return data.data
-            .map(item => ({
+        const tickersWithCA = await Promise.all(data.data
+            .map(async (item) => ({
                 ticker: item.ticker,
-                count: item.count
-            }))
+                count: item.count,
+                ca: await getSolanaTokenCA(item.ticker)
+            })));
+
+        return tickersWithCA
             .sort((a, b) => b.count - a.count)
             .slice(0, TOP_N);
 

@@ -11,6 +11,7 @@ import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 import { getTopTickers } from '@utils/topTickers';
 import { fetchEthereumPrice } from '@utils/ethereumPrice';
 import { getLatestWhaleActivity } from '@utils/getAssetDashWhaleWatch';
+import { getSolanaTokenCA } from '@utils/caFromTicker';
 
 export default async function handler(
   req: NextApiRequest,
