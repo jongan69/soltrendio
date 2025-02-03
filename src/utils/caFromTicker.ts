@@ -1,6 +1,7 @@
 export async function getSolanaTokenCA(ticker: string) {
   /**
    * Retrieve the contract address (CA) of a Solana token by its ticker symbol.
+   * Returns the CA of the token with the highest liquidity.
    *
    * @param {string} ticker - The ticker symbol of the Solana token (e.g., 'SOL', 'USDC', or '$SOL').
    * @returns {Promise<string|null>} - The contract address of the token if found, otherwise null.
@@ -23,44 +24,43 @@ export async function getSolanaTokenCA(ticker: string) {
     const response = await fetch(url);
     const data = await response.json();
 
-    let firstFoundAddress = null; // Variable to store the first found address
+    // Filter for Solana pairs and valid quote tokens (SOL or USDC)
+    const validPairs = (data.pairs || []).filter((pair: any) => 
+      pair.chainId === 'solana' && 
+      (pair.quoteToken?.address === 'So11111111111111111111111111111111111111112' || // SOL
+       pair.quoteToken?.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v') && // USDC
+      pair.liquidity?.usd > 5000 // Minimum liquidity threshold
+    );
 
-    // Iterate through the pairs to find a match on the Solana chain
-    for (const pair of data.pairs || []) {
-      if (pair.chainId === 'solana') {
-        // console.log(`Found token on Solana: ${pair.baseToken?.symbol}`);
+    // Sort pairs by liquidity (highest first)
+    validPairs.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
 
-        const baseToken = pair.baseToken || {};
-        const quoteToken = pair.quoteToken || {};
+    // Find the highest liquidity pair that matches the ticker
+    for (const pair of validPairs) {
+      const baseToken = pair.baseToken || {};
+      const quoteToken = pair.quoteToken || {};
 
-        // Store the first found address if not already stored
-        if (!firstFoundAddress) {
-          firstFoundAddress = baseToken.address || quoteToken.address;
-        }
-
-        // Check if the ticker matches either the base or quote token
-        if (
-          baseToken.symbol?.toUpperCase() === tickerUpper ||
-          baseToken.symbol?.toLowerCase() === tickerLower
-        ) {
-          return baseToken.address;
-        } else if (
-          quoteToken.symbol?.toUpperCase() === tickerUpper ||
-          quoteToken.symbol?.toLowerCase() === tickerLower
-        ) {
-          return quoteToken.address;
-        }
+      if (
+        baseToken.symbol?.toUpperCase() === tickerUpper ||
+        baseToken.symbol?.toLowerCase() === tickerLower
+      ) {
+        return baseToken.address;
+      } else if (
+        quoteToken.symbol?.toUpperCase() === tickerUpper ||
+        quoteToken.symbol?.toLowerCase() === tickerLower
+      ) {
+        return quoteToken.address;
       }
     }
 
-    // Return the first found address if no exact match is found
-    if (firstFoundAddress) {
-      console.log(`No exact match found. Returning the first found address: ${firstFoundAddress}`);
-      return firstFoundAddress;
+    // If no exact match found but we have valid pairs, return the highest liquidity one
+    if (validPairs.length > 0) {
+      console.log(`No exact match found. Returning highest liquidity token: ${validPairs[0].baseToken.symbol}`);
+      return validPairs[0].baseToken.address;
     }
 
-    // Return null if the token is not found
-    console.log(`Token ${ticker} not found on Solana.`);
+    // Return null if no valid pairs found
+    console.log(`Token ${ticker} not found on Solana with sufficient liquidity.`);
     return null;
 
   } catch (error: any) {
