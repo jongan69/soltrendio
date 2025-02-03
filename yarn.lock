@@ -9986,7 +9986,41 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongodb@npm:^6.12.0, mongodb@npm:~6.12.0":
+"mongodb@npm:^6.13.0":
+  version: 6.13.0
+  resolution: "mongodb@npm:6.13.0"
+  dependencies:
+    "@mongodb-js/saslprep": "npm:^1.1.9"
+    bson: "npm:^6.10.1"
+    mongodb-connection-string-url: "npm:^3.0.0"
+  peerDependencies:
+    "@aws-sdk/credential-providers": ^3.188.0
+    "@mongodb-js/zstd": ^1.1.0 || ^2.0.0
+    gcp-metadata: ^5.2.0
+    kerberos: ^2.0.1
+    mongodb-client-encryption: ">=6.0.0 <7"
+    snappy: ^7.2.2
+    socks: ^2.7.1
+  peerDependenciesMeta:
+    "@aws-sdk/credential-providers":
+      optional: true
+    "@mongodb-js/zstd":
+      optional: true
+    gcp-metadata:
+      optional: true
+    kerberos:
+      optional: true
+    mongodb-client-encryption:
+      optional: true
+    snappy:
+      optional: true
+    socks:
+      optional: true
+  checksum: 10c0/8fe03ef208113a47842a0ae3676abe287d6e1cff81d47414abf501c7b78257c7fecb80cafc5ba16b3e42821fffcd3652c62650302c8f4f58464c802a17910478
+  languageName: node
+  linkType: hard
+
+"mongodb@npm:~6.12.0":
   version: 6.12.0
   resolution: "mongodb@npm:6.12.0"
   dependencies:
@@ -12268,7 +12302,7 @@ __metadata:
     google-trends-api: "npm:^4.9.2"
     he: "npm:^1.2.0"
     jito-ts: "npm:^4.1.1"
-    mongodb: "npm:^6.12.0"
+    mongodb: "npm:^6.13.0"
     mongoose: "npm:^8.9.5"
     next: "npm:15.1.2"
     oauth-1.0a: "npm:^2.2.6"
