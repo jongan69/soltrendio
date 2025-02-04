@@ -19,7 +19,7 @@
     "@metaplex-foundation/umi-bundle-defaults": "^1.0.0",
     "@project-serum/anchor": "^0.26.0",
     "@solana/spl-name-service": "^0.1.4",
-    "@solana/spl-token": "^0.4.9",
+    "@solana/spl-token": "^0.4.12",
     "@solana/wallet-adapter-base": "^0.9.20",
     "@solana/wallet-adapter-react": "^0.15.28",
     "@solana/wallet-adapter-react-ui": "^0.9.27",

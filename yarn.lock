@@ -2630,19 +2630,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/spl-token@npm:^0.4.9":
-  version: 0.4.11
-  resolution: "@solana/spl-token@npm:0.4.11"
+"@solana/spl-token@npm:^0.4.12":
+  version: 0.4.12
+  resolution: "@solana/spl-token@npm:0.4.12"
   dependencies:
     "@solana/buffer-layout": "npm:^4.0.0"
     "@solana/buffer-layout-utils": "npm:^0.2.0"
     "@solana/spl-token-group": "npm:^0.0.7"
     "@solana/spl-token-metadata": "npm:^0.1.6"
-    "@solana/zk-sdk": "npm:0.1.0"
     buffer: "npm:^6.0.3"
   peerDependencies:
     "@solana/web3.js": ^1.95.5
-  checksum: 10c0/0609ea6e14769ce649e5398ff296d53675ee36f1eeda9adf4462942728e5160093e86b74c6061c95776255159770dfc9c36b34e0210359003d5918d149828a8a
+  checksum: 10c0/262d5b6c60db0f0a4c983b0c29fd38a2f0a2a5a947c3bc3c4951843b212663c502f5cc71f9303178933f6e36ae24303081475c93a789dd33ec9c1c1b1123f841
   languageName: node
   linkType: hard
 
@@ -3425,13 +3424,6 @@ __metadata:
     rpc-websockets: "npm:^7.5.1"
     superstruct: "npm:^0.14.2"
   checksum: 10c0/3ef4d0b986101636931d371c44ee44d730015dc6678aa97e76e7e8e9c8640d0d30b5e3a5a545551c06e836e999555743d7068eb62f006c5e534482ee7e319aa4
-  languageName: node
-  linkType: hard
-
-"@solana/zk-sdk@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@solana/zk-sdk@npm:0.1.0"
-  checksum: 10c0/5728c05e7d6f43f0e3ad47076b87c26af5aea64f494c0fdf6c56858b611f145fa2dc2f6812e5d2cee8ba6ba469034be5254fcccbcd28fcc591c3df028ee067ae
   languageName: node
   linkType: hard
 
@@ -12274,7 +12266,7 @@ __metadata:
     "@metaplex-foundation/umi-bundle-defaults": "npm:^1.0.0"
     "@project-serum/anchor": "npm:^0.26.0"
     "@solana/spl-name-service": "npm:^0.1.4"
-    "@solana/spl-token": "npm:^0.4.9"
+    "@solana/spl-token": "npm:^0.4.12"
     "@solana/wallet-adapter-base": "npm:^0.9.20"
     "@solana/wallet-adapter-react": "npm:^0.15.28"
     "@solana/wallet-adapter-react-ui": "npm:^0.9.27"
