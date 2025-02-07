@@ -18,6 +18,9 @@ export const DEFAULT_TOKEN_3 = "BrhWtD6xw9kCf8HJycq91KbCaCAyLCQ3JDYN5QaQpump"; /
 export const DEFAULT_TOKEN_3_NAME = "TREND";
 
 export const TREND_SETTERS_NFT_COLLECTION = "9dWQeLNt6Q8Pjj77bC3XzLKpFMTUgQ3aUmGohR33TkKQ"; // TREND SETTERS NFT COLLECTION
+export const TREND_SETTERS_NFT_COLLECTION_NAME = "Trend Setters";
+
+export const VAULT_ADDRESS = "AvkHzVATyd1hnG5Y7iT7M3aa77UaMWaDJx2UQbEXMp7b"; // M3M3 VAULT Address
 
 export const REFERAL_WALLET = "2J8jsZmyTRwCYfX4aAKqdh763Y2UHMudnRh7b9Z9hBXE"; // Jupiter Swap Referral Key
 
