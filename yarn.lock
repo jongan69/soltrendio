@@ -1036,10 +1036,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jup-ag/api@npm:^6.0.36":
-  version: 6.0.36
-  resolution: "@jup-ag/api@npm:6.0.36"
-  checksum: 10c0/ad125663e45d2614755de034a2ee8d0a6396e1bd2d555102d96de5f107248cc7a0fa9ec0e897519ceb385f10624284a379b7b94fda06067f64d468c8e6f2a8eb
+"@jup-ag/api@npm:^6.0.39":
+  version: 6.0.39
+  resolution: "@jup-ag/api@npm:6.0.39"
+  checksum: 10c0/09eae1b4be82c2d42957ab110e0ff2e160336b0be798b598fd160d20dbd9eb5f35b7ebb2cb58a5d5a44bb36bcaf33ed6cebb938629dd03644ad38a431712bc9d
   languageName: node
   linkType: hard
 
@@ -12303,7 +12303,7 @@ __metadata:
   dependencies:
     "@bonfida/spl-name-service": "npm:^3.0.7"
     "@duneanalytics/client-sdk": "npm:^0.2.5"
-    "@jup-ag/api": "npm:^6.0.36"
+    "@jup-ag/api": "npm:^6.0.39"
     "@metaplex-foundation/mpl-token-metadata": "npm:3.3.0"
     "@metaplex-foundation/umi": "npm:^1.0.0"
     "@metaplex-foundation/umi-bundle-defaults": "npm:^1.0.0"
