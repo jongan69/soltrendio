@@ -7774,9 +7774,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^12.0.11":
-  version: 12.0.11
-  resolution: "framer-motion@npm:12.0.11"
+"framer-motion@npm:^12.4.3":
+  version: 12.4.3
+  resolution: "framer-motion@npm:12.4.3"
   dependencies:
     motion-dom: "npm:^12.0.0"
     motion-utils: "npm:^12.0.0"
@@ -7792,7 +7792,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/cf8b504c66e8ca067db48b95f1601c9da7b040c4877caeee952a7c97873612580782f41750a7c611f0dc937d7b60941fd8d223390440fc64e0f99992a3cfca77
+  checksum: 10c0/4f6a4c859c5cc96c234ac6c43ede0ef7a3472f9449fad72dd9fa518b30779b17ee785ab5ca20e626a303d7a0b9b4709bd9a12125381b948e6246b5b94fef87f2
   languageName: node
   linkType: hard
 
@@ -12333,7 +12333,7 @@ __metadata:
     dompurify: "npm:^3.2.3"
     eslint: "npm:^8.31.0"
     eslint-config-next: "npm:15.1.6"
-    framer-motion: "npm:^12.0.11"
+    framer-motion: "npm:^12.4.3"
     google-trends-api: "npm:^4.9.2"
     he: "npm:^1.2.0"
     jito-ts: "npm:^4.1.1"
