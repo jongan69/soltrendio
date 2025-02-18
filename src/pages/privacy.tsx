@@ -35,10 +35,10 @@ const PrivacyPolicy: NextPage = () => {
             We may collect, use, store, and transfer different kinds of personal data about you, including:
           </p>
           <ul className="list-disc pl-8 mb-4">
-            <li>Identity Data (name, username)</li>
-            <li>Contact Data (email address, phone number)</li>
-            <li>Technical Data (IP address, browser type, device information)</li>
-            <li>Usage Data (how you use our website)</li>
+            <li>Wallet Address</li>
+            <li>Transaction History</li>
+            <li>Token Balances</li>
+            <li>Token Holdings</li>
           </ul>
         </section>
 
@@ -50,9 +50,7 @@ const PrivacyPolicy: NextPage = () => {
             We use your personal data only when the law allows us to. Most commonly, we will use your personal data in the following circumstances:
           </p>
           <ul className="list-disc pl-8 mb-4">
-            <li>To provide and maintain our service</li>
-            <li>To notify you about changes to our service</li>
-            <li>To provide customer support</li>
+            <li>To provide our service</li>
             <li>To gather analytics to improve our service</li>
           </ul>
         </section>
@@ -110,7 +108,7 @@ const PrivacyPolicy: NextPage = () => {
             If you have any questions about this Privacy Policy, you can contact us:
           </p>
           <p className="text-base mb-4">
-            By email: privacy@example.com
+            By email: support@soltrendio.com
           </p>
         </section>
       </div>
