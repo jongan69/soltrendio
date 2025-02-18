@@ -33,8 +33,8 @@ const SupportPage: NextPage = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-semibold mb-3">Discord Community</h3>
               <p className="mb-3">Join our community for real-time support</p>
-              <a href="https://discord.gg/soltrendio" className="text-blue-600 hover:text-blue-800">
-                Join Discord
+              <a href="https://t.me/soltrendioportal" className="text-blue-600 hover:text-blue-800">
+                Join Telegram
               </a>
             </div>
           </div>
