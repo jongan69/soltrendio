@@ -5,7 +5,7 @@ import { Header } from "@components/layout/header";
 import { PageContainer } from "@components/layout/page-container";
 import { HomeContent } from "@components/home/HomeContent";
 import { DrawerContainer } from "@components/layout/drawer-container";
-import { ButtonState } from "@components/home/Button";
+import { ButtonState } from "@components/layout/button";
 import { Menu } from "@components/layout/menu";
 import { TxConfirmData } from "@pages/api/tx/confirm";
 import { TxCreateData } from "@pages/api/tx/create";

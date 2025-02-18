@@ -1,4 +1,4 @@
-import { Button, ButtonState } from "@components/home/Button";
+import { Button, ButtonState } from "@components/layout/button";
 import { DEFAULT_WALLET } from "@utils/globals";
 import React from "react";
 
