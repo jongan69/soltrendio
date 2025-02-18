@@ -54,7 +54,7 @@ import { processTrendPayment } from "@utils/processTrendPayment";
 import { processSolTransfer } from "@utils/processSolTransfer";
 import { processTokenTransfer } from "@utils/processTokenTransfer";
 import { createPortfolio } from "@utils/createPortfolio";
-import { SimilarCoinsSection } from "./similar-coins";
+import { SimilarCoinsSection } from "./SimilarCoins";
 import { checkTwitterStatus } from "@utils/checkTwitterStatus";
 import { LoadingState } from "@components/LoadingStates";
 import { fetchPremiumAnalytics } from "@utils/fetchPremiumAnalytics";

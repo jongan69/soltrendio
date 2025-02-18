@@ -59,6 +59,7 @@
     "ts-prune": "^0.10.3",
     "tweetnacl": "^1.0.3",
     "twitter-api-v2": "^1.19.0",
+    "web-encoding": "^1.1.5",
     "yahoo-finance2": "^2.13.3"
   },
   "devDependencies": {

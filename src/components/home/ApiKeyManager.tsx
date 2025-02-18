@@ -46,7 +46,7 @@ export function ApiKeyManager({ walletAddress }: ApiKeyManagerProps) {
         setApiKey(data.apiKey);
         toast.success('API key generated successfully');
       } else {
-        throw new Error(data.error || 'Failed to generate API key');
+        console.error(data.error || 'Failed to generate API key');
       }
     } catch (error) {
       console.error('Error generating API key:', error);

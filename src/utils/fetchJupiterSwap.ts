@@ -4,7 +4,7 @@ export const fetchJupiterSwap = async (id: string | undefined) => {
   try {
     const response = await fetch(`${JUPITER}/price/v2?ids=${id}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.error(`HTTP error! status: ${response.status}`);
     }
     const price = await response.json();
     return price;
