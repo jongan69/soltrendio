@@ -19,7 +19,7 @@ const SupportPage: NextPage = () => {
             Need Help?
           </h2>
           <p className="text-base mb-6">
-            We're here to help you with any questions or issues you might have. Browse through our resources below or contact our support team directly.
+            We&apos;re here to help you with any questions or issues you might have. Browse through our resources below or contact our support team directly.
           </p>
           
           <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -102,7 +102,7 @@ const SupportPage: NextPage = () => {
           </h2>
           <div className="bg-blue-50 p-6 rounded-lg">
             <p className="text-base mb-4">
-              Can't find what you're looking for? Our support team is available 24/7 to help you with any questions or concerns.
+              Can&apos;t find what you&apos;re looking for? Our support team is available 24/7 to help you with any questions or concerns.
             </p>
             <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Contact Support
