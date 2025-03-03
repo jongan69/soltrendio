@@ -765,10 +765,10 @@
   resolved "https://registry.npmjs.org/@js-sdsl/ordered-map/-/ordered-map-4.4.2.tgz"
   integrity sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==
 
-"@jup-ag/api@^6.0.36":
-  version "6.0.36"
-  resolved "https://registry.npmjs.org/@jup-ag/api/-/api-6.0.36.tgz"
-  integrity sha512-oJsYT1vhb8+uf+wrvRTDyB0/MN5RmxiqtVztEUmDaCxwTcVk3Eo/YsRTqeqKlB7rUMTNyQPqiEW6t3tqitgXzg==
+"@jup-ag/api@^6.0.40":
+  version "6.0.40"
+  resolved "https://registry.yarnpkg.com/@jup-ag/api/-/api-6.0.40.tgz#4a6c9f738e60f5c6897999862c8575f0fce9662d"
+  integrity sha512-iHDOY5YiCnt+XvqCoiPTKcYWIpAY7nmeo3Rsr1Cx2sdjgqTRjqNsYtLLvjTOO33pemVz5h+U0GaU2vc9zeyjew==
 
 "@keystonehq/alias-sampling@^0.1.1":
   version "0.1.2"
@@ -1464,6 +1464,13 @@
   integrity sha512-E1ImOIAD1tBZFRdjeM4/pzTiTApC0AOBGwyAMS4fwIodCWArzJ3DWdoh8cKxeFM2fElkxBh2Aqts1BPC373rHA==
   dependencies:
     buffer "~6.0.3"
+
+"@solana/codecs-core@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/@solana/codecs-core/-/codecs-core-2.0.0.tgz"
+  integrity sha512-qCG+3hDU5Pm8V6joJjR4j4Zv9md1z0RaecniNDIkEglnxmOUODnmPLWbtOjnDylfItyuZeDihK8hkewdj8cUtw==
+  dependencies:
+    "@solana/errors" "2.0.0"
 
 "@solana/codecs-core@2.0.0":
   version "2.0.0"
