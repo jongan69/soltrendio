@@ -1472,13 +1472,6 @@
   dependencies:
     "@solana/errors" "2.0.0"
 
-"@solana/codecs-core@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/@solana/codecs-core/-/codecs-core-2.0.0.tgz"
-  integrity sha512-qCG+3hDU5Pm8V6joJjR4j4Zv9md1z0RaecniNDIkEglnxmOUODnmPLWbtOjnDylfItyuZeDihK8hkewdj8cUtw==
-  dependencies:
-    "@solana/errors" "2.0.0"
-
 "@solana/codecs-core@2.0.0-preview.2":
   version "2.0.0-preview.2"
   resolved "https://registry.npmjs.org/@solana/codecs-core/-/codecs-core-2.0.0-preview.2.tgz"
@@ -3906,10 +3899,10 @@ axe-core@^4.10.0:
   resolved "https://registry.npmjs.org/axe-core/-/axe-core-4.10.2.tgz"
   integrity sha512-RE3mdQ7P3FRSe7eqCWoeQ/Z9QXrtniSjp1wUjt5nRC3WIpz5rSCve6o3fsZ2aCpJtrZjSZgjwXAoTO5k4tEI0w==
 
-axios@^1.6.7:
-  version "1.7.9"
-  resolved "https://registry.npmjs.org/axios/-/axios-1.7.9.tgz"
-  integrity sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==
+axios@^1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.8.2.tgz#fabe06e241dfe83071d4edfbcaa7b1c3a40f7979"
+  integrity sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==
   dependencies:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
