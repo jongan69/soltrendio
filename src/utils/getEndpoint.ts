@@ -2,6 +2,32 @@
 let cachedUrl: string | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+const FALLBACK_API_URL = process.env.FALLBACK_API_URL;
+interface HealthCheckResponse {
+    status: string;
+    timestamp: string;
+    uptime: number;
+    requestId: string;
+}
+
+const validateEndpoint = async (url: string): Promise<boolean> => {
+    try {
+        const response = await fetch(`${url}/health`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        });
+
+        if (!response.ok) return false;
+
+        const health: HealthCheckResponse = await response.json();
+        return health.status === 'healthy';
+    } catch (error) {
+        console.warn('Health check failed:', error);
+        return false;
+    }
+};
 
 const fetchWithRetry = async (retries = 3, backoff = 1000) => {
     for (let i = 0; i < retries; i++) {
@@ -28,18 +54,29 @@ const fetchWithRetry = async (retries = 3, backoff = 1000) => {
 };
 
 export const getEndpoint = async () => {
-    // console.log(process.env.NGROK_API_KEY);
-
-    // Check cache
+    // Check cache and validate endpoint
     if (cachedUrl && cacheTimestamp && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
-        console.log('Returning cached URL');
-        return cachedUrl;
+        console.log('Validating cached URL...');
+        const isValid = await validateEndpoint(cachedUrl);
+        if (isValid) {
+            console.log('Cached URL is valid');
+            return cachedUrl;
+        } else {
+            console.log('Cached URL is invalid, fetching new endpoint');
+            cachedUrl = null;
+            cacheTimestamp = null;
+        }
     }
 
     try {
         const data = await fetchWithRetry();
-        console.log(data);
         const url = data.tunnels[0].public_url;
+        
+        // Validate new endpoint before caching
+        const isValid = await validateEndpoint(url);
+        if (!isValid) {
+            throw new Error('New endpoint failed health check');
+        }
         
         // Update cache
         cachedUrl = url;
@@ -48,6 +85,18 @@ export const getEndpoint = async () => {
         return url;
     } catch (error) {
         console.error('Error fetching endpoint:', error);
+        
+        // Try fallback URL as last resort
+        if (FALLBACK_API_URL) {
+            console.log('Attempting to use fallback URL...');
+            const isValidFallback = await validateEndpoint(FALLBACK_API_URL);
+            if (isValidFallback) {
+                console.log('Fallback URL is valid');
+                return FALLBACK_API_URL;
+            }
+            console.error('Fallback URL failed health check');
+        }
+        
         return null;
     }
 }

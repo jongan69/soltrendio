@@ -11,18 +11,14 @@ export default async function handler(
 
     try {
         const endpoint = await getEndpoint()
-        console.log(endpoint)
         const response = await fetch(`${endpoint}/health`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             },
         })
-        console.log(response)
         const data = await response.json()
-        console.log(data)
         return res.status(200).json(data)
-
     } catch (error) {
         console.error('Twitter fetch error:', error);
         return res.status(500).json({
