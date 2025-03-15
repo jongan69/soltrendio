@@ -104,6 +104,13 @@ export function HomeContent() {
   const [hasPremiumAccess, setHasPremiumAccess] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading...");
 
+  const [error, setError] = useState<{
+    type: 'wallet' | 'network' | 'api' | 'token' | 'general';
+    message: string;
+    retryable: boolean;
+  } | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
   const updateTotalValue = useCallback((usdValue: number) => {
     setTotalValue((prevValue) => prevValue + usdValue);
   }, []);
@@ -123,6 +130,161 @@ export function HomeContent() {
       console.error("Error fetching fee wallet balance:", error);
     }
   }, []);
+
+  const sign = async (walletAddress: PublicKeyInitData) => {
+    if (walletAddress && signState === "initial") {
+      setLoading(true);
+      setSignState("loading");
+      setLoadingMessage("Initializing wallet connection...");
+      const signToastId = toast.loading("Getting Token Data...");
+
+      try {
+        // Validate the address first
+        let pubKey: PublicKey;
+        try {
+          pubKey = new PublicKey(walletAddress);
+          setLoadingMessage("Validating wallet address...");
+        } catch (e) {
+          handleError(e, 'wallet');
+          throw new Error("Invalid wallet address");
+        }
+
+        setLoadingMessage("Fetching token accounts...");
+        let tokenAccounts;
+        try {
+          tokenAccounts = await fetchTokenAccounts(pubKey);
+        } catch (e) {
+          handleError(e, 'token');
+          throw new Error("Failed to fetch token accounts");
+        }
+
+        // Add immediate check for empty wallet
+        if (!tokenAccounts?.value || tokenAccounts.value.length === 0) {
+          setSignState("error");
+          setTokens([]);
+          setTotalAccounts(0);
+          setTotalValue(0);
+          setThesis("");
+          setSpecificTokenBalance(0);
+          setSubmittedAddress("");
+          setManualAddress("");
+          setTrendsData([]);
+          setTopSymbols([]);
+          setLoading(false);
+
+          toast.error("No tokens found in this wallet", { id: signToastId });
+          return;
+        }
+
+        setTotalAccounts(tokenAccounts.value.length);
+        setLoadingMessage(`Processing ${tokenAccounts.value.length} token accounts...`);
+
+        // Calculate total value separately
+        let calculatedTotalValue = 0;
+        let processedTokens = 0;
+
+        const tokenDataPromises = tokenAccounts.value.map(async (tokenAccount) => {
+          try {
+            const tokenData = await handleTokenData(pubKey, tokenAccount, apiLimiter);
+            processedTokens++;
+            setLoadingMessage(`Processing tokens (${processedTokens}/${tokenAccounts.value.length})...`);
+            calculatedTotalValue += tokenData.usdValue;
+            updateTotalValue(tokenData.usdValue);
+            return tokenData;
+          } catch (error) {
+            console.error("Error processing token data:", error);
+            return null;
+          }
+        });
+
+        const settledResults = await Promise.allSettled(tokenDataPromises);
+        const tokens = settledResults
+          .filter((result): result is PromiseFulfilledResult<TokenData> =>
+            result.status === 'fulfilled' && result.value !== null
+          )
+          .map(result => result.value);
+        setTokens(tokens);
+
+        setLoadingMessage("Analyzing top holdings...");
+        const topHoldings = tokens
+          .filter(token => token.symbol && !isSolanaAddress(token.symbol))
+          .sort((a, b) => b.usdValue - a.usdValue)
+          .slice(0, 10);
+
+        setLoadingMessage("Enriching token data...");
+        const enrichedTopHoldingsSettled = await Promise.allSettled(
+          topHoldings.map(async (token): Promise<TopHolding> => {
+            let tokenInfo = null;
+            if (token.mintAddress) {
+              tokenInfo = await getTokenInfo(token.mintAddress);
+            }
+
+            return {
+              symbol: token.symbol || '',
+              contractAddress: token.mintAddress || '',
+              balance: token.amount,
+              usdValue: token.usdValue,
+              isNft: token.isNft || false,
+              price: tokenInfo?.price || 0,
+              marketCap: tokenInfo?.marketCap || 0
+            };
+          })
+        );
+
+        const enrichedTopHoldings = enrichedTopHoldingsSettled
+          .filter((result): result is PromiseFulfilledResult<TopHolding> =>
+            result.status === 'fulfilled' && result.value !== null
+          )
+          .map(result => result.value);
+
+        // Check the balance of the specific token
+        const specificTokenAccount = tokenAccounts.value.find(account =>
+          account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
+        );
+        const specificTokenAmount = specificTokenAccount
+          ? specificTokenAccount.account.data.parsed.info.tokenAmount.uiAmount
+          : 0;
+        setSpecificTokenBalance(specificTokenAmount);
+
+        setLoadingMessage("Generating investment thesis...");
+        const thesis = await generateThesis(tokens);
+        setThesis(thesis);
+
+        setLoadingMessage("Analyzing sentiment...");
+        if (thesis) await fetchSentimentAnalysis(thesis);
+
+        setLoadingMessage("Fetching market trends...");
+        if (tokens) await fetchGoogleTrends(tokens);
+
+        await updateWalletToDb(
+          walletAddress.toString(),
+          calculatedTotalValue,
+          enrichedTopHoldings,
+          originalDomain
+        ).catch(error => {
+          console.error('Error updating wallet data:', error);
+        });
+
+        setSignState("success");
+        toast.success("Token Data Retrieved", { id: signToastId });
+      } catch (error) {
+        handleError(error);
+        setSignState("error");
+      } finally {
+        setLoading(false);
+        toast.dismiss(signToastId);
+      }
+    }
+  };
+
+  // Initial signed in wallet useEffect
+  useEffect(() => {
+    if (publicKey) {
+      sign(publicKey.toBase58());
+    } else if (submittedAddress) {
+      sign(submittedAddress);
+    }
+  }, [signState, publicKey, submittedAddress]);
 
   // Effect for handling Twitter auth messages
   useEffect(() => {
@@ -195,7 +357,17 @@ export function HomeContent() {
 
   const fetchSentimentAnalysis = async (text: string) => {
     try {
-      const response = await axios.post("/api/analyze/sentiment-analysis", { text });
+      const response = await axios.post("/api/analyze/sentiment-analysis", { text })
+        .catch(error => {
+          console.error("Sentiment analysis API error:", error?.response?.status, error?.message);
+          return null;
+        });
+
+      // If request failed or response is invalid, return default scores
+      if (!response?.data?.thesis) {
+        console.warn("Invalid sentiment analysis response");
+        return setDefaultSentimentScores();
+      }
 
       // Handle the response data safely
       let parsedResponse = response.data.thesis;
@@ -205,14 +377,14 @@ export function HomeContent() {
           parsedResponse = JSON.parse(parsedResponse.replace(/[\x00-\x1F\x7F-\x9F]/g, ''));
         } catch (parseError) {
           console.error("Error parsing sentiment response:", parseError);
-          parsedResponse = {
-            racism: 0,
-            crudity: 0,
-            profanity: 0,
-            drugUse: 0,
-            hateSpeech: 0
-          };
+          return setDefaultSentimentScores();
         }
+      }
+
+      // Validate parsed response has required fields
+      if (!parsedResponse || typeof parsedResponse !== 'object') {
+        console.warn("Invalid sentiment analysis response format");
+        return setDefaultSentimentScores();
       }
 
       const scores = {
@@ -231,16 +403,21 @@ export function HomeContent() {
 
       return scores;
     } catch (error) {
-      console.error("Error fetching sentiment analysis:", error);
-      const defaultScores = { racism: 0, crudity: 0, profanity: 0, drugUse: 0, hateSpeech: 0 };
-
-      setRacismScore(0);
-      setCrudityScore(0);
-      setProfanityScore(0);
-      setDrugUseScore(0);
-      setHateSpeechScore(0);
-      return defaultScores;
+      console.error("Error in sentiment analysis:", error);
+      // Don't show error toast to user since this is non-critical
+      return setDefaultSentimentScores();
     }
+  };
+
+  // Helper function to set default sentiment scores
+  const setDefaultSentimentScores = () => {
+    const defaultScores = { racism: 0, crudity: 0, profanity: 0, drugUse: 0, hateSpeech: 0 };
+    setRacismScore(0);
+    setCrudityScore(0);
+    setProfanityScore(0);
+    setDrugUseScore(0);
+    setHateSpeechScore(0);
+    return defaultScores;
   };
 
   // Fetch Google Trends
@@ -286,181 +463,54 @@ export function HomeContent() {
     }
   };
 
-  // Initial signed in wallet useEffect
-  useEffect(() => {
-    const sign = async (walletAddress: PublicKeyInitData) => {
-      if (walletAddress && signState === "initial") {
-        setLoading(true);
-        setSignState("loading");
-        setLoadingMessage("Initializing wallet connection...");
-        const signToastId = toast.loading("Getting Token Data...");
-        const whaleResponse = await fetch('/api/stats/getWhaleActivity');
-        const whaleActivity = await whaleResponse.json();
-        // console.log(whaleActivity);
-        // setWhaleAlerts(whaleActivity);
-        if (whaleActivity.whaleActivity) {
-          const alerts = [
-            ...whaleActivity.whaleActivity.bullish?.map((item: any) => ({ ...item, type: 'BULLISH' as const })),
-            ...whaleActivity.whaleActivity.bearish?.map((item: any) => ({ ...item, type: 'BEARISH' as const }))
-          ];
-          setAlerts(alerts);
-        }
+  const handleError = (error: any, type: 'wallet' | 'network' | 'api' | 'token' | 'general' = 'general') => {
+    console.error(`${type} error:`, error);
+    let message = 'An unexpected error occurred';
+    let retryable = false;
 
-        try {
-          // Validate the address first
-          let pubKey: PublicKey;
-          try {
-            pubKey = new PublicKey(walletAddress);
-            setLoadingMessage("Validating wallet address...");
-          } catch (e) {
-            throw new Error("Invalid wallet address");
-          }
-
-          setLoadingMessage("Fetching token accounts...");
-          const tokenAccounts = await fetchTokenAccounts(pubKey);
-
-          // Add immediate check for empty wallet
-          if (!tokenAccounts?.value || tokenAccounts.value.length === 0) {
-            setSignState("error");
-            setTokens([]);
-            setTotalAccounts(0);
-            setTotalValue(0);
-            setThesis("");
-            setSpecificTokenBalance(0);
-            setSubmittedAddress("");
-            setManualAddress("");
-            setTrendsData([]);
-            setTopSymbols([]);
-            setLoading(false);
-
-            toast.error("No tokens found in this wallet", { id: signToastId });
-            return;
-          }
-
-          setTotalAccounts(tokenAccounts.value.length);
-          setLoadingMessage(`Processing ${tokenAccounts.value.length} token accounts...`);
-
-          // Calculate total value separately
-          let calculatedTotalValue = 0;
-          let processedTokens = 0;
-
-          const tokenDataPromises = tokenAccounts.value.map(async (tokenAccount) => {
-            try {
-              const tokenData = await handleTokenData(pubKey, tokenAccount, apiLimiter);
-              processedTokens++;
-              setLoadingMessage(`Processing tokens (${processedTokens}/${tokenAccounts.value.length})...`);
-              calculatedTotalValue += tokenData.usdValue;
-              updateTotalValue(tokenData.usdValue);
-              return tokenData;
-            } catch (error) {
-              console.error("Error processing token data:", error);
-              return null;
-            }
-          });
-
-          const settledResults = await Promise.allSettled(tokenDataPromises);
-          const tokens = settledResults
-            .filter((result): result is PromiseFulfilledResult<TokenData> =>
-              result.status === 'fulfilled' && result.value !== null
-            )
-            .map(result => result.value);
-          setTokens(tokens);
-
-          setLoadingMessage("Analyzing top holdings...");
-          const topHoldings = tokens
-            .filter(token => token.symbol && !isSolanaAddress(token.symbol))
-            .sort((a, b) => b.usdValue - a.usdValue)
-            .slice(0, 10);
-
-          setLoadingMessage("Enriching token data...");
-          const enrichedTopHoldingsSettled = await Promise.allSettled(
-            topHoldings.map(async (token): Promise<TopHolding> => {
-              let tokenInfo = null;
-              if (token.mintAddress) {
-                tokenInfo = await getTokenInfo(token.mintAddress);
-              }
-
-              return {
-                symbol: token.symbol || '',
-                contractAddress: token.mintAddress || '',
-                balance: token.amount,
-                usdValue: token.usdValue,
-                isNft: token.isNft || false,
-                price: tokenInfo?.price || 0,
-                marketCap: tokenInfo?.marketCap || 0
-              };
-            })
-          );
-
-          const enrichedTopHoldings = enrichedTopHoldingsSettled
-            .filter((result): result is PromiseFulfilledResult<TopHolding> =>
-              result.status === 'fulfilled' && result.value !== null
-            )
-            .map(result => result.value);
-
-          // Check the balance of the specific token
-          const specificTokenAccount = tokenAccounts.value.find(account =>
-            account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
-          );
-          const specificTokenAmount = specificTokenAccount
-            ? specificTokenAccount.account.data.parsed.info.tokenAmount.uiAmount
-            : 0;
-          setSpecificTokenBalance(specificTokenAmount);
-
-          setLoadingMessage("Generating investment thesis...");
-          const thesis = await generateThesis(tokens);
-          setThesis(thesis);
-
-          setLoadingMessage("Analyzing sentiment...");
-          if (thesis) await fetchSentimentAnalysis(thesis);
-
-          setLoadingMessage("Fetching market trends...");
-          if (tokens) await fetchGoogleTrends(tokens);
-
-          await updateWalletToDb(
-            walletAddress.toString(),
-            calculatedTotalValue,
-            enrichedTopHoldings,
-            originalDomain
-          ).catch(error => {
-            console.error('Error updating wallet data:', error);
-          });
-
-          setSignState("success");
-          toast.success("Token Data Retrieved", { id: signToastId });
-        } catch (error) {
-          setSignState("error");
-          let errorMessage = "Error retrieving wallet data";
-
-          if (error instanceof Error) {
-            console.error("Detailed error:", error);
-
-            // More specific error messages
-            if (error.message.includes("Invalid wallet address")) {
-              errorMessage = "Invalid wallet address. Please check the address and try again.";
-            } else if (error.message.includes("No token accounts found")) {
-              errorMessage = "No tokens found in this wallet.";
-            } else if (error.message.includes("429")) {
-              errorMessage = "Too many requests. Please try again in a few minutes.";
-            } else if (error.message.includes("fetch")) {
-              errorMessage = "Network error. Please check your connection and try again.";
-            }
-          }
-
-          toast.error(errorMessage, { id: signToastId });
-          console.error("Error in sign function:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (publicKey) {
-      sign(publicKey.toBase58());
-    } else if (submittedAddress) {
-      sign(submittedAddress);
+    if (error?.message?.includes('429')) {
+      message = 'Rate limit exceeded. Please try again in a few minutes.';
+      retryable = true;
+    } else if (error?.message?.includes('fetch')) {
+      message = 'Network connection error. Please check your internet connection.';
+      retryable = true;
+    } else if (error?.message?.includes('User rejected')) {
+      message = 'Transaction was cancelled by user.';
+      retryable = false;
+    } else if (type === 'wallet') {
+      message = 'Error connecting to wallet. Please ensure your wallet is unlocked and try again.';
+      retryable = true;
+    } else if (type === 'token') {
+      message = 'Error fetching token data. This could be due to network congestion or rate limits.';
+      retryable = true;
     }
-  }, [signState, publicKey, submittedAddress, updateTotalValue]);
+
+    setError({ type, message, retryable });
+    toast.error(message);
+  };
+
+  const handleRetry = async () => {
+    if (!error?.retryable || retryCount >= MAX_RETRIES) {
+      toast.error('Maximum retry attempts reached. Please try again later.');
+      return;
+    }
+
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (publicKey) {
+        await sign(publicKey.toBase58());
+      } else if (submittedAddress) {
+        await sign(submittedAddress);
+      }
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Extract sentiment scores from thesis
   const extractSentimentScores = (thesis: string) => {
@@ -931,7 +981,7 @@ export function HomeContent() {
           <BestPoolsDisplay tokens={tokens} />
           {/* Thesis Section - Updated button layout */}
           <ThesisSection
-            thesis={thesis}
+            thesis={thesis ?? ""}
             onGenerateNew={handleGenerateNewThesis}
             hasEligibleTokens={hasEligibleTokens}
             handleCreatePortfolio={handleCreatePortfolio}
@@ -1128,17 +1178,27 @@ export function HomeContent() {
           {signState === "error" && (
             <div className="bg-error/10 border-2 border-error rounded-lg p-6">
               <h2 className="text-xl text-error font-bold">
-                Connection Error
+                {error?.type === 'wallet' ? 'Wallet Connection Error' : 
+                 error?.type === 'network' ? 'Network Error' :
+                 error?.type === 'api' ? 'API Error' :
+                 error?.type === 'token' ? 'Token Data Error' : 'Connection Error'}
               </h2>
               <p className="mt-2">
-                {publicKey
-                  ? "Please disconnect and reconnect your wallet. You might need to reload the page. You might have too many tokens and we're being rate limited."
-                  : submittedAddress
-                    ? "Unable to fetch token data for this address. Please verify the address and try again."
-                    : "Please check the wallet address and try again. Make sure it's a valid Solana address."}
+                {error?.message || 'An unexpected error occurred. Please try again.'}
               </p>
+              {error?.retryable && (
+                <button 
+                  onClick={handleRetry}
+                  className="btn btn-error btn-sm mt-4"
+                  disabled={retryCount >= MAX_RETRIES}
+                >
+                  {retryCount >= MAX_RETRIES ? 'Max retries reached' : `Retry (${retryCount + 1}/${MAX_RETRIES})`}
+                </button>
+              )}
               <p className="mt-2 text-sm opacity-75">
-                If the problem persists, try again in a few minutes or with a different address.
+                {error?.retryable ? 
+                  `You can try again ${MAX_RETRIES - retryCount} more times.` : 
+                  'Please check your settings and try again later.'}
               </p>
             </div>
           )}

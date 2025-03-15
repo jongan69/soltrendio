@@ -46,7 +46,7 @@ export default async function handler(req: { method: string; body: { text: any; 
         const thesis = completion.choices[0].message.content;
         res.status(200).json({ thesis });
     } catch (error) {
-        console.error("Error generating thesis:", error);
+        console.error("Error generating sentiment analysis:", error);
         res.status(500).json({ error: "An error occurred while generating the thesis." });
     }
 }
