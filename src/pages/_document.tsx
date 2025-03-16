@@ -6,6 +6,11 @@ class MyDocument extends Document {
     return (
       <Html data-theme={DEFAULT_THEME}>
         <Head>
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6202902142885850"
+            crossOrigin="anonymous"
+          />
           <meta
             name="Soltrendio"
             content="Solana wallet trends and sentiment analysis."
