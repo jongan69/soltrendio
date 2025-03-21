@@ -22,7 +22,10 @@ export default async function handler(
         }
         const endpoint = await getEndpoint()
         // console.log(endpoint)
-        const response = await fetch(`${endpoint}/api/twitter/trendingTickers`)
+        // const url = `${endpoint}/api/twitter/trendingTickers`
+        const url = `https://twitterapi-2cw6.onrender.com/api/twitter/trendingTickers`
+        console.log(url)
+        const response = await fetch(url)
         const data = await response.json()
         //    console.log(data)
         return res.status(200).json(data)
