@@ -61,7 +61,7 @@ export default async function handler(
     // Safely access values with fallbacks
     const trendPrice = getValue(jupiterSwapResponse, { data: { [DEFAULT_TOKEN_3]: { price: 0 } } })
       .data[DEFAULT_TOKEN_3].price;
-    const totalAmountStaked = getValue(m3VaultData, { total_staked_amount: 0 }).total_staked_amount;
+    const totalAmountStaked = getValue(m3VaultData, { total_staked_amount: 0 })?.total_staked_amount;
     const largeHoldersCount = getValue(largeHolders, 0);
     const solanaPrice = getValue(jupiterSwapResponse2, { data: { [SOLANA_ADDRESS]: { price: 0 } } })
       .data[SOLANA_ADDRESS]?.price;
