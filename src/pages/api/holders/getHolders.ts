@@ -18,6 +18,7 @@ export default async function handler(
 
         const uniqueHolders = [...new Set([...vaultHolders, ...nftHolders])];
         return res.status(200).json({
+            holderCount: uniqueHolders.length,
             UniqueNftHoldersAndStakers: uniqueHolders || []
         });
 

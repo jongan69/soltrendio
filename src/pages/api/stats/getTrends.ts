@@ -11,6 +11,7 @@ import { fetchBitcoinPrice } from '@utils/bitcoinPrice';
 import { getTopTickers } from '@utils/topTickers';
 import { fetchEthereumPrice } from '@utils/ethereumPrice';
 import { getLatestWhaleActivity } from '@utils/getAssetDashWhaleWatch';
+import { fetchOptionRecomendations } from '@utils/fetchOptionRecomendations';
 
 export default async function handler(
   req: NextApiRequest,
@@ -36,7 +37,8 @@ export default async function handler(
       // fetch6900(),
       getTopTickers(true),
       getLatestWhaleActivity(),
-      fetchEthereumPrice()
+      fetchEthereumPrice(),
+      fetchOptionRecomendations()
     ]);
 
     // Helper function to safely get value from settled promise
@@ -55,7 +57,8 @@ export default async function handler(
       // spx6900MarketCap,
       topTickers,
       whaleActivity,
-      ethereumPrice
+      ethereumPrice,
+      optionRecommendations
     ] = promises;
 
     // Safely access values with fallbacks
@@ -466,7 +469,8 @@ export default async function handler(
           : 0
       },
       topTweetedTickers: topTickersData,
-      whaleActivity: whaleActivityData
+      whaleActivity: whaleActivityData,
+      optionRecommendations: getValue(optionRecommendations, { total_stocks_analyzed: 0, recommendations: [] })
     });
 
   } catch (error) {

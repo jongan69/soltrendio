@@ -17,7 +17,8 @@ export async function formatTrendsTweet(trends: any) {
         bitcoinPrice,
         ethereumPrice,
         solanaPrice,
-        whaleActivity
+        whaleActivity,
+        optionRecommendations
     } = trends;
     // const jupiterSwapResponse = await fetchJupiterSwap(DEFAULT_TOKEN_3);
     // const jupiterSwapResponse2 = await fetchJupiterSwap(SOLANA_ADDRESS);
@@ -29,19 +30,30 @@ export async function formatTrendsTweet(trends: any) {
 
     // console.log(topTweetedTickers);
     // Format top tweeted tickers with conditional plural
-    const topTickers = topTweetedTickers?.length 
+    const topTickers = topTweetedTickers?.length
         ? topTweetedTickers
             .map((item: any) => `${item.ticker}: ${item.count} ${item.count === 1 ? 'tweet' : 'tweets'}`)
             .join('\n')
         : '';
 
-    const bullishWhaleActivity = whaleActivity.bullish.map((item: any) => 
+    const bullishWhaleActivity = whaleActivity.bullish.map((item: any) =>
         `${item.name} ( ${item.symbol.startsWith('$') ? item.symbol : '$' + item.symbol} ) Score: ${item.bullishScore}`
     ).join('\n');
-    
-    const bearishWhaleActivity = whaleActivity.bearish.map((item: any) => 
+
+    const bearishWhaleActivity = whaleActivity.bearish.map((item: any) =>
         `${item.name} ( ${item.symbol.startsWith('$') ? item.symbol : '$' + item.symbol} ) Score: ${item.bearishScore}`
     ).join('\n');
+
+    // Format top option recommendation
+    const topOptionRecommendation = optionRecommendations?.recommendations?.[0];
+    const optionRecommendationText = topOptionRecommendation ? `
+🎯 Top Option Play:
+$${topOptionRecommendation.symbol} (${topOptionRecommendation.companyName})
+Score: ${topOptionRecommendation.stockScore.toFixed(2)}
+Current Price: $${topOptionRecommendation.currentPrice}
+${topOptionRecommendation.options.shortTermCalls ? `📈 Call: $${topOptionRecommendation.options.shortTermCalls.entryPrice} (${topOptionRecommendation.options.shortTermCalls.strikePrice} Strike)` : ''}
+${topOptionRecommendation.options.shortTermPuts ? `📉 Put: $${topOptionRecommendation.options.shortTermPuts.entryPrice} (${topOptionRecommendation.options.shortTermPuts.strikePrice} Strike)` : ''}` : '';
+
     // const jupiterSwapPrice = jupiterSwapResponse.data[DEFAULT_TOKEN_3].price;
     // const solanaPrice = jupiterSwapResponse2.data[SOLANA_ADDRESS].price;
     // const bitcoinPrice = await fetchBitcoinPrice();
@@ -68,11 +80,15 @@ ${topTokens}
 ${topTweetedTickers?.length ? `🐦 Top Tweeted Tickers:
 ${topTickers}` : ''}
 
+${optionRecommendationText}
+
 🐋 Recent Bullish Whale Activity:
 ${bullishWhaleActivity}
 
 🐋 Recent Bearish Whale Activity:
 ${bearishWhaleActivity}
 
-Track individual wallets at soltrendio.com`;
+View individual wallet holdings at soltrendio.com
+View Market Trends at investassist.app
+`;
 }
