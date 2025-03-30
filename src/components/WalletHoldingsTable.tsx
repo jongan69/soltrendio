@@ -3,6 +3,10 @@ import Image from 'next/image';
 import { toPng } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 import { saveWalletToDb } from '@utils/saveWallet';
+import { getPublicKeyFromSolDomain } from '@utils/getPublicKeyFromDomain';
+import { Connection } from '@solana/web3.js';
+import { NETWORK } from '@utils/endpoints';
+import { isSolanaAddress } from '@utils/isSolanaAddress';
 
 interface TokenPriceInfo {
   price_per_token: number;
@@ -113,6 +117,7 @@ interface MarketData {
 }
 
 export default function WalletHoldingsTable({ address }: WalletHoldingsTableProps) {
+  const connection = new Connection(NETWORK);
   const [holdings, setHoldings] = useState<{
     total: number;
     limit: number;
@@ -120,13 +125,15 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     items: Token[];
     nativeBalance: NativeBalance;
   } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [marketData, setMarketData] = useState<MarketData>({});
   const [uploading, setUploading] = useState(false);
   const [showTwitterModal, setShowTwitterModal] = useState(false);
   const [twitterHandle, setTwitterHandle] = useState('');
   const [handleError, setHandleError] = useState('');
+  const [resolvedDomain, setResolvedDomain] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState<string>('Loading...');
   const tableRef = useRef<HTMLDivElement>(null);
 
   const validateTwitterHandle = (handle: string): boolean => {
@@ -248,13 +255,58 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
   useEffect(() => {
     const fetchHoldings = async () => {
-      try {
-        saveWalletToDb(address);
-        const response = await fetch(`/api/wallet-holdings/get-assets?address=${address}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch wallet holdings');
+      // Reset states when address changes
+      setError(null);
+      setHoldings(null);
+      setMarketData({});
+      setResolvedDomain(null);
+      
+      if (!address) {
+        setError('Please enter a wallet address or .sol domain');
+        return;
+      }
+
+      // Check if it's a .sol domain
+      let resolvedAddress = address;
+      if (address.toLowerCase().endsWith('.sol')) {
+        setLoading(true);
+        setLoadingMessage('Resolving .sol domain...');
+        try {
+          resolvedAddress = await getPublicKeyFromSolDomain(address, connection);
+          setResolvedDomain(address); // Store original domain
+          if (!isSolanaAddress(resolvedAddress)) {
+            throw new Error('Domain resolved to an invalid address');
+          }
+        } catch (error) {
+          setError('Could not resolve .sol domain. Please check if the domain exists and try again.');
+          setLoading(false);
+          return;
         }
+      }
+
+      if (!isSolanaAddress(resolvedAddress)) {
+        setError('Please enter a valid Solana wallet address or .sol domain');
+        return;
+      }
+
+      setLoading(true);
+      setLoadingMessage('Fetching wallet data...');
+      
+      try {
+        await saveWalletToDb(resolvedAddress, resolvedDomain || undefined);
+        const response = await fetch(`/api/wallet-holdings/get-assets?address=${resolvedAddress}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to fetch wallet holdings');
+        }
+
         const data: WalletHoldingsResponse = await response.json();
+        
+        if (!data.result || !data.result.items) {
+          throw new Error('No wallet data found');
+        }
+
         setHoldings(data.result);
 
         // Get contract addresses for tokens
@@ -272,35 +324,38 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
             body: JSON.stringify({ contractAddresses }),
           });
 
-          if (marketResponse.ok) {
-            const { marketcaps, allTimeHighPrices } = await marketResponse.json();
-            const newMarketData: MarketData = {};
-            
-            contractAddresses.forEach((address, index) => {
-              // Get the token from holdings to access supply
-              const token = data.result.items.find(t => t.id === address);
-              const supply = token?.token_info.supply || 0;
-              
-              newMarketData[address] = {
-                marketCap: marketcaps[index] || 0,
-                allTimeHighPrice: allTimeHighPrices[index] || 0,
-                supply: supply
-              };
-            });
-            
-            setMarketData(newMarketData);
+          if (!marketResponse.ok) {
+            throw new Error('Failed to fetch market data');
           }
+
+          const { marketcaps, allTimeHighPrices } = await marketResponse.json();
+          const newMarketData: MarketData = {};
+          
+          contractAddresses.forEach((address, index) => {
+            // Get the token from holdings to access supply
+            const token = data.result.items.find(t => t.id === address);
+            const supply = token?.token_info.supply || 0;
+            
+            newMarketData[address] = {
+              marketCap: marketcaps[index] || 0,
+              allTimeHighPrice: allTimeHighPrices[index] || 0,
+              supply: supply
+            };
+          });
+          
+          setMarketData(newMarketData);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching holdings:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching wallet data');
+        setHoldings(null);
+        setMarketData({});
       } finally {
         setLoading(false);
       }
     };
 
-    if (address) {
-      fetchHoldings();
-    }
+    fetchHoldings();
   }, [address]);
 
   const formatBalance = (balance: number, decimals: number) => {
@@ -344,15 +399,47 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading holdings...</div>;
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <span className="ml-3 text-gray-600">{loadingMessage}</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+        <div className="flex items-center">
+          <svg className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+          <h3 className="text-sm font-medium text-red-800">Error</h3>
+        </div>
+        <div className="mt-2 text-sm text-red-700">{error}</div>
+        <div className="mt-3 text-sm text-gray-600">
+          {error.includes('.sol domain') 
+            ? 'Make sure the domain is correctly spelled and exists on the Solana network.'
+            : 'Please check the wallet address and try again.'}
+        </div>
+      </div>
+    );
   }
 
-  if (!holdings) {
-    return <div className="text-center py-4">No holdings found</div>;
+  if (!holdings || !holdings.items) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 my-4">
+        <div className="flex items-center">
+          <svg className="h-5 w-5 text-yellow-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <h3 className="text-sm font-medium text-yellow-800">No Holdings Found</h3>
+        </div>
+        <div className="mt-2 text-sm text-yellow-700">
+          No token holdings were found for this wallet address.
+        </div>
+      </div>
+    );
   }
 
   // First get all tokens with holdings
@@ -452,7 +539,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 101.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
             Download Your BreadSheet
           </button>
@@ -467,6 +554,20 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
           </button>
         </div>
       </div>
+
+      {/* Add domain display if resolved */}
+      {resolvedDomain && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-purple-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm text-purple-700">
+              Viewing wallet for domain: <span className="font-medium">{resolvedDomain}</span>
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto bg-white p-8 rounded-lg shadow" ref={tableRef}>
         <h1 className="text-3xl font-bold mb-8">BreadSheet</h1>
