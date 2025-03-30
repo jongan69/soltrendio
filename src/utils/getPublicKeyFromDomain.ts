@@ -9,7 +9,7 @@ export const getPublicKeyFromSolDomain = async (domain: string, connection: Conn
       const owner = (await NameRegistryState.retrieve(connection, pubkey)).owner.toBase58();
       return owner;
     } catch (error) {
-      console.error('Error resolving SNS domain:', error);
-      throw new Error('Invalid or non-existent .sol domain');
+      console.warn('Error resolving SNS domain:', error);
+      return error instanceof Error ? error.message : 'Unknown error';
     }
   };

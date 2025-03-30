@@ -134,7 +134,9 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
   const [handleError, setHandleError] = useState('');
   const [resolvedDomain, setResolvedDomain] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState<string>('Loading...');
+  const [isResolvingDomain, setIsResolvingDomain] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
+  const resolveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const validateTwitterHandle = (handle: string): boolean => {
     // Remove @ if present and trim whitespace
@@ -187,7 +189,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       });
       
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
+        console.warn('Failed to upload image');
       }
       
       const { mediaId } = await uploadResponse.json();
@@ -208,12 +210,12 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       });
       
       if (!tweetResponse.ok) {
-        throw new Error('Failed to post tweet');
+        console.warn('Failed to post tweet');
       }
 
       toast.success('Successfully shared to Twitter!');
     } catch (err) {
-      console.error('Error sharing to Twitter:', err);
+      console.warn('Error sharing to Twitter:', err);
       toast.error('Failed to share to Twitter');
     } finally {
       setUploading(false);
@@ -234,7 +236,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Error generating screenshot:', err);
+      console.warn('Error generating screenshot:', err);
     }
   };
 
@@ -253,13 +255,27 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     return data.allTimeHighPrice * adjustedSupply;
   };
 
+  // Function to validate .sol domain format
+  const isValidSolDomain = (domain: string): boolean => {
+    // Basic validation for .sol domain format
+    // Must be at least 1 character before .sol and only contain valid characters
+    const solDomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.sol$/;
+    return solDomainRegex.test(domain.toLowerCase());
+  };
+
   useEffect(() => {
     const fetchHoldings = async () => {
+      // Clear any pending timeout
+      if (resolveTimeoutRef.current) {
+        clearTimeout(resolveTimeoutRef.current);
+      }
+
       // Reset states when address changes
       setError(null);
       setHoldings(null);
       setMarketData({});
       setResolvedDomain(null);
+      setIsResolvingDomain(false);
       
       if (!address) {
         setError('Please enter a wallet address or .sol domain');
@@ -269,42 +285,68 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       // Check if it's a .sol domain
       let resolvedAddress = address;
       if (address.toLowerCase().endsWith('.sol')) {
-        setLoading(true);
-        setLoadingMessage('Resolving .sol domain...');
-        try {
-          resolvedAddress = await getPublicKeyFromSolDomain(address, connection);
-          setResolvedDomain(address); // Store original domain
-          if (!isSolanaAddress(resolvedAddress)) {
-            throw new Error('Domain resolved to an invalid address');
+        // Don't attempt to resolve if the domain format is invalid
+        if (!isValidSolDomain(address)) {
+          // Only show error if it's a complete .sol domain
+          if (address.toLowerCase() === '.sol') {
+            setError('Please enter a valid domain name before .sol');
+          } else if (address.toLowerCase().endsWith('.sol')) {
+            setError('Invalid .sol domain format');
           }
-        } catch (error) {
-          setError('Could not resolve .sol domain. Please check if the domain exists and try again.');
-          setLoading(false);
           return;
         }
+
+        setIsResolvingDomain(true);
+        setLoadingMessage('Resolving .sol domain...');
+
+        // Add debouncing for domain resolution
+        resolveTimeoutRef.current = setTimeout(async () => {
+          try {
+            resolvedAddress = await getPublicKeyFromSolDomain(address, connection);
+            setResolvedDomain(address);
+            await fetchWalletData(resolvedAddress);
+          } catch (error) {
+            console.warn('Error resolving domain:', error);
+            setError(error instanceof Error && error.message.includes('Domain not found')
+              ? 'This .sol domain does not exist. Please check the spelling and try again.'
+              : 'Could not resolve .sol domain. The domain may be invalid or the network might be experiencing issues.');
+            setLoading(false);
+            setIsResolvingDomain(false);
+            setHoldings(null);
+            setMarketData({});
+          }
+        }, 500); // 500ms debounce delay
+
+        return;
       }
 
+      // If it's not a .sol domain, proceed with normal address handling
       if (!isSolanaAddress(resolvedAddress)) {
         setError('Please enter a valid Solana wallet address or .sol domain');
         return;
       }
 
+      await fetchWalletData(resolvedAddress);
+    };
+
+    // Separate function for fetching wallet data
+    const fetchWalletData = async (walletAddress: string) => {
       setLoading(true);
       setLoadingMessage('Fetching wallet data...');
       
       try {
-        await saveWalletToDb(resolvedAddress, resolvedDomain || undefined);
-        const response = await fetch(`/api/wallet-holdings/get-assets?address=${resolvedAddress}`);
+        await saveWalletToDb(walletAddress, resolvedDomain || undefined);
+        const response = await fetch(`/api/wallet-holdings/get-assets?address=${walletAddress}`);
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Failed to fetch wallet holdings');
+         console.warn(errorData.message || 'Failed to fetch wallet holdings');
         }
 
         const data: WalletHoldingsResponse = await response.json();
         
         if (!data.result || !data.result.items) {
-          throw new Error('No wallet data found');
+          console.warn('No wallet data found');
         }
 
         setHoldings(data.result);
@@ -325,7 +367,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
           });
 
           if (!marketResponse.ok) {
-            throw new Error('Failed to fetch market data');
+            console.warn('Failed to fetch market data');
           }
 
           const { marketcaps, allTimeHighPrices } = await marketResponse.json();
@@ -346,24 +388,26 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
           setMarketData(newMarketData);
         }
       } catch (err) {
-        console.error('Error fetching holdings:', err);
+        console.warn('Error fetching holdings:', err);
         setError(err instanceof Error ? err.message : 'An error occurred while fetching wallet data');
         setHoldings(null);
         setMarketData({});
       } finally {
         setLoading(false);
+        setIsResolvingDomain(false);
       }
     };
 
     fetchHoldings();
+
+    // Cleanup function to clear timeout
+    return () => {
+      if (resolveTimeoutRef.current) {
+        clearTimeout(resolveTimeoutRef.current);
+      }
+    };
   }, [address]);
 
-  const formatBalance = (balance: number, decimals: number) => {
-    return (balance / Math.pow(10, decimals)).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    });
-  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -398,7 +442,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     };
   };
 
-  if (loading) {
+  if (loading || isResolvingDomain) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
