@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { toPng } from 'html-to-image';
 import { toast } from 'react-hot-toast';
+import { saveWalletToDb } from '@utils/saveWallet';
 
 interface TokenPriceInfo {
   price_per_token: number;
@@ -248,6 +249,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
   useEffect(() => {
     const fetchHoldings = async () => {
       try {
+        saveWalletToDb(address);
         const response = await fetch(`/api/wallet-holdings/get-assets?address=${address}`);
         if (!response.ok) {
           throw new Error('Failed to fetch wallet holdings');
