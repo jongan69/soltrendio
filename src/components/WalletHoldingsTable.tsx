@@ -575,138 +575,207 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
           </div>
         </div>
       )}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">BreadSheet</h1>
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-8 flex-col sm:flex-row gap-4 sm:gap-0">
+        <h1 className="text-2xl sm:text-3xl font-bold">BreadSheet</h1>
+        <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
           <button
             onClick={handleDownload}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 101.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-            Download Your BreadSheet
+            <span className="whitespace-nowrap">Download BreadSheet</span>
           </button>
           <button
             onClick={handleTweet}
-            className="px-4 py-2 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a8cd8] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-4 py-2 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a8cd8] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
             </svg>
-            {uploading ? 'Uploading...' : 'Share Your BreadSheet'}
+            <span className="whitespace-nowrap">{uploading ? 'Uploading...' : 'Share BreadSheet'}</span>
           </button>
         </div>
       </div>
 
       {/* Add domain display if resolved */}
       {resolvedDomain && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 sm:p-4 mb-4">
           <div className="flex items-center">
-            <svg className="h-5 w-5 text-purple-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-4 sm:h-5 w-4 sm:w-5 text-purple-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm text-purple-700">
+            <span className="text-xs sm:text-sm text-purple-700">
               Viewing wallet for domain: <span className="font-medium">{resolvedDomain}</span>
             </span>
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto bg-white p-8 rounded-lg shadow" ref={tableRef}>
-        <h1 className="text-3xl font-bold mb-8">BreadSheet</h1>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Token
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Market Cap
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ATH Market Cap
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+      <div className="overflow-x-auto bg-white p-4 sm:p-8 rounded-lg shadow" ref={tableRef}>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">BreadSheet</h1>
+        <div className="min-w-full">
+          {/* Mobile view - card layout */}
+          <div className="sm:hidden space-y-4">
             {allHoldings.map((holding) => (
-              <tr key={holding.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {holding.isNativeSol ? (
-                      <>
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-purple-600 font-medium">SOL</span>
+              <div key={holding.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                <div className="flex items-center mb-3">
+                  {holding.isNativeSol ? (
+                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-purple-600 font-medium text-sm">SOL</span>
+                    </div>
+                  ) : (
+                    <div className="flex-shrink-0 h-8 w-8">
+                      {holding.token.content.links?.image ? (
+                        <Image
+                          src={holding.token.content.links.image}
+                          alt={holding.token.content.metadata.name || holding.token.id}
+                          width={32}
+                          height={32}
+                          className="object-cover rounded-lg"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-gray-200 flex items-center justify-center rounded-lg">
+                          <span className="text-gray-500 text-xs">
+                            {holding.token.content.metadata.symbol || 'Token'}
+                          </span>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">Solana</div>
-                          <div className="text-sm text-gray-500">Native Token</div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-shrink-0 h-10 w-10">
-                          {holding.token.content.links?.image ? (
-                            <Image
-                              src={holding.token.content.links.image}
-                              alt={holding.token.content.metadata.name || holding.token.id}
-                              width={40}
-                              height={40}
-                              className="object-cover rounded-lg"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="h-10 w-10 bg-gray-200 flex items-center justify-center rounded-lg">
-                              <span className="text-gray-500 text-xs">
-                                {holding.token.content.metadata.symbol || 'Token'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {holding.token.content.metadata.name || holding.token.id}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {holding.token.token_info.symbol || holding.token.content.metadata.symbol}
-                          </div>
-                        </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+                  )}
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-900">
+                      {holding.isNativeSol ? 'Solana' : (holding.token.content.metadata.name || holding.token.id)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {holding.isNativeSol ? 'Native Token' : (holding.token.token_info.symbol || holding.token.content.metadata.symbol)}
+                    </div>
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                  {holding.isNativeSol ? (
-                    formatPrice(holding.pricePerToken * (holding.balance / Math.pow(10, holding.decimals)))
-                  ) : (
-                    marketData[holding.token.id]?.marketCap ? 
-                    formatMarketCap(marketData[holding.token.id].marketCap) : 
-                    '-'
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                  {holding.isNativeSol ? (
-                    '-'
-                  ) : (
-                    calculateAthMarketCap(holding) > 0 ?
-                    `${formatMarketCap(calculateAthMarketCap(holding))}` :
-                    '-'
-                  )}
-                  <br />
-                  <span className="text-sm italic text-gray-600">
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
+                  <div>
+                    <div className="text-gray-500">Market Cap</div>
+                    <div className="font-medium">
+                      {holding.isNativeSol
+                        ? formatPrice(holding.pricePerToken * (holding.balance / Math.pow(10, holding.decimals)))
+                        : (marketData[holding.token.id]?.marketCap ? formatMarketCap(marketData[holding.token.id].marketCap) : '-')}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">ATH Market Cap</div>
+                    <div className="font-medium">
+                      {holding.isNativeSol ? '-' : (calculateAthMarketCap(holding) > 0
+                        ? formatMarketCap(calculateAthMarketCap(holding))
+                        : '-')}
+                    </div>
                     {calculateMultiplier(holding) && (
-                      <>
+                      <div className="text-xs italic text-gray-600">
                         (<span className="font-bold">{calculateMultiplier(holding)?.value}</span>
                         {calculateMultiplier(holding)?.text})
-                      </>
+                      </div>
                     )}
-                  </span>
-                </td>
-              </tr>
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Desktop view - table layout */}
+          <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Token
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Market Cap
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ATH Market Cap
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {allHoldings.map((holding) => (
+                <tr key={holding.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {holding.isNativeSol ? (
+                        <>
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                            <span className="text-purple-600 font-medium">SOL</span>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">Solana</div>
+                            <div className="text-sm text-gray-500">Native Token</div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex-shrink-0 h-10 w-10">
+                            {holding.token.content.links?.image ? (
+                              <Image
+                                src={holding.token.content.links.image}
+                                alt={holding.token.content.metadata.name || holding.token.id}
+                                width={40}
+                                height={40}
+                                className="object-cover rounded-lg"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="h-10 w-10 bg-gray-200 flex items-center justify-center rounded-lg">
+                                <span className="text-gray-500 text-xs">
+                                  {holding.token.content.metadata.symbol || 'Token'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {holding.token.content.metadata.name || holding.token.id}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {holding.token.token_info.symbol || holding.token.content.metadata.symbol}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    {holding.isNativeSol ? (
+                      formatPrice(holding.pricePerToken * (holding.balance / Math.pow(10, holding.decimals)))
+                    ) : (
+                      marketData[holding.token.id]?.marketCap ? 
+                      formatMarketCap(marketData[holding.token.id].marketCap) : 
+                      '-'
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    {holding.isNativeSol ? (
+                      '-'
+                    ) : (
+                      calculateAthMarketCap(holding) > 0 ?
+                      `${formatMarketCap(calculateAthMarketCap(holding))}` :
+                      '-'
+                    )}
+                    <br />
+                    <span className="text-sm italic text-gray-600">
+                      {calculateMultiplier(holding) && (
+                        <>
+                          (<span className="font-bold">{calculateMultiplier(holding)?.value}</span>
+                          {calculateMultiplier(holding)?.text})
+                        </>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
