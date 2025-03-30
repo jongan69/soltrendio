@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**'
+      }
+    ],
+  },
   experimental: {
     largePageDataBytes: 128 * 100000, // Increase the limit to ~12.8MB
   },

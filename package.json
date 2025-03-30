@@ -41,6 +41,7 @@
     "framer-motion": "^12.0.11",
     "google-trends-api": "^4.9.2",
     "he": "^1.2.0",
+    "html-to-image": "^1.11.13",
     "jito-ts": "^4.1.1",
     "mongodb": "^6.13.0",
     "mongoose": "^8.9.6",
@@ -58,7 +59,7 @@
     "theme-change": "^2.3.0",
     "ts-prune": "^0.10.3",
     "tweetnacl": "^1.0.3",
-    "twitter-api-v2": "^1.19.0",
+    "twitter-api-v2": "^1.22.0",
     "web-encoding": "^1.1.5",
     "yahoo-finance2": "^2.13.3"
   },
