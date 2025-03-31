@@ -11,7 +11,7 @@ export default function WalletHoldings() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">BreadSheet</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Compare solana address holdings current market caps to all-time high market caps.
+            Compare solana address holdings&apos; current market caps to all-time high market caps.
             Enter your wallet address or .sol domain below to get started.
           </p>
         </div>
@@ -33,7 +33,7 @@ export default function WalletHoldings() {
               />
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              Example: "abc...xyz" or "mydomain.sol"
+              Example: &ldquo;abc...xyz&rdquo; or &ldquo;mydomain.sol&rdquo;
             </p>
           </div>
         </div>
