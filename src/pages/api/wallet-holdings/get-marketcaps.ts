@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import tokensData from '../../../utils/tokens.json';
+// import tokensData from '../../../utils/tokens.json';
 
 interface TokenData {
     id: string;
@@ -9,8 +9,16 @@ interface TokenData {
     };
 }
 
+
 const DEXSCREENER_TOKEN_API_URL = 'https://api.dexscreener.com/latest/dex/tokens';
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
+
+const tokensData = await fetch('https://api.coingecko.com/api/v3/coins/list?include_platform=true', {
+    headers: {
+        'x-cg-demo-api-key': COINGECKO_API_KEY!
+    }
+}).then(res => res.json());
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -20,6 +28,8 @@ export default async function handler(
     }
 
     const { contractAddresses } = req.body;
+
+    console.log(JSON.stringify(contractAddresses, null, 2));
 
     if (!contractAddresses || !Array.isArray(contractAddresses)) {
         return res.status(400).json({ error: 'Contract addresses are required' });
@@ -57,7 +67,7 @@ export default async function handler(
             // Find token id in tokens.json using contract address
             const token = (tokensData as TokenData[]).find(token => token.platforms.solana === address);
             if (!token) {
-                console.warn(`No token found in tokens.json for address ${address}`);
+                console.warn(`No token found in token data for address ${address}`);
                 return 0;
             }
 

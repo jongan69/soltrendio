@@ -7,6 +7,8 @@ import { getPublicKeyFromSolDomain } from '@utils/getPublicKeyFromDomain';
 import { Connection } from '@solana/web3.js';
 import { NETWORK } from '@utils/endpoints';
 import { isSolanaAddress } from '@utils/isSolanaAddress';
+import { SOLANA_ADDRESS } from '@utils/globals';
+import { fetchJupiterSwap } from '@utils/fetchJupiterSwap';
 
 interface TokenPriceInfo {
   price_per_token: number;
@@ -137,14 +139,16 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
   const [isResolvingDomain, setIsResolvingDomain] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
   const resolveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const [showOneMillionCost, setShowOneMillionCost] = useState(false);
+  const [solanaPrice, setSolanaPrice] = useState<number | null>(null);
 
   const validateTwitterHandle = (handle: string): boolean => {
     // Remove @ if present and trim whitespace
     const cleanHandle = handle.trim().replace(/^@/, '');
-    
+
     // Twitter handle rules: 4-15 characters, alphanumeric and underscores only
     const isValid = /^[A-Za-z0-9_]{4,15}$/.test(cleanHandle);
-    
+
     return isValid || cleanHandle === '';
   };
 
@@ -153,7 +157,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     // Remove @ if present and trim whitespace
     const cleanHandle = value.trim().replace(/^@/, '');
     setTwitterHandle(cleanHandle);
-    
+
     // Only set error if there's a value and it's invalid
     if (cleanHandle !== '' && !validateTwitterHandle(cleanHandle)) {
       setHandleError('Handle must be 4-15 characters long and can only contain letters, numbers, and underscores');
@@ -164,22 +168,22 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
   const handleTwitterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (twitterHandle && !validateTwitterHandle(twitterHandle)) {
       return;
     }
-    
+
     setShowTwitterModal(false);
-    
+
     if (!tableRef.current) return;
-    
+
     try {
       setUploading(true);
       const dataUrl = await toPng(tableRef.current, {
         quality: 1.0,
         backgroundColor: 'white',
       });
-      
+
       const uploadResponse = await fetch('/api/twitter/upload-media', {
         method: 'POST',
         headers: {
@@ -187,17 +191,17 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
         },
         body: JSON.stringify({ image: dataUrl })
       });
-      
+
       if (!uploadResponse.ok) {
         console.warn('Failed to upload image');
       }
-      
+
       const { mediaId } = await uploadResponse.json();
-      
-      const tweetText = twitterHandle 
+
+      const tweetText = twitterHandle
         ? `BreadSheet created by @${twitterHandle}! 🍞📊`
         : "Latest BreadSheet! 🍞📊";
-      
+
       const tweetResponse = await fetch('/api/twitter/tweet-with-media', {
         method: 'POST',
         headers: {
@@ -208,7 +212,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
           mediaId
         })
       });
-      
+
       if (!tweetResponse.ok) {
         console.warn('Failed to post tweet');
       }
@@ -224,13 +228,13 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
   const handleDownload = async () => {
     if (!tableRef.current) return;
-    
+
     try {
       const dataUrl = await toPng(tableRef.current, {
         quality: 1.0,
         backgroundColor: 'white',
       });
-      
+
       const link = document.createElement('a');
       link.download = 'breadsheet.png';
       link.href = dataUrl;
@@ -246,10 +250,10 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
   const calculateAthMarketCap = (holding: Holding): number => {
     if (holding.isNativeSol) return 0;
-    
+
     const data = marketData[holding.token.id];
     if (!data?.allTimeHighPrice || !data?.supply) return 0;
-    
+
     // Adjust supply by token decimals
     const adjustedSupply = data.supply / Math.pow(10, holding.token.token_info.decimals);
     return data.allTimeHighPrice * adjustedSupply;
@@ -276,7 +280,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       setMarketData({});
       setResolvedDomain(null);
       setIsResolvingDomain(false);
-      
+
       if (!address) {
         setError('Please enter a wallet address or .sol domain');
         return;
@@ -333,18 +337,18 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     const fetchWalletData = async (walletAddress: string) => {
       setLoading(true);
       setLoadingMessage('Fetching wallet data...');
-      
+
       try {
         await saveWalletToDb(walletAddress, resolvedDomain || undefined);
         const response = await fetch(`/api/wallet-holdings/get-assets?address=${walletAddress}`);
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-         console.warn(errorData.message || 'Failed to fetch wallet holdings');
+          console.warn(errorData.message || 'Failed to fetch wallet holdings');
         }
 
         const data: WalletHoldingsResponse = await response.json();
-        
+
         if (!data.result || !data.result.items) {
           console.warn('No wallet data found');
         }
@@ -372,19 +376,19 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
           const { marketcaps, allTimeHighPrices } = await marketResponse.json();
           const newMarketData: MarketData = {};
-          
+
           contractAddresses.forEach((address, index) => {
             // Get the token from holdings to access supply
             const token = data.result.items.find(t => t.id === address);
             const supply = token?.token_info.supply || 0;
-            
+
             newMarketData[address] = {
               marketCap: marketcaps[index] || 0,
               allTimeHighPrice: allTimeHighPrices[index] || 0,
               supply: supply
             };
           });
-          
+
           setMarketData(newMarketData);
         }
       } catch (err) {
@@ -408,6 +412,20 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
     };
   }, [address]);
 
+  useEffect(() => {
+    const fetchSolanaPrice = async () => {
+      try {
+        const response = await fetchJupiterSwap(SOLANA_ADDRESS);
+        if (response?.data?.[SOLANA_ADDRESS]?.price) {
+          setSolanaPrice(response.data[SOLANA_ADDRESS].price);
+        }
+      } catch (error) {
+        console.error('Error fetching Solana price:', error);
+      }
+    };
+
+    fetchSolanaPrice();
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -428,18 +446,53 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
 
   const calculateMultiplier = (holding: Holding): { value: string; text: string } | null => {
     if (holding.isNativeSol) return null;
-    
+
     const data = marketData[holding.token.id];
     if (!data?.marketCap || data.marketCap === 0) return null;
-    
+
     const athMarketCap = calculateAthMarketCap(holding);
     if (athMarketCap === 0) return null;
     
+    if(data.marketCap > athMarketCap) {
+      return {
+        value: '1.0',
+        text: 'x from Current Market Cap'
+      };
+    }
+
     const multiplier = athMarketCap / data.marketCap;
     return {
       value: multiplier.toFixed(1),
       text: 'x from Current Market Cap'
     };
+  };
+
+  const formatSol = (solAmount: number): string => {
+    return `${solAmount.toFixed(2)} SOL`;
+  };
+
+  const calculateOneMillionCost = (holding: Holding): { usd: number | null; sol: number | null } => {
+    // Get SOL price for conversion
+    const solPrice = solanaPrice || 0;
+
+    if (holding.isNativeSol) {
+      // For SOL, use the solanaPrice from Jupiter
+      const usdCost = solPrice * 1000000;
+      const solCost = 1000000; // 1M SOL
+      return { usd: usdCost, sol: solCost };
+    } else {
+      // For other tokens, we need to calculate from price info
+      const priceInfo = holding.token.token_info.price_info;
+      if (!priceInfo?.price_per_token) return { usd: null, sol: null };
+
+      // Calculate cost for 1M tokens
+      const usdCost = priceInfo.price_per_token * 1000000;
+
+      // Convert to SOL if we have SOL price
+      const solCost = solPrice > 0 ? usdCost / solPrice : null;
+
+      return { usd: usdCost, sol: solCost };
+    }
   };
 
   if (loading || isResolvingDomain) {
@@ -462,7 +515,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
         </div>
         <div className="mt-2 text-sm text-red-700">{error}</div>
         <div className="mt-3 text-sm text-gray-600">
-          {error.includes('.sol domain') 
+          {error.includes('.sol domain')
             ? 'Make sure the domain is correctly spelled and exists on the Solana network.'
             : 'Please check the wallet address and try again.'}
         </div>
@@ -502,9 +555,10 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       .filter(token => {
         if (token.interface !== "FungibleToken") return false;
         if (token.token_info.balance <= 0) return false;
-        // Only include tokens where we have both market caps
         const data = marketData[token.id];
+         // Only include tokens where we have both market caps
         return data?.marketCap > 0 && data?.allTimeHighPrice > 0;
+        // return data?.marketCap > 0;
       })
       .map(token => ({
         id: token.id,
@@ -514,10 +568,10 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
       }))
   ];
 
-  // Take top 10 by holdings value
+  // Take top 25 by holdings value
   const topHoldings = tokensWithHoldings
     .sort((a, b) => (b.totalValue || 0) - (a.totalValue || 0))
-    .slice(0, 10);
+    .slice(0, 25);
 
   // Sort the selected tokens by market cap for display
   const allHoldings: Holding[] = topHoldings.sort((a, b) => {
@@ -541,9 +595,8 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                   type="text"
                   id="twitter-handle"
                   placeholder="username (without @)"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    handleError ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${handleError ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   value={twitterHandle}
                   onChange={handleTwitterHandleChange}
                 />
@@ -592,9 +645,19 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
             className="w-full sm:w-auto px-4 py-2 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a8cd8] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
             </svg>
             <span className="whitespace-nowrap">{uploading ? 'Uploading...' : 'Share BreadSheet'}</span>
+          </button>
+          <button
+            onClick={() => setShowOneMillionCost(!showOneMillionCost)}
+            className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+            </svg>
+            <span className="whitespace-nowrap">{showOneMillionCost ? 'Hide 1M Cost' : 'Show 1M Cost'}</span>
           </button>
         </div>
       </div>
@@ -677,6 +740,21 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                       </div>
                     )}
                   </div>
+                  {showOneMillionCost && (
+                    <div className="col-span-2">
+                      <div className="text-gray-500">Cost for 1M Tokens</div>
+                      <div className="font-medium">
+                        {calculateOneMillionCost(holding).usd !== null
+                          ? formatPrice(calculateOneMillionCost(holding).usd!)
+                          : '-'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {calculateOneMillionCost(holding).sol !== null
+                          ? formatSol(calculateOneMillionCost(holding).sol!)
+                          : '-'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -695,6 +773,11 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ATH Market Cap
                 </th>
+                {showOneMillionCost && (
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    1M Tokens Cost
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -748,18 +831,18 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                     {holding.isNativeSol ? (
                       formatPrice(holding.pricePerToken * (holding.balance / Math.pow(10, holding.decimals)))
                     ) : (
-                      marketData[holding.token.id]?.marketCap ? 
-                      formatMarketCap(marketData[holding.token.id].marketCap) : 
-                      '-'
+                      marketData[holding.token.id]?.marketCap ?
+                        formatMarketCap(marketData[holding.token.id].marketCap) :
+                        '-'
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
                     {holding.isNativeSol ? (
                       '-'
                     ) : (
-                      calculateAthMarketCap(holding) > 0 ?
-                      `${formatMarketCap(calculateAthMarketCap(holding))}` :
-                      '-'
+                      calculateAthMarketCap(holding) > 0 && calculateAthMarketCap(holding) > marketData[holding.token.id]?.marketCap ?
+                        `${formatMarketCap(calculateAthMarketCap(holding))}` :
+                        formatMarketCap(marketData[holding.token.id].marketCap)
                     )}
                     <br />
                     <span className="text-sm italic text-gray-600">
@@ -771,6 +854,19 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                       )}
                     </span>
                   </td>
+                  {showOneMillionCost && (
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                      {calculateOneMillionCost(holding).usd !== null
+                        ? formatPrice(calculateOneMillionCost(holding).usd!)
+                        : '-'}
+                      <br />
+                      <span className="text-sm text-gray-600">
+                        {calculateOneMillionCost(holding).sol !== null
+                          ? formatSol(calculateOneMillionCost(holding).sol!)
+                          : '-'}
+                      </span>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -29,7 +29,7 @@ export default async function handler(
         params: {
           ownerAddress: address,
           page: 1,
-          limit: 50,
+          limit: 1000,
           sortBy: {
             sortBy: 'created',
             sortDirection: 'asc'
