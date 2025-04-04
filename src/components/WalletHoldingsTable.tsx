@@ -358,8 +358,9 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
         // Get contract addresses for tokens
         const contractAddresses = data.result.items
           .filter(token => token.interface === "FungibleToken")
-          .map(token => token.id);
-
+          .map(token => token.id)
+          .slice(0, 25);
+          
         // Fetch market data for tokens
         if (contractAddresses.length > 0) {
           const marketResponse = await fetch('/api/wallet-holdings/get-marketcaps', {
@@ -697,6 +698,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                           width={32}
                           height={32}
                           className="object-cover rounded-lg"
+                          style={{ width: 'auto', height: 'auto' }}
                           unoptimized
                         />
                       ) : (
@@ -805,6 +807,7 @@ export default function WalletHoldingsTable({ address }: WalletHoldingsTableProp
                                 width={40}
                                 height={40}
                                 className="object-cover rounded-lg"
+                                style={{ width: 'auto', height: 'auto' }}
                                 unoptimized
                               />
                             ) : (
