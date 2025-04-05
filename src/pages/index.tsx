@@ -17,6 +17,7 @@ import { toast } from "react-hot-toast";
 import { Modal } from "@components/layout/modal";
 import { Footer } from "@components/layout/footer";
 import { DEFAULT_TOKEN_3_NAME } from "@utils/globals";
+import { BreadsheetLink } from "@components/layout/breadsheet-link";
 
 
 const Home: NextPage = () => {
