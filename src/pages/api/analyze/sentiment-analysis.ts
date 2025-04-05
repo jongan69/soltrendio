@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEP_SEEK_API_KEY,
+    // baseURL: 'https://api.deepseek.com',
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req: { method: string; body: { text: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; end: { (): any; new(): any; }; json: { (arg0: { thesis?: any; error?: string; }): void; new(): any; }; }; }) {
@@ -33,7 +33,7 @@ export default async function handler(req: { method: string; body: { text: any; 
                 }
             ],
             // model: "deepseek-chat",
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             temperature: 0.7,
             max_tokens: 4096,
             response_format: { type: "json_object" }
