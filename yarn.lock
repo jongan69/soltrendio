@@ -2821,9 +2821,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/spl-token@npm:^0.4.12":
-  version: 0.4.12
-  resolution: "@solana/spl-token@npm:0.4.12"
+"@solana/spl-token@npm:^0.4.13":
+  version: 0.4.13
+  resolution: "@solana/spl-token@npm:0.4.13"
   dependencies:
     "@solana/buffer-layout": "npm:^4.0.0"
     "@solana/buffer-layout-utils": "npm:^0.2.0"
@@ -2832,7 +2832,7 @@ __metadata:
     buffer: "npm:^6.0.3"
   peerDependencies:
     "@solana/web3.js": ^1.95.5
-  checksum: 10c0/262d5b6c60db0f0a4c983b0c29fd38a2f0a2a5a947c3bc3c4951843b212663c502f5cc71f9303178933f6e36ae24303081475c93a789dd33ec9c1c1b1123f841
+  checksum: 10c0/001c3c347e66fe20a1a631679d81bad26d9cf174f21fe8817a571524626d755347e48696917c49f9a457c7227f82ec1bda4aa5d1d252f912e764a3dce5d89e4b
   languageName: node
   linkType: hard
 
@@ -12550,7 +12550,7 @@ __metadata:
     "@metaplex-foundation/umi-bundle-defaults": "npm:^1.0.0"
     "@project-serum/anchor": "npm:^0.26.0"
     "@solana/spl-name-service": "npm:^0.1.4"
-    "@solana/spl-token": "npm:^0.4.12"
+    "@solana/spl-token": "npm:^0.4.13"
     "@solana/wallet-adapter-base": "npm:^0.9.20"
     "@solana/wallet-adapter-react": "npm:^0.15.28"
     "@solana/wallet-adapter-react-ui": "npm:^0.9.27"
