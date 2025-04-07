@@ -10,7 +10,6 @@ import { fromWeb3JsPublicKey } from '@metaplex-foundation/umi-web3js-adapters'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import Bottleneck from "bottleneck";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TOKEN_PROGRAM_ID_ADDRESS } from "@utils/globals";
 import { Instruction } from "@jup-ag/api";
 import { NETWORK } from "@utils/endpoints";
 import { fetchJupiterSwap } from "./fetchJupiterSwap";
@@ -105,10 +104,11 @@ export async function fetchTokenMetadata(mintAddress: PublicKey, mint: string) {
 export async function fetchTokenAccounts(publicKey: PublicKey) {
   return rpcLimiter.schedule(() =>
     connection.getParsedTokenAccountsByOwner(publicKey, {
-      programId: TOKEN_PROGRAM_ID_ADDRESS,
+      programId: TOKEN_PROGRAM_ID,
     })
   );
 }
+
 
 export async function fetchNftPrice(mintAddress: string) {
   const response = await apiLimiter.schedule(() =>
