@@ -12566,7 +12566,7 @@ __metadata:
     big.js: "npm:^6.2.1"
     body-parser: "npm:^1.20.2"
     bottleneck: "npm:^2.19.5"
-    bs58: "npm:^5.0.0"
+    bs58: "npm:^6.0.0"
     chart.js: "npm:^4.4.3"
     classnames: "npm:^2.3.2"
     cookie: "npm:^1.0.2"
