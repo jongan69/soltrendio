@@ -7,7 +7,7 @@ export function Footer() {
       <div className="flex flex-col items-center gap-2">
         <div className="flex gap-4">
           <a
-            href="https://doc.soltrendio.com/"
+            href="https://soltrendio.gitbook.io/soltrendio-docs"
             target="_blank"
             rel="noreferrer"
             className="link link-primary"
