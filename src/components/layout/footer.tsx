@@ -69,7 +69,7 @@ export function Footer() {
             />
           </a> */}
           <a
-            href="https://m3m3.meteora.ag/farms/7VrKfJZ1D7B9ydmd8HXS76vX47A3rzKPDCok82SvFvRV"
+            href="https://app.meteora.ag/stake2earn/7VrKfJZ1D7B9ydmd8HXS76vX47A3rzKPDCok82SvFvRV"
             target="_blank"
             rel="noreferrer"
             className="link link-primary"
