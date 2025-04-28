@@ -11,7 +11,7 @@
     "find-deadcode": "ts-prune | grep -v '(used in module)'"
   },
   "dependencies": {
-    "@bonfida/spl-name-service": "^3.0.7",
+    "@bonfida/spl-name-service": "^3.0.10",
     "@duneanalytics/client-sdk": "^0.2.5",
     "@jup-ag/api": "^6.0.40",
     "@metaplex-foundation/mpl-token-metadata": "3.4.0",
