@@ -213,10 +213,10 @@
     bs58 "5.0.0"
     buffer "^6.0.3"
 
-"@bonfida/spl-name-service@^3.0.7":
-  version "3.0.8"
-  resolved "https://registry.npmjs.org/@bonfida/spl-name-service/-/spl-name-service-3.0.8.tgz"
-  integrity sha512-JsjQWLVYTY7ofVDdu5wNgVmRvqveJsTv0tEHTMGtyztsxlG37hxGJSTywX0P/u54MIzr0uaN5sA26m2cK0N/LA==
+"@bonfida/spl-name-service@^3.0.10":
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/@bonfida/spl-name-service/-/spl-name-service-3.0.10.tgz#883f2e077eef7d91147f44ae383990a82479d5f8"
+  integrity sha512-CrqlEDz43K9fPIVaUXn29OiMWZUOs3+sxU7zHrlPjjdXn9GrJSVao5gjmflfK6tcwLxSSGC4F4GOg5erSfyR/A==
   dependencies:
     "@bonfida/sns-records" "0.0.1"
     "@noble/curves" "^1.4.0"
