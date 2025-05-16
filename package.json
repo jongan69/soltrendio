@@ -30,7 +30,7 @@
     "agent-twitter-client": "^0.0.18",
     "axios": "^1.8.3",
     "big.js": "^6.2.1",
-    "body-parser": "^1.20.2",
+    "body-parser": "^2.2.0",
     "bottleneck": "^2.19.5",
     "bs58": "^6.0.0",
     "chart.js": "^4.4.3",
