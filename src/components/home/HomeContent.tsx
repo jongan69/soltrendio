@@ -59,6 +59,7 @@ import { checkTwitterStatus } from "@utils/checkTwitterStatus";
 import { LoadingState } from "@components/LoadingStates";
 import { fetchPremiumAnalytics } from "@utils/fetchPremiumAnalytics";
 import { ApiKeyManager } from './ApiKeyManager';
+import { fetchBalance } from "@utils/fetchBalance";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -94,6 +95,7 @@ export function HomeContent() {
   const [createdPortId, setCreatedPortId] = useState<string | null>(null);
   const [hasEligibleTokens, setHasEligibleTokens] = useState<boolean>(false);
   const [isCreatingPortfolio, setIsCreatingPortfolio] = useState<boolean>(false);
+  const [userToken3Balance, setUserToken3Balance] = useState<number>(0);
   // const [whaleAlerts, setWhaleAlerts] = useState();
   const [alerts, setAlerts] = useState<WhaleAlert[]>([]);
 
@@ -116,20 +118,12 @@ export function HomeContent() {
   }, []);
 
   const fetchFeeWalletBalance = useCallback(async () => {
-    try {
-      const tokenAccounts = await fetchTokenAccounts(new PublicKey(DEFAULT_WALLET));
-      const tokenAccount = tokenAccounts.value.find(account =>
-        account.account.data.parsed.info.mint === DEFAULT_TOKEN_3
-      );
+    const DEFAULT_WALLET_TOKEN_3_BALANCE = await fetchBalance(DEFAULT_WALLET, DEFAULT_TOKEN_3);
+    setFeeTokenBalance(DEFAULT_WALLET_TOKEN_3_BALANCE);
 
-      if (tokenAccount) {
-        const balance = tokenAccount.account.data.parsed.info.tokenAmount.uiAmount;
-        setFeeTokenBalance(balance);
-      }
-    } catch (error) {
-      console.error("Error fetching fee wallet balance:", error);
-    }
-  }, []);
+    const USER_WALLET_TOKEN_3_BALANCE = await fetchBalance(publicKey?.toBase58() || "", DEFAULT_TOKEN_3);
+    setUserToken3Balance(USER_WALLET_TOKEN_3_BALANCE);
+  }, [publicKey]);
 
   const sign = async (walletAddress: PublicKeyInitData) => {
     if (walletAddress && signState === "initial") {
@@ -974,7 +968,7 @@ export function HomeContent() {
                 <p className="text-sm sm:text-base text-gray-700">Total Value</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">${totalValue.toFixed(2)}</p>
                 <p className="text-sm sm:text-base text-gray-700">{DEFAULT_TOKEN_3_NAME} Balance</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">${specificTokenBalance.toFixed(2)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{userToken3Balance.toFixed(2)}</p>
                 <br />
               </div>
             </div>
