@@ -9,7 +9,7 @@ export default function WalletHoldings() {
       <div className="container mx-auto px-4 py-12">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">BreadSheet</h1>
+          <h1 className="text-4xl font-bold text-white dark:text-white mb-4">BreadSheet</h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Compare solana address holdings&apos; current market caps to all-time high market caps.
             Enter your wallet address or .sol domain below to get started.

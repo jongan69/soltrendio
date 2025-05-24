@@ -36,7 +36,7 @@ import { PnLCard } from './PnLCard';
 import { WalletInputForm } from './WalletInput';
 import { ThesisSection } from './ThesisComponent';
 import { BestPoolsDisplay } from '@components/home/BestPoolsDisplay';
-import { WhaleAlert, WhaleAlerts } from "./WhaleAlerts";
+import { WhaleActivity, WhaleAlert, WhaleAlerts } from "./WhaleAlerts";
 
 // Utils
 import { apiLimiter, fetchTokenAccounts, handleTokenData, TokenData } from "@utils/tokenUtils";
@@ -60,6 +60,7 @@ import { LoadingState } from "@components/LoadingStates";
 import { fetchPremiumAnalytics } from "@utils/fetchPremiumAnalytics";
 import { ApiKeyManager } from './ApiKeyManager';
 import { fetchBalance } from "@utils/fetchBalance";
+import getTrends from "@utils/getTrends";
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -97,7 +98,7 @@ export function HomeContent() {
   const [isCreatingPortfolio, setIsCreatingPortfolio] = useState<boolean>(false);
   const [userToken3Balance, setUserToken3Balance] = useState<number>(0);
   // const [whaleAlerts, setWhaleAlerts] = useState();
-  const [alerts, setAlerts] = useState<WhaleAlert[]>([]);
+  const [alerts, setAlerts] = useState<WhaleActivity>({ bullish: [], bearish: [] });
 
   const [twitterAuth, setTwitterAuth] = useState<TwitterAuthState>({
     isLinked: false
@@ -124,6 +125,12 @@ export function HomeContent() {
     const USER_WALLET_TOKEN_3_BALANCE = await fetchBalance(publicKey?.toBase58() || "", DEFAULT_TOKEN_3);
     setUserToken3Balance(USER_WALLET_TOKEN_3_BALANCE);
   }, [publicKey]);
+
+  const fetchWhaleAlerts = useCallback(async () => {
+    const trends = await getTrends();
+    const activity = trends.whaleActivity
+    setAlerts(activity);
+  }, []);
 
   const sign = async (walletAddress: PublicKeyInitData) => {
     if (walletAddress && signState === "initial") {
@@ -338,6 +345,7 @@ export function HomeContent() {
   // Effect for fetching fee wallet balance
   useEffect(() => {
     fetchFeeWalletBalance();
+    fetchWhaleAlerts();
     // Refresh balance every 60 seconds
     const interval = setInterval(fetchFeeWalletBalance, 60000);
     return () => clearInterval(interval);
