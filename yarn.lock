@@ -2934,24 +2934,17 @@
     "@types/node" "*"
     form-data "^4.0.0"
 
-"@types/node@*", "@types/node@^12.12.54":
-  version "12.20.55"
-  resolved "https://registry.npmjs.org/@types/node/-/node-12.20.55.tgz"
-  integrity sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==
-
-"@types/node@>=13.7.0":
-  version "22.14.1"
-  resolved "https://registry.npmjs.org/@types/node/-/node-22.14.1.tgz"
-  integrity sha512-u0HuPQwe/dHrItgHHpmw3N2fYCR6x4ivMNbPHRkBVP4CvN+kiRrKHWk3i8tXiO/joPwXLMYvF9TTF0eqgHIuOw==
+"@types/node@*", "@types/node@>=13.7.0", "@types/node@^22.8.1":
+  version "22.15.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.15.31.tgz#454f11e2061150135c8353d7f3b3b1823fca9f3f"
+  integrity sha512-jnVe5ULKl6tijxUhvQeNbQG/84fHfg+yMak02cT8QVhBx/F05rAVxCGBYYTh2EKz22D6JF5ktXuNwdx7b9iEGw==
   dependencies:
     undici-types "~6.21.0"
 
-"@types/node@^18.7.3":
-  version "18.19.86"
-  resolved "https://registry.npmjs.org/@types/node/-/node-18.19.86.tgz"
-  integrity sha512-fifKayi175wLyKyc5qUfyENhQ1dCNI1UNjp653d8kuYcPQN5JhX3dGuP/XmvPTg/xRBn1VTLpbmi+H/Mr7tLfQ==
-  dependencies:
-    undici-types "~5.26.4"
+"@types/node@^12.12.54":
+  version "12.20.55"
+  resolved "https://registry.npmjs.org/@types/node/-/node-12.20.55.tgz"
+  integrity sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==
 
 "@types/parse-json@^4.0.0":
   version "4.0.2"
@@ -5966,9 +5959,9 @@ ignore@^5.2.0, ignore@^5.3.1:
   resolved "https://registry.npmjs.org/ignore/-/ignore-5.3.2.tgz"
   integrity sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==
 
-image-size@^1.0.0:
+image-size@^1.1.1:
   version "1.2.1"
-  resolved "https://registry.npmjs.org/image-size/-/image-size-1.2.1.tgz"
+  resolved "https://registry.yarnpkg.com/image-size/-/image-size-1.2.1.tgz#ee118aedfe666db1a6ee12bed5821cde3740276d"
   integrity sha512-rH+46sQJ2dlwfjfhCyNx5thzrv+dtmBIhPHk0zgRUukHzZ/kRueTJXoYYsclBaKcSMBWuGbOFXtioLpzTb5euw==
   dependencies:
     queue "6.0.2"
@@ -6494,9 +6487,9 @@ jsqr@^1.2.0:
     object.assign "^4.1.4"
     object.values "^1.1.6"
 
-jszip@^3.7.1:
+jszip@^3.10.1:
   version "3.10.1"
-  resolved "https://registry.npmjs.org/jszip/-/jszip-3.10.1.tgz"
+  resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.10.1.tgz#34aee70eb18ea1faec2f589208a157d1feb091c2"
   integrity sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g==
   dependencies:
     lie "~3.3.0"
@@ -7825,15 +7818,15 @@ postcss@^8.4.41, postcss@^8.4.47, postcss@^8.5.3:
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
 
-pptxgenjs@^3.12.0:
-  version "3.12.0"
-  resolved "https://registry.npmjs.org/pptxgenjs/-/pptxgenjs-3.12.0.tgz"
-  integrity sha512-ZozkYKWb1MoPR4ucw3/aFYlHkVIJxo9czikEclcUVnS4Iw/M+r+TEwdlB3fyAWO9JY1USxJDt0Y0/r15IR/RUA==
+pptxgenjs@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/pptxgenjs/-/pptxgenjs-4.0.0.tgz#a74fdc2b1cf1eb1a59d284268e28227082e6e236"
+  integrity sha512-iXpmNbivy64cxb4W05nDpUBkhoa73qCmvDZ2CTXYhvvX7LkJKAs6wWEEWlm3OSVJdaZtjY+AAmWgcmwNH8fSkA==
   dependencies:
-    "@types/node" "^18.7.3"
+    "@types/node" "^22.8.1"
     https "^1.0.0"
-    image-size "^1.0.0"
-    jszip "^3.7.1"
+    image-size "^1.1.1"
+    jszip "^3.10.1"
 
 prelude-ls@^1.2.1:
   version "1.2.1"
@@ -9340,11 +9333,6 @@ undici-types@^7.9.0:
   version "7.10.0"
   resolved "https://registry.npmjs.org/undici-types/-/undici-types-7.10.0.tgz"
   integrity sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==
-
-undici-types@~5.26.4:
-  version "5.26.5"
-  resolved "https://registry.npmjs.org/undici-types/-/undici-types-5.26.5.tgz"
-  integrity sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==
 
 undici-types@~6.21.0:
   version "6.21.0"
