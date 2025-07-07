@@ -9,7 +9,7 @@ export const METAPLEX = "https://api.metaplex.solana.com";
 export const SERUM = "https://solana-api.projectserum.com";
 export const HELIUS = process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT;
 export const DEXSCREENER = "https://api.dexscreener.com";
-export const JUPITER = "https://api.jup.ag";
+export const JUPITER = "https://lite-api.jup.ag";
 
 export const JUPITER_QUOTE = "https://quote-api.jup.ag/v6";
 

@@ -141,7 +141,7 @@ export async function handleTokenData(publicKey: PublicKey, tokenAccount: any, a
   // console.log("Metadata:", metadata);
 
   if (!metadata?.isNft) {
-    const price = jupiterPrice.data[mintAddress]?.price || 0;
+    const price = jupiterPrice?.data?.[mintAddress]?.price || 0;
     const usdValue = amount * price;
 
     return {
