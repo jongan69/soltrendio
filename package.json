@@ -44,7 +44,7 @@
     "html-to-image": "^1.11.13",
     "jito-ts": "^4.1.1",
     "mongodb": "^6.16.0",
-    "mongoose": "^8.13.2",
+    "mongoose": "^8.17.0",
     "next": "15.3.5",
     "oauth-1.0a": "^2.2.6",
     "openai": "^5.8.2",
