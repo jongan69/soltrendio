@@ -2,7 +2,7 @@ import { JUPITER } from "./endpoints";
 
 export const fetchJupiterSwap = async (id: string | undefined) => {
   try {
-    const response = await fetch(`${JUPITER}/price/v2?ids=${id}`);
+    const response = await fetch(`${JUPITER}/price/v3?ids=${id}`);
     if (!response.ok) {
       console.error(`HTTP error! status: ${response.status}`);
     }

@@ -50,3 +50,8 @@ env/
 *.model
 *.pth
 *.onnx
+
+# misc
+.yarn
+.vscode
+.idea
