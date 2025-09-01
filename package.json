@@ -28,7 +28,7 @@
     "@tailwindcss/postcss": "^4.1.8",
     "@tailwindcss/typography": "^0.5.9",
     "agent-twitter-client": "^0.0.18",
-    "axios": "^1.8.3",
+    "axios": "^1.11.0",
     "big.js": "^6.2.1",
     "body-parser": "^2.2.0",
     "bottleneck": "^2.19.5",
