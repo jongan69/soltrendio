@@ -13,7 +13,7 @@
   "dependencies": {
     "@bonfida/spl-name-service": "^3.0.10",
     "@duneanalytics/client-sdk": "^0.2.5",
-    "@jup-ag/api": "^6.0.40",
+    "@jup-ag/api": "^6.0.44",
     "@metaplex-foundation/mpl-token-metadata": "3.4.0",
     "@metaplex-foundation/umi": "^1.0.0",
     "@metaplex-foundation/umi-bundle-defaults": "^1.0.0",
