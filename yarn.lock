@@ -623,10 +623,10 @@
   resolved "https://registry.npmjs.org/@js-sdsl/ordered-map/-/ordered-map-4.4.2.tgz"
   integrity sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==
 
-"@jup-ag/api@^6.0.40":
-  version "6.0.40"
-  resolved "https://registry.npmjs.org/@jup-ag/api/-/api-6.0.40.tgz"
-  integrity sha512-iHDOY5YiCnt+XvqCoiPTKcYWIpAY7nmeo3Rsr1Cx2sdjgqTRjqNsYtLLvjTOO33pemVz5h+U0GaU2vc9zeyjew==
+"@jup-ag/api@^6.0.44":
+  version "6.0.44"
+  resolved "https://registry.yarnpkg.com/@jup-ag/api/-/api-6.0.44.tgz#ee554614f3534461297b85ca78c9440ea130f2be"
+  integrity sha512-C6oYi+wvNi07VlmWhT8+ZDMqTJuF+MiHuNBE65cYuBH6C4l0JfwpXaj6mKazAdVqVFWgngr3s2+0tdF5nDH4tA==
 
 "@keystonehq/alias-sampling@^0.1.1":
   version "0.1.2"
@@ -7863,10 +7863,9 @@ postcss@^8.4.41, postcss@^8.5.6:
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
 
-
-pptxgenjs@^4.0.0:
+pptxgenjs@^4.0.1:
   version "4.0.1"
-  resolved "https://registry.npmjs.org/pptxgenjs/-/pptxgenjs-4.0.1.tgz"
+  resolved "https://registry.yarnpkg.com/pptxgenjs/-/pptxgenjs-4.0.1.tgz#cd0f202f62f74d950bcd217e90b766da8f73742e"
   integrity sha512-TeJISr8wouAuXw4C1F/mC33xbZs/FuEG6nH9FG1Zj+nuPcGMP5YRHl6X+j3HSUnS1f3at6k75ZZXPMZlA5Lj9A==
   dependencies:
     "@types/node" "^22.8.1"
